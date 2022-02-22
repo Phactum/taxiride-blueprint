@@ -2,7 +2,7 @@
 
 This project is about building Java-based business-processing (micro)services.
 
-I incorprates best-practices collected as part of business-processing services developed since 2014.
+It incorprates best-practices collected as part of business-processing services developed since 2014.
 
 ## Paradigms
 

@@ -24,10 +24,10 @@ public @interface WorkflowService {
     static String USE_BEAN_NAME = "";
 
     /**
-     * @return The process-id for which the annotated service is responsible for.
-     *         Defaults to the bean name of the service.
+     * @return The process-id as defined in the BPMN for which the annotated service
+     *         is responsible for. Defaults to the bean name of the service.
      */
-    String processId() default USE_BEAN_NAME;
+    String bpmnProcessId() default USE_BEAN_NAME;
 
     /**
      * Can be used to define certain versions or ranges of versions of a process for
