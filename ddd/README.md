@@ -197,14 +197,15 @@ There are two primary use-case for this:
 1. Whenever a value needs to be calculated (e.g. x business-days as a timer-event definition) ![Camunda Modeller](./readme/timer_propertiespanel.png)
 1. Whenever a task needs to fulfill its functionality (e.g. service-task) ![Camunda Modeller](./readme/task_propertiespanel.png)
 
-In both cases a method of the wired service needs to be called (1. to calculate a value; 2. to complete a task)
+In both cases a method of the wired service needs to be called (1. to calculate a value; 2. to complete a task). The method has to be annotated to mark it as mapped (for details read next sections).
 
 #### Domain-entity argument
 
+As mentioned in section [Process-specific domain-aggregate](#Process-specific_domain-aggregate) for each workflow a JPA entity-record is used as a domain-aggregate. So, whenever a service-method is called there is one argument accept: The domain-aggergate-entity which holds the object for the current workflow.
 
 #### Software-first approach
 
-In this situation the name of the  
+In this situation for the name of the BPMN expression the name of the method has to be used (e.g. `sendAcceptedMail`):
 
 ```java
 @WorkflowTask
@@ -213,9 +214,114 @@ public void sendAcceptedMail(ApprovalOfVacation entity) {
 }
 ```
 
+#### BPMN-first approach
+
+If the BPMN is given, then the name used in the BPMN can be mapped by the annotation attribute `taskDefinition` if it does not match the method's name:
+
 ```java
 @WorkflowTask(taskDefinition = "SEND_ACCEPTED")
 public void sendAcceptedMail(ApprovalOfVacation entity) {
   ...
 }
 ```
+
+#### Multi-instance
+
+For multi-instance executions a lot of process variables are created:
+1. The current element or the collection
+1. The number of the element of the collection
+1. The number of elements already processed
+
+In case of using an expression to define the collection to iterate the collection's size is fetched for each iteration. Additionally, elements might be complex objects which brings [a lot of problems](../README.md) as well.
+
+To overcome this troublesome situation this is recommended:
+1. Don't use collection values for multi-instance activities
+1. Use attribute `loop-cardinality` instead to simply define the number of iterations
+1. In case of dynamically changing collections use attribute `completionCondition`
+1. Fetch the current element on your own based on the current iteration's number
+
+Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current elment it might be that this is not done in the most efficient way, since the process engine cannot know about the details of the underlying data (typically the workflow-aggregate). Therefore it is better to fetch the element as part of the method the iteration is used for (spoiler: there is a shortcut available).
+
+##### Tasks
+
+In case of multi-instance the current element (in caes of a collection), the current iteration's number and the total number of elements (in case of cardinality) can be passed to any method called.
+
+To announce which value you are interessed in is done by adding further method-parameters annotated using one of these annotations:
+* `@MultiInstanceItem` to pass the current element
+* `@MultiInstanceItemNo` to pass the current iterations number
+* `@MultiInstanceTotal` to pass the total number of iterations
+
+In case of using collection-based iterations all annotations can be used. For cardinatilty-based iterations `@MultiInstanceItem` is not allowed.
+
+*Cardinatilty-based:*
+
+```java
+@WorkflowTask
+public void sendAcceptedMail(
+    ApprovalOfVacation entity,
+    @MultiInstanceItemNo int itemNo) {
+  final var participant = entity.getParticipants().get(itemNo);
+  ...
+}
+```
+
+*Collection-based:*
+
+```java
+@WorkflowTask
+public void sendAcceptedMail(
+    ApprovalOfVacation entity,
+    @MultiInstance String participant) {
+  ...
+}
+```
+
+##### Embedded subprocesses
+
+For embedded subprocesses the value of the authorities can be used to specify the requested value:
+
+1. No value: Use current activity, if multi-instance
+1. `@MultiInstanceItemNo`: The name of the multi-instance activity
+1. `@MultiInstanceTotal`: The name of the multi-instance activity
+1. `@MultiInstance`: The name of the process-variable
+
+*Cardinatilty-based:*
+
+```java
+@WorkflowTask
+public void sendInvitationForClearanceMail(
+    ApprovalOfVacation entity,
+    @MultiInstanceItemNo("SendInvitation") int itemNo) {
+  ...
+}
+```
+
+*Collection-based:*
+
+```java
+@WorkflowTask
+public void sendInvitationForClearanceMail(
+    ApprovalOfVacation entity,
+    @MultiInstance("authorityPerson") String) {
+  ...
+}
+```
+
+*Hierarchy of multi-instance*:
+
+In this example each order item of an order (processed by a multi-instance embedded-subprocess) is checked for availability in all storages (processed by a multi-instance service-task):
+
+```java
+@WorkflowTask
+public void sendCheckAvailability(
+    ApprovalOfVacation entity,
+    @MultiInstance("orderItem") String
+    @MultiInstanceItemNo("storage") int itemNo) {
+  ...
+}
+```
+
+##### Call-activities
+
+For call-activities no special handling is required since the values (item-no, current element) can be used as part of expressions to start the call-activity workflow:
+
