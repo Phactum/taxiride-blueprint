@@ -10,13 +10,6 @@
 	<packaging>pom</packaging>
 	<name>A Business Processing Blueprint</name>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<camunda-edition>ce</camunda-edition>
-		<camunda-version>7.16</camunda-version>
-		<camunda-version-minor>0</camunda-version-minor>
-	</properties>
-
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -31,9 +24,11 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	
+
 	<modules>
-		<module>ddd</module>
+		<module>spi</module>
+		<module>adapters</module>
+		<module>blueprint</module>
 	</modules>
 
 	<dependencyManagement>
@@ -45,44 +40,6 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-			<dependency>
-				<groupId>org.camunda.bpm</groupId>
-				<artifactId>camunda-bom</artifactId>
-				<version>${camunda-version}.${camunda-version-minor}${camunda-edition-suffix}</version>
-				<scope>import</scope>
-				<type>pom</type>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
-	<profiles>
-		<profile>
-			<id>camunda-ee</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-				<property>
-					<name>camunda-edition</name>
-					<value>ee</value>
-				</property>
-			</activation>
-			<properties>
-				<camunda-edition-suffix>-ee</camunda-edition-suffix>
-			</properties>
-		</profile>
-		<profile>
-			<id>camunda-ce</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-				<property>
-					<name>camunda-edition</name>
-					<value>ce</value>
-				</property>
-			</activation>
-			<properties>
-				<camunda-edition-suffix />
-				<camunda-version-minor>0</camunda-version-minor>
-			</properties>
-		</profile>
-	</profiles>
-
 </project>
