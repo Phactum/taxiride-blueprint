@@ -5,8 +5,6 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,95 +12,101 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
-public abstract class ModuleAwareBpmnDeployment<D> {
+import at.phactum.bp.blueprint.modules.ModuleSpecificProperties;
 
+public abstract class ModuleAwareBpmnDeployment {
+
+	public static final String DEFAULT_BASE_PACKAGE_NAME = "processes";
+	
     protected abstract Logger getLogger();
 
     @Value("${spring.application.name}")
     protected String applicationName;
 
     @Autowired(required = false)
-    private List<DeploymentListener<D>> deploymentListeners;
-
-    private final String basePackageName;
-
-    protected final String workflowModuleId;
-
-    protected ModuleAwareBpmnDeployment() {
-        
-        this(null);
-        
+    private List<ModuleSpecificProperties> moduleProperties;
+    
+    @Autowired(required = false)
+    private List<BpDeploymentConfiguration> properties;
+    
+    protected void deployAllWorkflowModules() {
+    	
+    	if (moduleProperties == null) {
+    		getLogger().warn("No workflow-module properties defined using 'ModuleSpecificProperties'");
+    		return;
+    	}
+    	
+    	moduleProperties.forEach(this::deployWorkflowModule);
+    	
+    }
+    
+    private void deployWorkflowModule(
+    		final ModuleSpecificProperties propertySpecification) {
+    	
+    	final var basePackageName = determineBasePackageName(propertySpecification);
+    	final var workflowModuleId = propertySpecification.getName();
+    	
+    	deployWorkflowModule(workflowModuleId, basePackageName);
+    	
+    }
+    
+    private String determineBasePackageName(
+    		final ModuleSpecificProperties propertySpecification) {
+    	
+    	if (properties == null) {
+    		return DEFAULT_BASE_PACKAGE_NAME;
+    	}
+    	
+    	return properties
+    			.stream()
+                .filter(p -> propertySpecification.getPropertiesClass().isAssignableFrom(p.getClass()))
+    			.findFirst()
+    			.map(BpDeploymentConfiguration::getProcessesLocation)
+    			.orElse(DEFAULT_BASE_PACKAGE_NAME);
+    	
     }
 
-    protected ModuleAwareBpmnDeployment(
-            final String workflowModuleId) {
-        
-        this(workflowModuleId, "processes");
-        
-    }
+    protected abstract void doDeployment(
+    		String workflowModuleId,
+    		Resource[] bpmns,
+    		Resource[] dmns,
+    		Resource[] cmms) throws Exception;
 
-    protected ModuleAwareBpmnDeployment(
-            final String workflowModuleId,
-            final String basePackageName) {
-
-        if (workflowModuleId == null) {
-            final var simpleName = getClass().getSimpleName();
-            if (simpleName.endsWith("Deployment")) {
-                this.workflowModuleId = simpleName.substring(0, simpleName.length() - 10);
-            } else {
-                throw new IllegalArgumentException("Either name deployment class according to "
-                        + "'[ProcessArchiveId]Deployment' convention or instantiate with an explicit "
-                        + "process archive name.");
-            }
-        } else {
-            this.workflowModuleId = workflowModuleId;
-        }
-
-        this.basePackageName = basePackageName;
-
-    }
-
-    protected abstract D doDeployment(Resource[] bpmns, Resource[] dmns, Resource[] cmms) throws Exception;
-
-    @PostConstruct
-    public void deployOnStartup() throws Exception {
-
+    private void deployWorkflowModule(
+    		final String workflowModuleId,
+    		final String basePackageName) {
+    	
         try {
 
-            final var bpmns = findResources(workflowModuleId, "*.bpmn");
-            final var cmms = findResources(workflowModuleId, "*.cmmn");
-            final var dmns = findResources(workflowModuleId, "*.dmn");
+            final var bpmns = findResources(workflowModuleId, basePackageName, "*.bpmn");
+            final var cmms = findResources(workflowModuleId, basePackageName, "*.cmmn");
+            final var dmns = findResources(workflowModuleId, basePackageName, "*.dmn");
 
-            final var deploymentDefinitions = doDeployment(bpmns, dmns, cmms);
-
-            if (deploymentListeners != null) {
-                deploymentListeners.forEach(listener -> listener.notify(workflowModuleId, deploymentDefinitions));
-            }
+            doDeployment(workflowModuleId, bpmns, dmns, cmms);
 
             getLogger()
-                    .info("Deployed resources for process archive <{}>: {}", workflowModuleId, deploymentDefinitions);
+                    .info("Deployed resources for process archive <{}>: {}", workflowModuleId);
 
-        } catch (Exception e) {
-
-            getLogger().error(format("Could not deploy resources for process archive <%s>", workflowModuleId), e);
+        } catch (RuntimeException e) {
             throw e;
-
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
         }
 
     }
 
     private Resource[] findResources(
-            final String processArchiveId,
+            final String workflowModuleId,
+            final String basePackageName,
             final String fileNamePattern) throws IOException {
 
-        final var resourcesPath = format("%s%s/*/%s/**/%s",
+        final var resourcesPath = format("%s%s/**/%s",
                 ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX,
                 basePackageName.replace('.', '/'),
-                processArchiveId.toLowerCase().replace("-", ""),
                 fileNamePattern);
 
         getLogger()
-                .debug("Scanning process archive <{}> for {}", processArchiveId, resourcesPath);
+                .debug("Scanning process archive <{}> for {}", workflowModuleId, resourcesPath);
 
         return new PathMatchingResourcePatternResolver().getResources(resourcesPath);
 

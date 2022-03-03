@@ -17,34 +17,12 @@ import org.springframework.core.io.Resource;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import at.phactum.bp.blueprint.utilities.CaseUtils;
-
 @Configuration(proxyBeanMethods = false)
 public class ModuleSpecificPropertiesConfiguration {
 
     public static final String YAML_EXTENSTION = ".yaml";
 
     private static final Logger logger = LoggerFactory.getLogger(ModuleSpecificPropertiesConfiguration.class);
-
-    public static class ModuleSpecificProperties {
-        private String name;
-
-        public ModuleSpecificProperties(final String name) {
-            this.name = name;
-        }
-
-        public ModuleSpecificProperties(final String name, final boolean isCamelCase) {
-            if (isCamelCase) {
-                this.name = CaseUtils.camelToKebap(name);
-            } else {
-                this.name = name;
-            }
-        }
-
-        public String getName() {
-            return name;
-        }
-    };
 
     /**
      * @see https://stackoverflow.com/questions/35197175/spring-what-is-the-programmatic-equivalent-of-propertysource

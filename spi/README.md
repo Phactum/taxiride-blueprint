@@ -60,7 +60,7 @@ The blueprint-framework simplifies a couple of things in conjunction with this w
 
 ### Wire up a process
 
-Acording to the [concept](#Concept) and in order to have no reference from BPMN to the implemenation an aspect-oriented approach is used for the binding.
+Acording to the [concept](#concept) and in order to have no reference from BPMN to the implemenation an aspect-oriented approach is used for the binding.
 
 There are two primary use-case for this:
 1. Whenever a value needs to be calculated (e.g. x business-days as a timer-event definition)
@@ -212,7 +212,7 @@ public class ApprovalOfVacationRequests
 
 ### Wire a task or a expression
 
-Acording to the [concept](#Concept) and in order to have no reference from BPMN to the implemenation an aspect-oriented approach is used for the binding.
+Acording to the [concept](#concept) and in order to have no reference from BPMN to the implemenation an aspect-oriented approach is used for the binding.
 
 There are two primary use-case for this:
 1. Whenever a value needs to be calculated (e.g. x business-days as a timer-event definition) ![Camunda Modeller](./readme/timer_propertiespanel.png)
@@ -222,7 +222,7 @@ In both cases a method of the wired service needs to be called (1. to calculate 
 
 #### Domain-entity argument
 
-As mentioned in section [Process-specific domain-aggregate](#Process-specific_domain-aggregate) for each workflow a JPA entity-record is used as a domain-aggregate. So, whenever a service-method is called there is one parameter accepted: The domain-aggergate-entity which holds the object for the current workflow.
+As mentioned in section [Process-specific domain-aggregate](#process-specific-domain-aggregate) for each workflow a JPA entity-record is used as a domain-aggregate. So, whenever a service-method is called there is one parameter accepted: The domain-aggergate-entity which holds the object for the current workflow.
 
 #### Software-first approach
 

@@ -1,37 +1,32 @@
 package at.phactum.bp.blueprint.camunda7.adapter;
 
 import org.camunda.bpm.engine.ProcessEngine;
-import org.camunda.bpm.engine.repository.DeploymentWithDefinitions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
 
-public abstract class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment<DeploymentWithDefinitions> {
+@Component
+public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
+	private static final Logger logger = LoggerFactory.getLogger(Camunda7DeploymentAdapter.class);
+	
     @Autowired
     private ProcessEngine processEngine;
-
-    protected Camunda7DeploymentAdapter() {
-        
-        super(null);
-        
-    }
-
-    protected Camunda7DeploymentAdapter(final String workflowModuleId) {
-        
-        super(workflowModuleId, "workflows");
-        
-    }
-
-    protected Camunda7DeploymentAdapter(final String workflowModuleId, final String basePackageName) {
-
-        super(workflowModuleId, basePackageName);
-
-    }
-
+    
     @Override
-    protected DeploymentWithDefinitions doDeployment(
+    protected Logger getLogger() {
+    	
+    	return logger;
+    	
+    }
+    
+    @Override
+    protected void doDeployment(
+    		final String workflowModuleId,
             final Resource[] bpmns,
             final Resource[] dmns,
             final Resource[] cmms)
@@ -43,7 +38,7 @@ public abstract class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeploymen
                 .enableDuplicateFiltering(true)
                 .source(applicationName)
                 .tenantId(workflowModuleId)
-                .name(workflowModuleId + " [core]");
+                .name(workflowModuleId);
 
         for (final var resource : bpmns) {
             try (final var inputStream = resource.getInputStream()) {
@@ -63,7 +58,7 @@ public abstract class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeploymen
             }
         }
 
-        return deploymentBuilder.deployWithResult();
+        deploymentBuilder.deployWithResult();
         
     }
     

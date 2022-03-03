@@ -1,4 +1,4 @@
-package org.blueprint.bp;
+package org.blueprint.bp.blueprint;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
