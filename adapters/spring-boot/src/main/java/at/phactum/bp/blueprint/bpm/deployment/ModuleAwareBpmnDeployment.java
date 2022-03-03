@@ -85,7 +85,7 @@ public abstract class ModuleAwareBpmnDeployment {
             doDeployment(workflowModuleId, bpmns, dmns, cmms);
 
             getLogger()
-                    .info("Deployed resources for process archive <{}>: {}", workflowModuleId);
+                    .info("Deployed resources for process archive <{}>", workflowModuleId);
 
         } catch (RuntimeException e) {
             throw e;
