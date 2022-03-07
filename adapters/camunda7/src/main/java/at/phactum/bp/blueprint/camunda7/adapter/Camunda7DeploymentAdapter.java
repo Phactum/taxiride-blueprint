@@ -1,15 +1,15 @@
 package at.phactum.bp.blueprint.camunda7.adapter;
 
+import javax.annotation.PostConstruct;
+
 import org.camunda.bpm.engine.ProcessEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
 
-@Component
 public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
 	private static final Logger logger = LoggerFactory.getLogger(Camunda7DeploymentAdapter.class);
@@ -24,6 +24,14 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
     	
     }
     
+    @Override
+    @PostConstruct
+    public void deployAllWorkflowModules() {
+
+        super.deployAllWorkflowModules();
+
+    }
+
     @Override
     protected void doDeployment(
     		final String workflowModuleId,

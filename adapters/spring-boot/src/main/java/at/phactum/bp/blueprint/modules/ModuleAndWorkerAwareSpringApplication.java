@@ -12,13 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
-import at.phactum.bp.blueprint.BlueprintModuleRoot;
 import at.phactum.bp.blueprint.utilities.ClasspathScanner;
 
 public class ModuleAndWorkerAwareSpringApplication extends SpringApplication {
@@ -49,17 +47,6 @@ public class ModuleAndWorkerAwareSpringApplication extends SpringApplication {
                 Arrays.toString(environment.getActiveProfiles()));
         
         return context;
-    }
-    
-    @Override
-    protected void postProcessApplicationContext(
-            final ConfigurableApplicationContext context) {
-        
-        if (context instanceof AnnotationConfigApplicationContext) {
-            ((AnnotationConfigApplicationContext) context)
-                    .scan(BlueprintModuleRoot.class.getPackageName());
-        }
-        
     }
     
     @Override
