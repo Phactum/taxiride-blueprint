@@ -1,15 +1,17 @@
-package at.phactum.bp.blueprint.camunda8.adapter;
+package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
+import at.phactum.bp.blueprint.bpm.deployment.Connectable;
+import at.phactum.bp.blueprint.service.WorkflowTask;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
-public class Connectable {
+public class Camunda8Connectable implements Connectable {
     
     private Process process;
     private String elementId;
     private ZeebeTaskDefinition taskDefinition;
     
-    public Connectable(
+    public Camunda8Connectable(
             final Process process,
             final String elementId,
             final ZeebeTaskDefinition taskDefinition) {
@@ -18,19 +20,42 @@ public class Connectable {
         this.taskDefinition = taskDefinition;
     }
     
+    @Override
+    public boolean applies(
+            final WorkflowTask workflowTask) {
+        
+        return getElementId().equals(workflowTask.id())
+                || getTaskDefinition().equals(workflowTask.taskDefinition());
+
+    }
+    
     public String getElementId() {
+
         return elementId;
+
     }
     
-    public Process getProcess() {
-        return process;
+    public boolean isExecutableProcess() {
+
+        return process.isExecutable();
+
+    }
+
+    @Override
+    public String getBpmnProcessId() {
+
+        return process.getId();
+
     }
     
+    @Override
     public String getTaskDefinition() {
+
         if (taskDefinition == null) {
             return null;
         }
         return taskDefinition.getType();
+
     }
     
 }

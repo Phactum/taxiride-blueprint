@@ -1,12 +1,24 @@
 package at.phactum.bp.blueprint.camunda8.adapter;
 
 import java.lang.reflect.Method;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.springframework.beans.factory.InjectionPoint;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.ResolvableType;
 
+import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
+import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskHandler;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
+import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import io.camunda.zeebe.spring.client.EnableZeebeClient;
 import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlingStrategy;
@@ -15,6 +27,11 @@ import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlin
 @EnableZeebeClient
 public class Camunda8AdapterConfiguration {
 
+    private List<Camunda8ProcessService<?>> connectableServices = new LinkedList<>();
+    
+    @Value("${workerId}")
+    private String workerId;
+
     @Autowired
     private ZeebeClientLifecycle clientLifecycle;
     
@@ -22,31 +39,55 @@ public class Camunda8AdapterConfiguration {
     private DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
     @Bean
-    public Camunda8DeploymentAdapter camunda8Adapter() {
+    public Camunda8DeploymentAdapter camunda8Adapter(
+            final Camunda8TaskWiring camunda8TaskWiring) {
 
-        final var result = new Camunda8DeploymentAdapter();
+        return new Camunda8DeploymentAdapter(
+                clientLifecycle,
+                camunda8TaskWiring);
 
-        clientLifecycle.addStartListener(result);
+    }
+
+    @Bean
+    public Camunda8TaskWiring camunda8TaskWiring(
+            final ObjectProvider<Camunda8TaskHandler> taskHandlers) {
+
+        return new Camunda8TaskWiring(
+                workerId,
+                taskHandlers,
+                connectableServices);
+
+    }
+
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public <DE extends WorkflowDomainEntity> Camunda8ProcessService<DE> camunda8ProcessService(
+            final InjectionPoint injectionPoint) throws Exception {
+
+        final var resolvableType = ResolvableType.forField(injectionPoint.getField());
+
+        @SuppressWarnings("unchecked")
+        final var workflowDomainEntityClass = (Class<DE>) resolvableType.getGeneric(0).resolve();
+        
+        final var result = new Camunda8ProcessService<DE>(workflowDomainEntityClass);
+
+        connectableServices.add(result);
 
         return result;
-
-    }
-
-    @Bean
-    public Camunda8TaskWiring camunda8TaskWiring() {
-
-        return new Camunda8TaskWiring();
-
+        
     }
     
-    @Scope("prototype")
     @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public Camunda8TaskHandler camunda8TaskHandler(
             final String taskDefinition,
             final Object bean,
             final Method method) {
         
-        return new Camunda8TaskHandler(commandExceptionHandlingStrategy, bean, method);
+        return new Camunda8TaskHandler(
+                commandExceptionHandlingStrategy,
+                bean,
+                method);
         
     }
 

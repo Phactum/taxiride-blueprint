@@ -1,4 +1,4 @@
-package at.phactum.bp.blueprint.camunda8.adapter.test;
+package at.phactum.bp.blueprint.camunda8.adapter.test.testcase;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;

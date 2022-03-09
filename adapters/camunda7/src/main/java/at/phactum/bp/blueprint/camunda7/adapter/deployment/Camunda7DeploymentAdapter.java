@@ -1,4 +1,4 @@
-package at.phactum.bp.blueprint.camunda7.adapter;
+package at.phactum.bp.blueprint.camunda7.adapter.deployment;
 
 import javax.annotation.PostConstruct;
 
@@ -14,9 +14,16 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
 	private static final Logger logger = LoggerFactory.getLogger(Camunda7DeploymentAdapter.class);
 	
-    @Autowired
     private ProcessEngine processEngine;
     
+    public Camunda7DeploymentAdapter(
+            final ProcessEngine processEngine) {
+        
+        super();
+        this.processEngine = processEngine;
+        
+    }
+
     @Override
     protected Logger getLogger() {
     	

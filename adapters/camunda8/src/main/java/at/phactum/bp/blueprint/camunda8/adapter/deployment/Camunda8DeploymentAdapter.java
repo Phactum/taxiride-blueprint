@@ -1,32 +1,29 @@
-package at.phactum.bp.blueprint.camunda8.adapter;
+package at.phactum.bp.blueprint.camunda8.adapter.deployment;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
-import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 
 import com.google.common.collect.Streams;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
 import io.camunda.zeebe.model.bpmn.impl.BpmnParser;
-import io.camunda.zeebe.model.bpmn.instance.BaseElement;
 import io.camunda.zeebe.model.bpmn.instance.BusinessRuleTask;
 import io.camunda.zeebe.model.bpmn.instance.EndEvent;
 import io.camunda.zeebe.model.bpmn.instance.IntermediateThrowEvent;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.SendTask;
 import io.camunda.zeebe.model.bpmn.instance.ServiceTask;
-import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
+import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 
 public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
         implements Consumer<ZeebeClient> {
@@ -37,8 +34,18 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
 	
     private ZeebeClient client;
 
-    @Autowired
     private Camunda8TaskWiring taskWiring;
+
+    public Camunda8DeploymentAdapter(
+            final ZeebeClientLifecycle clientLifecycle,
+            final Camunda8TaskWiring taskWiring) {
+        
+        super();
+        this.taskWiring = taskWiring;
+        
+        clientLifecycle.addStartListener(this);
+
+    }
 
     @Override
     protected Logger getLogger() {
@@ -69,6 +76,8 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                 .stream(bpmns)
                 .map(resource -> {
                     try (InputStream inputStream = resource.getInputStream()) {
+                        logger.info("About to deploy '{}' of workflow-module '{}'",
+                                resource.getFilename(), workflowModuleId);
                     	final var model = bpmnParser.parseModelFromStream(inputStream);
                     	processBpmnModel(model);
                     	return deployProcessCommand.addProcessModel(model, resource.getFilename());
@@ -85,45 +94,23 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
     
     private void processBpmnModel(
     		final BpmnModelInstanceImpl model) {
-    	
-    	Streams.concat(
-                        connectablesForType(model, ServiceTask.class),
-                        connectablesForType(model, BusinessRuleTask.class),
-                        connectablesForType(model, SendTask.class),
-                        connectablesForType(model, IntermediateThrowEvent.class),
-                        connectablesForType(model, EndEvent.class)
-                )
+
+        taskWiring.accept(client);
+
+        model.getModelElementsByType(Process.class)
+                .stream()
+                .filter(Process::isExecutable)
+                // wire service port
+                .peek(process -> taskWiring.wireService(process.getId()))
+                // wire task methods
+                .flatMap(process -> Streams.concat(
+                        taskWiring.connectablesForType(process, model, ServiceTask.class),
+                        taskWiring.connectablesForType(process, model, BusinessRuleTask.class),
+                        taskWiring.connectablesForType(process, model, SendTask.class),
+                        taskWiring.connectablesForType(process, model, IntermediateThrowEvent.class),
+                        taskWiring.connectablesForType(process, model, EndEvent.class)))
                 .forEach(taskWiring::wireTask);
     	
-    }
-    
-    private Stream<Connectable> connectablesForType(
-            final BpmnModelInstanceImpl model,
-            final Class<? extends BaseElement> type) {
-        
-        return model
-                .getModelElementsByType(type)
-                .stream()
-                .map(element -> new Connectable(getOwningProcess(element), element.getId(),
-                        element.getSingleExtensionElement(ZeebeTaskDefinition.class)))
-                .filter(connectable -> connectable.getProcess().isExecutable())
-                .filter(connectable -> connectable.getTaskDefinition() != null);
-        
-    }
-    
-    private Process getOwningProcess(final ModelElementInstance element) {
-
-        if (element instanceof Process) {
-            return (Process) element;
-        }
-
-        final var parent = element.getParentElement();
-        if (parent == null) {
-            return null;
-        }
-
-        return getOwningProcess(parent);
-
     }
 
 }

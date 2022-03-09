@@ -1,4 +1,4 @@
-package at.phactum.bp.blueprint.camunda8.adapter;
+package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
