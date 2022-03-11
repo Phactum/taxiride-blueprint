@@ -1,5 +1,7 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
@@ -18,6 +20,8 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
     
     private final Camunda7TaskWiring taskWiring;
 
+    private List<Camunda7Connectable> connectables = new LinkedList<>();
+
     public TaskWiringBpmnParseListener(Camunda7TaskWiring taskWiring) {
 
         super();
@@ -32,7 +36,11 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
 
         final var bpmnProcessId = processDefinition.getKey();
 
-        taskWiring.wireService(bpmnProcessId);
+        final var processService = taskWiring.wireService(bpmnProcessId);
+
+        connectables.forEach(connectable -> taskWiring.wireTask(processService, connectable));
+
+        connectables.clear();
 
     }
 
@@ -94,7 +102,7 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
                     
         }
         
-        taskWiring.wireTask(connectable);
+        connectables.add(connectable);
         
     }
 

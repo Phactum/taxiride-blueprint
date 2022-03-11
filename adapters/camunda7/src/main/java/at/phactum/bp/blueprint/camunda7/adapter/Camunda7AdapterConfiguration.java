@@ -52,7 +52,7 @@ public class Camunda7AdapterConfiguration {
     }
     
     @Bean
-    public Camunda7DeploymentAdapter camunda7Adapter() {
+    public Camunda7DeploymentAdapter camunda7DeploymentAdapter() {
 
         return new Camunda7DeploymentAdapter(processEngine);
 

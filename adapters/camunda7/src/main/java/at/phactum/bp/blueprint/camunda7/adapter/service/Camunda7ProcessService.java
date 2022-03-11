@@ -41,6 +41,12 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity> implements 
 
     }
 
+    public JpaRepository<DE, String> getWorkflowDomainEntityRepository() {
+
+        return workflowDomainEntityRepository;
+
+    }
+
     @Override
     public DE startWorkflow(DE domainEntity) throws Exception {
 

@@ -13,6 +13,7 @@ import org.springframework.core.io.Resource;
 import com.google.common.collect.Streams;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
+import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
@@ -97,11 +98,15 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
 
         taskWiring.accept(client);
 
+        final var processService = new Camunda8ProcessService[] { null };
+
         model.getModelElementsByType(Process.class)
                 .stream()
                 .filter(Process::isExecutable)
                 // wire service port
-                .peek(process -> taskWiring.wireService(process.getId()))
+                .peek(process -> {
+                    processService[0] = taskWiring.wireService(process.getId());
+                })
                 // wire task methods
                 .flatMap(process -> Streams.concat(
                         taskWiring.connectablesForType(process, model, ServiceTask.class),
@@ -109,7 +114,7 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                         taskWiring.connectablesForType(process, model, SendTask.class),
                         taskWiring.connectablesForType(process, model, IntermediateThrowEvent.class),
                         taskWiring.connectablesForType(process, model, EndEvent.class)))
-                .forEach(taskWiring::wireTask);
+                .forEach(connectable -> taskWiring.wireTask(processService[0], connectable));
     	
     }
 

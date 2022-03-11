@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import io.camunda.zeebe.client.api.command.CompleteJobCommandStep1;
 import io.camunda.zeebe.client.api.command.FinalCommandStep;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
@@ -17,16 +19,20 @@ public class Camunda8TaskHandler implements JobHandler {
 
     private final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
+    private final JpaRepository<?, String> workflowDomainEntityRepository;
+
     private final Object bean;
 
     private final Method method;
 
     public Camunda8TaskHandler(
             final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy,
+            final JpaRepository<?, String> workflowDomainEntityRepository,
             final Object bean,
             final Method method) {
 
-        this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy; 
+        this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
+        this.workflowDomainEntityRepository = workflowDomainEntityRepository;
         this.bean = bean;
         this.method = method;
 

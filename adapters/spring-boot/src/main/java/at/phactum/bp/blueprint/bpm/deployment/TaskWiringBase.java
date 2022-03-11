@@ -12,11 +12,12 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
+import at.phactum.bp.blueprint.process.ProcessService;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
-public abstract class TaskWiringBase<T extends Connectable> {
+public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessService<?>> {
 
     protected final ApplicationContext applicationContext;
 
@@ -27,14 +28,14 @@ public abstract class TaskWiringBase<T extends Connectable> {
         
     }
 
-    protected abstract <DE extends WorkflowDomainEntity> void connectToCamunda(
+    protected abstract <DE extends WorkflowDomainEntity> PS connectToBpms(
             final Class<DE> workflowDomainEntityClass,
             final String bpmnProcessId);
 
-    private Entry<Class<?>, Class<? extends WorkflowDomainEntity>> determineWorkflowEntityClass(
-            final Entry<String, Object> bean) {
+    protected Entry<Class<?>, Class<? extends WorkflowDomainEntity>> determineWorkflowEntityClass(
+            final Object bean) {
 
-        final var serviceClass = targetClass(bean.getValue());
+        final var serviceClass = targetClass(bean);
 
         if (serviceClass.isAssignableFrom(WorkflowServicePort.class)) {
             return null;
@@ -46,7 +47,6 @@ public abstract class TaskWiringBase<T extends Connectable> {
             final var workflowDomainEntityClass =
                     (Class<? extends WorkflowDomainEntity>) Arrays
                             .stream(bean
-                                    .getValue()
                                     .getClass()
                                     .getGenericInterfaces())
                             .map(type -> (ParameterizedType) type)
@@ -71,7 +71,16 @@ public abstract class TaskWiringBase<T extends Connectable> {
 
     }
 
-    public void wireService(
+    public PS wireService(
+            final String bpmnProcessId) {
+
+        final var workflowDomainEntityClass = determineAndValidateWorkflowDomainEntityClass(bpmnProcessId);
+
+        return connectToBpms(workflowDomainEntityClass, bpmnProcessId);
+        
+    }
+
+    private Class<? extends WorkflowDomainEntity> determineAndValidateWorkflowDomainEntityClass(
             final String bpmnProcessId) {
 
         final var tested = new StringBuilder();
@@ -87,7 +96,7 @@ public abstract class TaskWiringBase<T extends Connectable> {
                     tested.append(bean.getKey());
                 })
                 .filter(bean -> isAboutConnectableProcess(bpmnProcessId, bean.getValue()))
-                .map(this::determineWorkflowEntityClass)
+                .map(bean -> determineWorkflowEntityClass(bean.getValue()))
                 .filter(this::isExtendingWorkflowServicePort)
                 .collect(Collectors.groupingBy(
                         Entry::getValue,
@@ -133,21 +142,26 @@ public abstract class TaskWiringBase<T extends Connectable> {
             
         }
 
-        final var workflowDomainEntityClass = matchingServices.keySet().iterator().next();
+        return matchingServices.keySet().iterator().next();
 
-        connectToCamunda(workflowDomainEntityClass, bpmnProcessId);
-        
     }
 
     public void wireTask(
+            final PS processService,
             final T connectable) {
 
         applicationContext
                 .getBeansWithAnnotation(WorkflowService.class)
                 .entrySet()
                 .stream()
-                .filter(bean -> isAboutConnectableProcess(connectable.getBpmnProcessId(), bean.getValue()))
-                .forEach(bean -> saveWorkflowTaskMethods(connectable, bean.getKey(), bean.getValue()));
+                .filter(bean -> isAboutConnectableProcess(
+                        connectable.getBpmnProcessId(),
+                        bean.getValue()))
+                .forEach(bean -> connectConnectableToBean(
+                        processService,
+                        connectable,
+                        bean.getKey(),
+                        bean.getValue()));
 
     }
 
@@ -157,23 +171,6 @@ public abstract class TaskWiringBase<T extends Connectable> {
         
         final var beanClass = targetClass(bean);
         final var workflowServiceAnnotations = beanClass.getAnnotationsByType(WorkflowService.class);
-//        final var workflowServices = applicationContext
-//                .findAnnotationOnBean(beanName, WorkflowServices.class);
-//        if (workflowServices == null) {
-//            
-//            final var workflowService = applicationContext
-//                    .findAnnotationOnBean(beanName, WorkflowService.class);
-//            if (workflowService != null) {
-//                workflowServiceAnnotations.add(workflowService);
-//            }
-//            
-//        } else {
-//            
-//            Arrays
-//                    .stream(workflowServices.value())
-//                    .forEach(workflowServiceAnnotations::add);
-//            
-//        }
 
         return Arrays
                 .stream(workflowServiceAnnotations)
@@ -188,12 +185,14 @@ public abstract class TaskWiringBase<T extends Connectable> {
         
     }
 
-    protected abstract void connectToCamunda(
+    protected abstract void connectToBpms(
+            final PS processService,
             final Object bean,
             final T connectable,
             final Method method);
 
-    private void saveWorkflowTaskMethods(
+    private void connectConnectableToBean(
+            final PS processService,
             final T connectable,
             final String beanName,
             final Object bean) {
@@ -228,7 +227,11 @@ public abstract class TaskWiringBase<T extends Connectable> {
                 })
                 .filter(m -> matchingMethods.getAndIncrement() == 0)
                 .findFirst()
-                .ifPresent(m -> connectToCamunda(bean, connectable, m.getKey()));
+                .ifPresent(m -> connectToBpms(
+                        processService,
+                        bean,
+                        connectable,
+                        m.getKey()));
         
         if (matchingMethods.get() > 1) {
             throw new RuntimeException(

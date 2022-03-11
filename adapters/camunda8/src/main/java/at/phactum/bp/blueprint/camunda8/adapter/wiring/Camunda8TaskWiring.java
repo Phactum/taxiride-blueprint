@@ -19,7 +19,8 @@ import io.camunda.zeebe.model.bpmn.instance.BaseElement;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
-public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable> implements Consumer<ZeebeClient> {
+public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camunda8ProcessService<?>>
+        implements Consumer<ZeebeClient> {
 
     private final String workerId;
     
@@ -88,24 +89,33 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable> impl
     }
     
     @Override
-    protected <DE extends WorkflowDomainEntity> void connectToCamunda(
+    protected <DE extends WorkflowDomainEntity> Camunda8ProcessService<?> connectToBpms(
             final Class<DE> workflowDomainEntityClass,
             final String bpmnProcessId) {
         
-        connectableServices
+        final var processService = connectableServices
                 .stream()
                 .filter(service -> service.getWorkflowDomainEntityClass().equals(workflowDomainEntityClass))
-                .forEach(service -> service.wire(client, bpmnProcessId));
+                .findFirst()
+                .get();
+
+        processService.wire(client, bpmnProcessId);
+
+        return processService;
         
     }
     
     @Override
-    protected void connectToCamunda(
+    protected void connectToBpms(
+            final Camunda8ProcessService<?> processService,
             final Object bean,
             final Camunda8Connectable connectable,
             final Method method) {
         
+        final var repository = processService.getWorkflowDomainEntityRepository();
+
         final var taskHandler = taskHandlers.getObject(
+                repository,
                 connectable.getTaskDefinition(),
                 bean,
                 method);

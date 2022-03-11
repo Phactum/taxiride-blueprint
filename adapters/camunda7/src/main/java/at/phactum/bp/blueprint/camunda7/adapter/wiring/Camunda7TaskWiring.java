@@ -11,7 +11,7 @@ import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 
 @Component
-public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable> {
+public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camunda7ProcessService<?>> {
 
     private final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager;
 
@@ -29,26 +29,34 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable> {
     }
     
     @Override
-    protected void connectToCamunda(
+    protected void connectToBpms(
+            final Camunda7ProcessService<?> processService,
             final Object bean,
             final Camunda7Connectable connectable,
             final Method method) {
         
-        final var taskHandler = new Camunda7TaskHandler(bean, method);
+        final var repository = processService.getWorkflowDomainEntityRepository();
+        
+        final var taskHandler = new Camunda7TaskHandler(repository, bean, method);
 
         processEntityAwareExpressionManager.addTaskHandler(connectable, taskHandler);
 
     }
     
     @Override
-    protected <DE extends WorkflowDomainEntity> void connectToCamunda(
+    protected <DE extends WorkflowDomainEntity> Camunda7ProcessService<?> connectToBpms(
             final Class<DE> workflowDomainEntityClass,
             final String bpmnProcessId) {
         
-        connectableServices
+        final var processService = connectableServices
                 .stream()
                 .filter(service -> service.getWorkflowDomainEntityClass().equals(workflowDomainEntityClass))
-                .forEach(service -> service.wire(bpmnProcessId));
+                .findFirst()
+                .get();
+
+        processService.wire(bpmnProcessId);
+
+        return processService;
         
     }
 

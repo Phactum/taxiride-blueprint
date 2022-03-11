@@ -16,8 +16,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
+import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.test.springboot.TestConfiguration;
 import at.phactum.bp.blueprint.camunda8.adapter.test.testcase.TestModuleProperties;
+import at.phactum.bp.blueprint.camunda8.adapter.test.testcase.TestWorkflowDomainEntity;
 import at.phactum.bp.blueprint.camunda8.adapter.test.testcase.TestWorkflowService1;
 import at.phactum.bp.blueprint.camunda8.adapter.test.testcase.TestWorkflowService2;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8Connectable;
@@ -42,6 +44,9 @@ public class ConnectableTest {
     @Captor
     private ArgumentCaptor<Camunda8Connectable> connectablesCaptor;
 
+    @Autowired
+    private Camunda8ProcessService<TestWorkflowDomainEntity> processService;
+
     @Test
     public void testConnectables() {
 
@@ -49,7 +54,7 @@ public class ConnectableTest {
         adapter.accept(client);
 
         verify(taskWiring, times(9))
-                .wireTask(connectablesCaptor.capture());
+                .wireTask(processService, connectablesCaptor.capture());
         
         final var connectables = connectablesCaptor.getAllValues();
         assertEquals(9, connectables.size());

@@ -2,6 +2,7 @@ package at.phactum.bp.blueprint.camunda8.adapter.test.springboot;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 
 import at.phactum.bp.blueprint.camunda8.adapter.Camunda8AdapterConfiguration;
+import at.phactum.bp.blueprint.camunda8.adapter.test.testcase.TestWorkflowDomainEntity;
+import at.phactum.bp.blueprint.camunda8.adapter.test.testcase.TestWorkflowDomainEntityRepository;
+import at.phactum.bp.blueprint.utilities.SpringDataTool;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.ZeebeClientBuilder;
 import io.camunda.zeebe.client.api.ZeebeFuture;
@@ -31,6 +35,27 @@ import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 @ComponentScan(basePackageClasses = { TestConfiguration.class })
 @Import(Camunda8AdapterConfiguration.class)
 public class TestConfiguration {
+
+    @Bean
+    @Primary
+    public SpringDataTool mockedSpringDataTool(
+            final TestWorkflowDomainEntityRepository testWorkflowDomainEntityRepository) {
+        
+        final var result = mock(SpringDataTool.class);
+        
+        when(result.getJpaRepository(eq(TestWorkflowDomainEntity.class)))
+                .thenReturn(testWorkflowDomainEntityRepository);
+
+        return result;
+        
+    }
+    
+    @Bean
+    public TestWorkflowDomainEntityRepository testWorkflowDomainEntityRepository() {
+
+        return mock(TestWorkflowDomainEntityRepository.class);
+
+    }
 
     @Bean
     @Primary

@@ -103,12 +103,14 @@ public class Camunda8AdapterConfiguration {
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public Camunda8TaskHandler camunda8TaskHandler(
+            final JpaRepository<?, String> repository,
             final String taskDefinition,
             final Object bean,
             final Method method) {
         
         return new Camunda8TaskHandler(
                 commandExceptionHandlingStrategy,
+                repository,
                 bean,
                 method);
         

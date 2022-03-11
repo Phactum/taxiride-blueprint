@@ -39,7 +39,15 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
     }
 
     public Class<DE> getWorkflowDomainEntityClass() {
+
         return workflowDomainEntityClass;
+
+    }
+
+    public JpaRepository<DE, String> getWorkflowDomainEntityRepository() {
+
+        return workflowDomainEntityRepository;
+
     }
 
     @Override
@@ -68,7 +76,5 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
         }
         
     }
-    
-    
     
 }

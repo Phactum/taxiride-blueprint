@@ -91,29 +91,34 @@ public class ProcessEntityELResolver extends ELResolver {
                 .findFirst()
                 .get();
         
-        if (handler.getKey().getType() == Type.EXPRESSION) {
+        return executeHandler(execution, handler.getKey(), handler.getValue());
+
+    }
+    
+    private Object executeHandler(
+            final ExecutionEntity execution,
+            final Camunda7Connectable connectable,
+            final Camunda7TaskHandler taskHandler) {
+        
+        if (connectable.getType() == Type.EXPRESSION) {
             
             try {
-                handler
-                        .getValue()
-                        .execute(execution);
-                return handler
-                        .getValue()
-                        .getResult();
+                taskHandler.execute(execution);
+                return taskHandler.getResult();
             } catch (RuntimeException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException("Could not execute handler", e);
             }
             
-        } else if (handler.getKey().getType() == Type.DELEGATE_EXPRESSION) {
+        } else if (connectable.getType() == Type.DELEGATE_EXPRESSION) {
             
-            return handler.getValue();
+            return taskHandler;
             
         }
         
         return null;
-
+        
     }
 
     @Override
