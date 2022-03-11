@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.aop.support.AopUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
@@ -18,9 +17,15 @@ import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
 public abstract class TaskWiringBase<T extends Connectable> {
-    
-    @Autowired
-    private ApplicationContext applicationContext;
+
+    protected final ApplicationContext applicationContext;
+
+    public TaskWiringBase(
+            final ApplicationContext applicationContext) {
+        
+        this.applicationContext = applicationContext;
+        
+    }
 
     protected abstract <DE extends WorkflowDomainEntity> void connectToCamunda(
             final Class<DE> workflowDomainEntityClass,

@@ -15,11 +15,11 @@ import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlin
 
 public class Camunda8TaskHandler implements JobHandler {
 
-    private DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
+    private final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
-    private Object bean;
+    private final Object bean;
 
-    private Method method;
+    private final Method method;
 
     public Camunda8TaskHandler(
             final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy,

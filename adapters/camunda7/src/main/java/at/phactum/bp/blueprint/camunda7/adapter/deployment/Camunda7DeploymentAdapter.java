@@ -5,7 +5,6 @@ import javax.annotation.PostConstruct;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
@@ -14,7 +13,7 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
 	private static final Logger logger = LoggerFactory.getLogger(Camunda7DeploymentAdapter.class);
 	
-    private ProcessEngine processEngine;
+    private final ProcessEngine processEngine;
     
     public Camunda7DeploymentAdapter(
             final ProcessEngine processEngine) {

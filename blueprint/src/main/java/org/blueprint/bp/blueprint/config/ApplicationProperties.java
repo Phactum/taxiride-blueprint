@@ -11,10 +11,12 @@ import at.phactum.bp.blueprint.modules.ModuleSpecificProperties;
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties implements BpDeploymentConfiguration {
 
+    public static final String WORKFLOW_MODULE_ID = "test1";
+
     @Bean
     public static ModuleSpecificProperties moduleProps() {
 
-        return new ModuleSpecificProperties(ApplicationProperties.class, "test");
+        return new ModuleSpecificProperties(ApplicationProperties.class, WORKFLOW_MODULE_ID);
 
     }
 

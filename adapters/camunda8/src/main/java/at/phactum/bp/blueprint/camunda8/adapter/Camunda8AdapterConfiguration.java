@@ -9,16 +9,19 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ResolvableType;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskHandler;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
+import at.phactum.bp.blueprint.utilities.SpringDataTool;
 import io.camunda.zeebe.spring.client.EnableZeebeClient;
 import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlingStrategy;
@@ -33,10 +36,20 @@ public class Camunda8AdapterConfiguration {
     private String workerId;
 
     @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
     private ZeebeClientLifecycle clientLifecycle;
     
     @Autowired
     private DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
+
+    @Bean
+    public SpringDataTool springDataTool() {
+
+        return new SpringDataTool(applicationContext);
+
+    }
 
     @Bean
     public Camunda8DeploymentAdapter camunda8Adapter(
@@ -53,23 +66,33 @@ public class Camunda8AdapterConfiguration {
             final ObjectProvider<Camunda8TaskHandler> taskHandlers) {
 
         return new Camunda8TaskWiring(
+                applicationContext,
                 workerId,
                 taskHandlers,
                 connectableServices);
 
     }
 
+    @SuppressWarnings("unchecked")
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public <DE extends WorkflowDomainEntity> Camunda8ProcessService<DE> camunda8ProcessService(
+            final SpringDataTool springDataTool,
             final InjectionPoint injectionPoint) throws Exception {
 
         final var resolvableType = ResolvableType.forField(injectionPoint.getField());
 
-        @SuppressWarnings("unchecked")
-        final var workflowDomainEntityClass = (Class<DE>) resolvableType.getGeneric(0).resolve();
+        final var workflowDomainEntityClass = (Class<DE>) resolvableType
+                .getGeneric(0)
+                .resolve();
         
-        final var result = new Camunda8ProcessService<DE>(workflowDomainEntityClass);
+        final var workflowDomainEntityRepository = springDataTool
+                .getJpaRepository(workflowDomainEntityClass);
+        
+        
+        final var result = new Camunda8ProcessService<DE>(
+                (JpaRepository<DE, String>) workflowDomainEntityRepository,
+                workflowDomainEntityClass);
 
         connectableServices.add(result);
 

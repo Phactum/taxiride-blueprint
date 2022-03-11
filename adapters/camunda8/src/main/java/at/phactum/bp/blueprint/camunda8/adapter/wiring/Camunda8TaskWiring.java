@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
@@ -29,11 +30,12 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable> impl
     private ZeebeClient client;
 
     public Camunda8TaskWiring(
+            final ApplicationContext applicationContext,
             final String workerId,
             final ObjectProvider<Camunda8TaskHandler> taskHandlers,
             final List<Camunda8ProcessService<?>> connectableServices) {
         
-        super();
+        super(applicationContext);
         this.workerId = workerId;
         this.taskHandlers = taskHandlers;
         this.connectableServices = connectableServices;

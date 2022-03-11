@@ -1,23 +1,30 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
-import org.camunda.bpm.model.bpmn.instance.Process;
-
 import at.phactum.bp.blueprint.bpm.deployment.Connectable;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
 public class Camunda7Connectable implements Connectable {
+
+    public static enum Type {
+        EXPRESSION, DELEGATE_EXPRESSION, EXTERNAL_TASK
+    };
     
-    private Process process;
-    private String elementId;
-    private String taskDefinition;
+    private final Type type;
+    private final String bpmnProcessId;
+    private final String elementId;
+    private final String taskDefinition;
     
     public Camunda7Connectable(
-            final Process process,
+            final String bpmnProcessId,
             final String elementId,
-            final String taskDefinition) {
-        this.process = process;
+            final String taskDefinition,
+            final Type type) {
+
+        this.bpmnProcessId = bpmnProcessId;
         this.elementId = elementId;
         this.taskDefinition = taskDefinition;
+        this.type = type;
+
     }
     
     @Override
@@ -29,10 +36,17 @@ public class Camunda7Connectable implements Connectable {
 
     }
     
+    @Override
     public boolean isExecutableProcess() {
         
-        return process.isExecutable();
+        return true;
         
+    }
+    
+    public Type getType() {
+
+        return type;
+
     }
     
     public String getElementId() {
@@ -44,10 +58,11 @@ public class Camunda7Connectable implements Connectable {
     @Override
     public String getBpmnProcessId() {
         
-        return process.getId();
+        return bpmnProcessId;
         
     }
 
+    @Override
     public String getTaskDefinition() {
         
         return taskDefinition;

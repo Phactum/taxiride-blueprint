@@ -10,8 +10,9 @@ public interface ProcessService<DE extends WorkflowDomainEntity> {
     /**
      * Start a new workflow.
      * 
-     * @param domainEntity The underlying domain-entity
+     * @param domainEntity The domain-entity
+     * @return The domain-entity attached to JPA
      */
-    String startWorkflow(DE domainEntity) throws Exception;
+    DE startWorkflow(DE domainEntity) throws Exception;
 
 }

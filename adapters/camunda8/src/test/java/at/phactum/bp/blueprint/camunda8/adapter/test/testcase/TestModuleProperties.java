@@ -11,6 +11,8 @@ import at.phactum.bp.blueprint.modules.ModuleSpecificProperties;
 @ConfigurationProperties(prefix = "test")
 public class TestModuleProperties implements BpDeploymentConfiguration {
 
+    public static final String WORKFLOW_MODULE_ID = "test";
+
     private String processesLocation = "test-processes";
 
     private boolean myConfig;

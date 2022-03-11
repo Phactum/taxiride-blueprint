@@ -31,10 +31,10 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
 	private static final Logger logger = LoggerFactory.getLogger(Camunda8DeploymentAdapter.class);
 	
 	private final BpmnParser bpmnParser = new BpmnParser();
+
+    private final Camunda8TaskWiring taskWiring;
 	
     private ZeebeClient client;
-
-    private Camunda8TaskWiring taskWiring;
 
     public Camunda8DeploymentAdapter(
             final ZeebeClientLifecycle clientLifecycle,

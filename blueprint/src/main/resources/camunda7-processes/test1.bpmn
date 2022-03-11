@@ -9,20 +9,20 @@
       <bpmn:incoming>Flow_15jja18</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_15jja18" sourceRef="Activity_Test1" targetRef="Event_173i7e4" />
-    <bpmn:serviceTask id="Activity_Test1" name="do test 1" camunda:type="external" camunda:topic="TEST1">
+    <bpmn:serviceTask id="Activity_Test1" name="do test 1" camunda:delegateExpression="${TEST1}">
       <bpmn:incoming>Flow_065dfo5</bpmn:incoming>
       <bpmn:outgoing>Flow_15jja18</bpmn:outgoing>
     </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Test1">
-      <bpmndi:BPMNEdge id="Flow_065dfo5_di" bpmnElement="Flow_065dfo5">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_15jja18_di" bpmnElement="Flow_15jja18">
         <di:waypoint x="370" y="117" />
         <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_065dfo5_di" bpmnElement="Flow_065dfo5">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="99" width="36" height="36" />
