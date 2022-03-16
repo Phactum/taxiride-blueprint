@@ -4,8 +4,10 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
+import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
@@ -30,14 +32,20 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
     
     @Override
     protected void connectToBpms(
-            final Camunda7ProcessService<?> processService,
+            final Camunda7ProcessService<? extends WorkflowDomainEntity> processService,
             final Object bean,
             final Camunda7Connectable connectable,
-            final Method method) {
+            final Method method,
+            final List<MethodParameter> parameters) {
         
         final var repository = processService.getWorkflowDomainEntityRepository();
         
-        final var taskHandler = new Camunda7TaskHandler(repository, bean, method);
+        @SuppressWarnings("unchecked")
+        final var taskHandler = new Camunda7TaskHandler(
+                (JpaRepository<WorkflowDomainEntity, String>) repository,
+                bean,
+                method,
+                parameters);
 
         processEntityAwareExpressionManager.addTaskHandler(connectable, taskHandler);
 

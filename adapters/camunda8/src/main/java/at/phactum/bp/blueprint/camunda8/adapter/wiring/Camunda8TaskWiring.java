@@ -9,6 +9,7 @@ import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 
+import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
@@ -110,7 +111,8 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
             final Camunda8ProcessService<?> processService,
             final Object bean,
             final Camunda8Connectable connectable,
-            final Method method) {
+            final Method method,
+            final List<MethodParameter> parameters) {
         
         final var repository = processService.getWorkflowDomainEntityRepository();
 
@@ -118,14 +120,15 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
                 repository,
                 connectable.getTaskDefinition(),
                 bean,
-                method);
+                method,
+                parameters);
 
         client
                 .newWorker()
                 .jobType(connectable.getTaskDefinition())
                 .handler(taskHandler)
                 .name(workerId)
-                .fetchVariables(List.of())
+                .fetchVariables(List.of("id"))
                 .open();
 
               // using defaults from config if null, 0 or negative

@@ -2,7 +2,7 @@
 
 This project is about building Java-based business-processing (micro)services.
 
-It incorprates best-practices collected as part of business-processing services developed since 2014.
+It incorporates best-practices collected as part of business-processing services developed since 2014.
 
 ## Paradigms
 
@@ -16,7 +16,7 @@ As a side-effect of doing loose-coupling the outcoming software is much easier t
 
 ### Domain-Drive-Design
 
-To support the entire lifecycle of a software in a good way, it turned out that loose-coupling the business-processing engine itself should be enforced. A good fit for this is to use a domain-driven-design approach.
+To support the entire lifecycle of a software in a good way, it turned out that loose-coupling the business-processing engine itself should be preferred. A good fit for this is to use a domain-driven-design approach.
 
 Check out [this module](./ddd/README.md) to learn about how this looks like.
 

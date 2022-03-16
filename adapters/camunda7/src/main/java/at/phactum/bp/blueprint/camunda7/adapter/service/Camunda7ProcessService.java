@@ -3,10 +3,11 @@ package at.phactum.bp.blueprint.camunda7.adapter.service;
 import org.camunda.bpm.engine.RuntimeService;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-import at.phactum.bp.blueprint.process.ProcessService;
 
-public class Camunda7ProcessService<DE extends WorkflowDomainEntity> implements ProcessService<DE> {
+public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
+        implements ProcessServiceImplementation<DE> {
 
     private final RuntimeService runtimeService;
 
@@ -35,12 +36,14 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity> implements 
         
     }
 
+    @Override
     public Class<DE> getWorkflowDomainEntityClass() {
 
         return workflowDomainEntityClass;
 
     }
 
+    @Override
     public JpaRepository<DE, String> getWorkflowDomainEntityRepository() {
 
         return workflowDomainEntityRepository;
@@ -53,7 +56,7 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity> implements 
         final var processInstance =
                 runtimeService
                         .createProcessInstanceByKey(bpmnProcessId)
-                        .businessKey(domainEntity.getWorkflowId())
+                        .businessKey(domainEntity.getId())
                         .processDefinitionTenantId(domainEntity.getWorkflowModuleId())
                         .execute();
 

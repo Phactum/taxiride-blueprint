@@ -3,6 +3,8 @@ package at.phactum.bp.blueprint.bpm.deployment;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,13 +13,13 @@ import java.util.stream.Collectors;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 
+import at.phactum.bp.blueprint.bpm.deployment.MethodParameter.Type;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-import at.phactum.bp.blueprint.process.ProcessService;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
-public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessService<?>> {
+public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessServiceImplementation<?>> {
 
     protected final ApplicationContext applicationContext;
 
@@ -157,11 +159,13 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                 .filter(bean -> isAboutConnectableProcess(
                         connectable.getBpmnProcessId(),
                         bean.getValue()))
-                .forEach(bean -> connectConnectableToBean(
+                .forEach(bean -> {
+                    connectConnectableToBean(
                         processService,
                         connectable,
                         bean.getKey(),
-                        bean.getValue()));
+                            bean.getValue());
+                });
 
     }
 
@@ -189,7 +193,8 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
             final PS processService,
             final Object bean,
             final T connectable,
-            final Method method);
+            final Method method,
+            final List<MethodParameter> parameters);
 
     private void connectConnectableToBean(
             final PS processService,
@@ -226,12 +231,13 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                     matching.append(m.getKey().toString());
                 })
                 .filter(m -> matchingMethods.getAndIncrement() == 0)
-                .findFirst()
-                .ifPresent(m -> connectToBpms(
+                .map(m -> validateParameters(processService, m.getKey()))
+                .forEach(m -> connectToBpms(
                         processService,
                         bean,
                         connectable,
-                        m.getKey()));
+                        m.getKey(),
+                        m.getValue()));
         
         if (matchingMethods.get() > 1) {
             throw new RuntimeException(
@@ -254,4 +260,50 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
 
     }
     
+    private Map.Entry<Method, List<MethodParameter>> validateParameters(
+            final PS processService,
+            final Method method) {
+        
+        final var parameters = new LinkedList<MethodParameter>();
+        
+        final var workflowDomainEntityClass = processService.getWorkflowDomainEntityClass();
+
+        final var unknown = new StringBuffer();
+
+        final var index = new int[] { -1 };
+        Arrays
+                .stream(method.getParameters())
+                .peek(param -> ++index[0])
+                .filter(param -> {
+                    final var isWorkflowDomainEntity = workflowDomainEntityClass.isAssignableFrom(param.getType());
+                    if (!isWorkflowDomainEntity) {
+                        return true;
+                    }
+
+                    parameters.add(new MethodParameter(Type.DOMAINENTITY));
+                    return false;
+                }).forEach(param -> {
+                    if (unknown.length() != 0) {
+                        unknown.append(", ");
+                    }
+                    unknown.append(index[0]);
+                    unknown.append(" (");
+                    unknown.append(param.getType());
+                    unknown.append(' ');
+                    unknown.append(param.getName());
+                    unknown.append(")");
+                });
+
+        if (unknown.length() != 0) {
+            throw new RuntimeException(
+                    "Unexpected parameter(s) in method '"
+                    + method.getName()
+                            + "': "
+                    + unknown);
+        }
+        
+        return Map.entry(method, parameters);
+
+    }
+
 }

@@ -16,7 +16,7 @@ This aggregate uses a natural id as a primary key, so for one specific natural k
 
 A natural id is a primary key which uniqly identifies a single business-case. That might be an order-id, a trouble-ticket-id or - as in the case of vacation-requests - an artificial identifier (auto-increment/UUID).
 
-This natural id has to be choosen wisely, because it is used to identify duplicate requests, which might occure in a distributed, fault-tolerant system.
+This natural id has to be choosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system.
 
 ### Process-specific domain-aggregate
 

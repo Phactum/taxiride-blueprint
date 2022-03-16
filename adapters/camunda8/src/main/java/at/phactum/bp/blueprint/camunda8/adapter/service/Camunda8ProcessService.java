@@ -4,12 +4,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-import at.phactum.bp.blueprint.process.ProcessService;
 import io.camunda.zeebe.client.ZeebeClient;
 
 public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
-        implements ProcessService<DE> {
+        implements ProcessServiceImplementation<DE> {
 
     private final JpaRepository<DE, String> workflowDomainEntityRepository;
 
@@ -38,12 +38,14 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
         
     }
 
+    @Override
     public Class<DE> getWorkflowDomainEntityClass() {
 
         return workflowDomainEntityClass;
 
     }
 
+    @Override
     public JpaRepository<DE, String> getWorkflowDomainEntityRepository() {
 
         return workflowDomainEntityRepository;

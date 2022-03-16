@@ -1,7 +1,9 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
@@ -22,6 +24,8 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
 
     private List<Camunda7Connectable> connectables = new LinkedList<>();
 
+    private Map<String, Camunda7Connectable> serviceTaskLikeElements = new HashMap<>();
+
     public TaskWiringBpmnParseListener(Camunda7TaskWiring taskWiring) {
 
         super();
@@ -41,7 +45,48 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         connectables.forEach(connectable -> taskWiring.wireTask(processService, connectable));
 
         connectables.clear();
+        serviceTaskLikeElements.clear();
 
+    }
+    
+    @Override
+    public void parseEndEvent(
+            final Element endEventElement,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        connectEvent(endEventElement, scope, activity);
+        
+    }
+    
+    @Override
+    public void parseIntermediateThrowEvent(
+            final Element intermediateEventElement,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        connectEvent(intermediateEventElement, scope, activity);
+        
+    }
+    
+    @Override
+    public void parseBusinessRuleTask(
+            final Element businessRuleTaskElement,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        connect(businessRuleTaskElement, scope, activity);
+        
+    }
+    
+    @Override
+    public void parseSendTask(
+            final Element sendTaskElement,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        connect(sendTaskElement, scope, activity);
+        
     }
 
     @Override
@@ -50,17 +95,26 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
+        connect(serviceTaskElement, scope, activity);
+        
+    }
+
+    private void connect(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
         final var bpmnProcessId = ((ProcessDefinitionEntity) activity.getProcessDefinition()).getKey();
 
-        final var delegateExpression = serviceTaskElement.attributeNS(
+        final var delegateExpression = element.attributeNS(
                 BpmnParse.CAMUNDA_BPMN_EXTENSIONS_NS,
                 BpmnParse.PROPERTYNAME_DELEGATE_EXPRESSION);
 
-        final var expression = serviceTaskElement.attributeNS(
+        final var expression = element.attributeNS(
                 BpmnParse.CAMUNDA_BPMN_EXTENSIONS_NS,
                 BpmnParse.PROPERTYNAME_EXPRESSION);
         
-        final var topic = serviceTaskElement.attributeNS(
+        final var topic = element.attributeNS(
                 BpmnParse.CAMUNDA_BPMN_EXTENSIONS_NS,
                 BpmnParse.PROPERTYNAME_EXTERNAL_TASK_TOPIC);
         
@@ -96,14 +150,36 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         } else {
             
             throw new RuntimeException(
-                    "Missing implemenation 'delegate-expression' or 'external-task topic' on service-task '"
+                    "Missing implemenation 'delegate-expression' or 'external-task topic' on element '"
                     + activity.getId()
                     + "'");
                     
         }
         
-        connectables.add(connectable);
+        if (element.getTagName().equals("messageEventDefinition")) {
+            serviceTaskLikeElements.put(activity.getId(), connectable);
+        } else {
+            connectables.add(connectable);
+        }
         
+    }
+
+    private void connectEvent(final Element eventElement, final ScopeImpl scope, final ActivityImpl activity) {
+
+        final var messageEventDefinition = eventElement.element(BpmnParse.MESSAGE_EVENT_DEFINITION);
+        if (messageEventDefinition == null) {
+            return;
+        }
+
+        final var id = messageEventDefinition.attribute("id");
+        final var connectable = serviceTaskLikeElements.get(id);
+        if (connectable == null) {
+            return;
+        }
+
+        connectables.add(new Camunda7Connectable(connectable.getBpmnProcessId(), activity.getId(),
+                connectable.getTaskDefinition(), connectable.getType()));
+
     }
 
     private String unwrapExpression(final ActivityImpl activity, final String delegateExpression) {
@@ -112,7 +188,7 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         
         if (!expressionWrapperMatcher.find()) {
             throw new RuntimeException(
-                    "'delegate-expression' of service-task '"
+                    "'delegate-expression' of element '"
                     + activity.getId()
                     + "' not uses pattern ${...} or #{...}!");
         }
@@ -120,4 +196,5 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         return expressionWrapperMatcher.group(1);
         
     }
+
 }

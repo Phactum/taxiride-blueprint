@@ -27,7 +27,7 @@ public class ProcessEntityAwareExpressionManager extends SpringExpressionManager
 
         synchronized (this) {
 
-            processEntityELResolver = new ProcessEntityELResolver(applicationContext);
+            processEntityELResolver = new ProcessEntityELResolver();
             
             toBeConnected
                     .entrySet()

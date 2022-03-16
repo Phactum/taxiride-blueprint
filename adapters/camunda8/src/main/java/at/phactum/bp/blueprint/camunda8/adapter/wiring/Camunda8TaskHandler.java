@@ -2,10 +2,14 @@ package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
+import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import io.camunda.zeebe.client.api.command.CompleteJobCommandStep1;
 import io.camunda.zeebe.client.api.command.FinalCommandStep;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
@@ -15,35 +19,32 @@ import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import io.camunda.zeebe.spring.client.jobhandling.CommandWrapper;
 import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlingStrategy;
 
-public class Camunda8TaskHandler implements JobHandler {
+public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
 
     private final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
-    private final JpaRepository<?, String> workflowDomainEntityRepository;
-
-    private final Object bean;
-
-    private final Method method;
-
     public Camunda8TaskHandler(
             final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy,
-            final JpaRepository<?, String> workflowDomainEntityRepository,
+            final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository,
             final Object bean,
-            final Method method) {
+            final Method method,
+            final List<MethodParameter> parameters) {
 
+        super(workflowDomainEntityRepository, bean, method, parameters);
         this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
-        this.workflowDomainEntityRepository = workflowDomainEntityRepository;
-        this.bean = bean;
-        this.method = method;
 
     }
 
     @Override
-    public void handle(final JobClient client, final ActivatedJob job) throws Exception {
+    public void handle(
+            final JobClient client,
+            final ActivatedJob job) throws Exception {
 
         CommandWrapper command;
         try {
-            Object result = method.invoke(bean);
+            final var businessKey = (String) job.getVariablesAsMap().get("id");
+            
+            Object result = super.execute(businessKey);
 
             command = new CommandWrapper(createCompleteCommand(client, job, result), job,
                     commandExceptionHandlingStrategy);
@@ -55,7 +56,10 @@ public class Camunda8TaskHandler implements JobHandler {
 
     }
 
-    public FinalCommandStep createCompleteCommand(JobClient jobClient, ActivatedJob job, Object result) {
+    public FinalCommandStep createCompleteCommand(
+            final JobClient jobClient,
+            final ActivatedJob job,
+            final Object result) {
 
         CompleteJobCommandStep1 completeCommand = jobClient.newCompleteCommand(job.getKey());
         if (result != null) {
@@ -73,8 +77,10 @@ public class Camunda8TaskHandler implements JobHandler {
 
     }
 
-    private FinalCommandStep<Void> createThrowErrorCommand(JobClient jobClient, ActivatedJob job,
-            ZeebeBpmnError bpmnError) {
+    private FinalCommandStep<Void> createThrowErrorCommand(
+            final JobClient jobClient,
+            final ActivatedJob job,
+            final ZeebeBpmnError bpmnError) {
 
         FinalCommandStep<Void> command = jobClient.newThrowErrorCommand(job.getKey()) // TODO: PR for taking a job only
                                                                                       // in command chain

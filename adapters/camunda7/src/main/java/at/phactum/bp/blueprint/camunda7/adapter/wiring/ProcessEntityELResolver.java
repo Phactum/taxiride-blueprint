@@ -9,7 +9,6 @@ import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.javax.el.ELContext;
 import org.camunda.bpm.engine.impl.javax.el.ELResolver;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
-import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
 
@@ -18,18 +17,9 @@ import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
  * by using correspondingly named spring data repositories.
  */
 public class ProcessEntityELResolver extends ELResolver {
-
-    private final ApplicationContext applicationContext;
     
     private final Map<Camunda7Connectable, Camunda7TaskHandler> taskHandlers = new HashMap<>();
 
-    public ProcessEntityELResolver(
-            final ApplicationContext applicationContext) {
-        
-        this.applicationContext = applicationContext;
-        
-    }
-    
     public void addTaskHandler(
             final Camunda7Connectable connectable,
             final Camunda7TaskHandler taskHandler) {

@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskHandler;
@@ -103,16 +104,18 @@ public class Camunda8AdapterConfiguration {
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public Camunda8TaskHandler camunda8TaskHandler(
-            final JpaRepository<?, String> repository,
+            final JpaRepository<WorkflowDomainEntity, String> repository,
             final String taskDefinition,
             final Object bean,
-            final Method method) {
+            final Method method,
+            final List<MethodParameter> parameters) {
         
         return new Camunda8TaskHandler(
                 commandExceptionHandlingStrategy,
                 repository,
                 bean,
-                method);
+                method,
+                parameters);
         
     }
 

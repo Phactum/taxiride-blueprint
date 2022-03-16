@@ -1,29 +1,27 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public class Camunda7TaskHandler implements JavaDelegate {
+import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
+import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 
-    private final JpaRepository<?, String> workflowDomainEntityRepository;
-
-    private final Object bean;
-
-    private final Method method;
+public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate {
 
     private Object result;
 
     public Camunda7TaskHandler(
-            final JpaRepository<?, String> workflowDomainEntityRepository,
+            final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository,
             final Object bean,
-            final Method method) {
+            final Method method,
+            final List<MethodParameter> parameters) {
         
-        this.workflowDomainEntityRepository = workflowDomainEntityRepository;
-        this.bean = bean;
-        this.method = method;
+        super(workflowDomainEntityRepository, bean, method, parameters);
         
     }
 
@@ -31,7 +29,7 @@ public class Camunda7TaskHandler implements JavaDelegate {
     public void execute(
             final DelegateExecution execution) throws Exception {
         
-        result = method.invoke(bean);
+        result = super.execute(execution.getBusinessKey());
 
     }
     
