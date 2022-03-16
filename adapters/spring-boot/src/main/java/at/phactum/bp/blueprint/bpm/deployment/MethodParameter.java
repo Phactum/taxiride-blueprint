@@ -5,7 +5,10 @@ public class MethodParameter {
     public static enum Type {
         UNKNOWN,
         DOMAINENTITY,
-        MULTIINSTANCE
+        MULTIINSTANCE_ELEMENT,
+        MULTIINSTANCE_RESOLVER,
+        MULTIINSTANCE_INDEX,
+        MULTIINSTANCE_TOTAL
     };
     
     private Type type;

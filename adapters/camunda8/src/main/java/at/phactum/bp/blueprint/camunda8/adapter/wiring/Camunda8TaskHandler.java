@@ -44,7 +44,9 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
         try {
             final var businessKey = (String) job.getVariablesAsMap().get("id");
             
-            Object result = super.execute(businessKey);
+            Object result = super.execute(
+                    businessKey,
+                    () -> { throw new UnsupportedOperationException(); });
 
             command = new CommandWrapper(createCompleteCommand(client, job, result), job,
                     commandExceptionHandlingStrategy);

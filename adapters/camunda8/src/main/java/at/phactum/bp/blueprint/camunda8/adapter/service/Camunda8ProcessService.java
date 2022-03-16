@@ -39,6 +39,13 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
     }
 
     @Override
+    public String getBpmnProcessId() {
+
+        return bpmnProcessId;
+
+    }
+
+    @Override
     public Class<DE> getWorkflowDomainEntityClass() {
 
         return workflowDomainEntityClass;

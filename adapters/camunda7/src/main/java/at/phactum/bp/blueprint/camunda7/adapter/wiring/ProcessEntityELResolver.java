@@ -3,14 +3,20 @@ package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 import java.beans.FeatureDescriptor;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.javax.el.ELContext;
 import org.camunda.bpm.engine.impl.javax.el.ELResolver;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
+import at.phactum.bp.blueprint.utilities.CaseUtils;
 
 /*
  * Custom expression language resolver to resolve process entities
@@ -18,7 +24,20 @@ import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
  */
 public class ProcessEntityELResolver extends ELResolver {
     
+    private static final Logger logger = LoggerFactory.getLogger(ProcessEntityELResolver.class);
+    
     private final Map<Camunda7Connectable, Camunda7TaskHandler> taskHandlers = new HashMap<>();
+
+    private final Map<String, Camunda7ProcessService<?>> processServices;
+
+    public ProcessEntityELResolver(final List<Camunda7ProcessService<?>> connectableServices) {
+
+        super();
+        processServices = connectableServices
+                .stream()
+                .collect(Collectors.toMap(Camunda7ProcessService::getBpmnProcessId, s -> s));
+
+    }
 
     public void addTaskHandler(
             final Camunda7Connectable connectable,
@@ -59,7 +78,7 @@ public class ProcessEntityELResolver extends ELResolver {
                 .getProcessDefinition()
                 .getKey();
         
-        final var handler = taskHandlers
+        final var result = taskHandlers
                 .entrySet()
                 .stream()
                 .filter(entry -> {
@@ -70,18 +89,81 @@ public class ProcessEntityELResolver extends ELResolver {
                     }
                     
                     final var element = execution.getBpmnModelElementInstance();
-                    
-                    if ((connectable.getElementId() != null)
-                            && element.getId().equals(connectable.getElementId())) {
-                        return true;
+                    if (element == null) {
+                        return false;
                     }
                     
-                    return false;
+                    return connectable.applies(element.getId(), property.toString());
                 })
                 .findFirst()
-                .get();
+                // found handler-reference
+                .map(handler -> executeHandler(execution, handler.getKey(), handler.getValue()))
+                // otherwise it will be a domain-entity property reference
+                .orElseGet(() -> {
+                    final var processService = processServices.get(bpmnProcessId);
+                    if (processService == null) {
+                        return null;
+                    }
+
+                    final var domainEntityOptional = processService
+                            .getWorkflowDomainEntityRepository()
+                            .findById(execution.getBusinessKey());
+                    if (domainEntityOptional.isEmpty()) {
+                        return null;
+                    }
+                    final var domainEntity = domainEntityOptional.get();
+                    
+                    final var workflowDomainEntityClass = processService
+                            .getWorkflowDomainEntityClass();
+                    
+                    // use getter
+                    final var getterName = "get"
+                                + CaseUtils.firstCharacterToUpperCase(property.toString());
+                    try {
+                        return workflowDomainEntityClass
+                                .getMethod(getterName)
+                                .invoke(domainEntity);
+                    } catch (NoSuchMethodException e) {
+                        /* ignored */
+                    } catch (Exception e) {
+                        logger.warn("Could not access '{}#{}'",
+                                workflowDomainEntityClass.getName(), getterName, e);
+                        return null;
+                    }
+
+                    // use getter for booleans
+                    final var isGetterName = "is"
+                            + CaseUtils.firstCharacterToUpperCase(property.toString());
+                    try {
+                        return workflowDomainEntityClass
+                                .getMethod(isGetterName)
+                                .invoke(domainEntity);
+                    } catch (NoSuchMethodException e) {
+                        /* ignored */
+                    } catch (Exception e) {
+                        logger.warn("Could not access '{}#{}'",
+                                workflowDomainEntityClass.getName(), isGetterName, e);
+                        return null;
+                    }
+                    
+                    // use property
+                    try {
+                        final var field = workflowDomainEntityClass
+                                .getDeclaredField(property.toString());
+                        field.setAccessible(true);
+                        return field.get(domainEntity);
+                    } catch (NoSuchFieldException e) {
+                        /* ignored */
+                    } catch (Exception e) {
+                        logger.warn("Could not access property '{}' in class '{}'",
+                                property.toString(), workflowDomainEntityClass.getName(), e);
+                        return null;
+                    }
+                    
+                    return null;
+                });
         
-        return executeHandler(execution, handler.getKey(), handler.getValue());
+        return result;
 
     }
     

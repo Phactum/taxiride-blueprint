@@ -31,9 +31,17 @@ public class Camunda7Connectable implements Connectable {
     public boolean applies(
             final WorkflowTask workflowTask) {
 
-        return getElementId().equals(workflowTask.id())
-                || getTaskDefinition().equals(workflowTask.taskDefinition());
+        return applies(workflowTask.id(), workflowTask.taskDefinition());
 
+    }
+    
+    public boolean applies(
+            final String elementId,
+            final String taskDefinition) {
+        
+        return getElementId().equals(elementId)
+                || getTaskDefinition().equals(taskDefinition);
+        
     }
     
     @Override

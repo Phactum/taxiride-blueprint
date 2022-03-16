@@ -21,13 +21,13 @@
 		<!--
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>blueprint-camunda7-adapter</artifactId>
+			<artifactId>blueprint-camunda8-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		-->
 		<dependency>
 			<groupId>${project.groupId}</groupId>
-			<artifactId>blueprint-camunda8-adapter</artifactId>
+			<artifactId>blueprint-camunda7-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

@@ -15,4 +15,9 @@ public interface ProcessService<DE extends WorkflowDomainEntity> {
      */
     DE startWorkflow(DE domainEntity) throws Exception;
 
+    /**
+     * @return The BPMN process-id this service belongs to
+     */
+    String getBpmnProcessId();
+
 }

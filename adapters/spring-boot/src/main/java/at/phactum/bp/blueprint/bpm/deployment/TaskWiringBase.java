@@ -15,6 +15,10 @@ import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.bpm.deployment.MethodParameter.Type;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
+import at.phactum.bp.blueprint.service.MultiInstanceElement;
+import at.phactum.bp.blueprint.service.MultiInstanceIndex;
+import at.phactum.bp.blueprint.service.MultiInstanceTotal;
+import at.phactum.bp.blueprint.service.NoResolver;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
@@ -281,6 +285,42 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                     }
 
                     parameters.add(new MethodParameter(Type.DOMAINENTITY));
+                    return false;
+                }).filter(param -> {
+                    final var miTotalAnnotation = param.getAnnotation(MultiInstanceTotal.class);
+                    if (miTotalAnnotation == null) {
+                        return true;
+                    }
+
+                    parameters.add(new MethodParameter(Type.MULTIINSTANCE_TOTAL));
+                    return false;
+                }).filter(param -> {
+                    final var miIndexAnnotation = param.getAnnotation(MultiInstanceIndex.class);
+                    if (miIndexAnnotation == null) {
+                        return true;
+                    }
+
+                    parameters.add(new MethodParameter(Type.MULTIINSTANCE_INDEX));
+                    return false;
+                }).filter(param -> {
+                    final var miElementAnnotation = param.getAnnotation(MultiInstanceElement.class);
+                    if (miElementAnnotation == null) {
+                        return true;
+                    }
+
+                    if (miElementAnnotation.resolverBean().equals(NoResolver.class)) {
+
+                        parameters.add(new MethodParameter(Type.MULTIINSTANCE_ELEMENT));
+
+                    } else {
+
+                        final var resolver = applicationContext
+                                .getBean(miElementAnnotation.resolverBean());
+
+                        parameters.add(new ResolverBasedMethodParameter(
+                                Type.MULTIINSTANCE_RESOLVER, resolver));
+
+                    }
                     return false;
                 }).forEach(param -> {
                     if (unknown.length() != 0) {

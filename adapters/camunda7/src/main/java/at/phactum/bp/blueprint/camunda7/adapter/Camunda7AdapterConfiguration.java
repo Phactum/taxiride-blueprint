@@ -80,7 +80,9 @@ public class Camunda7AdapterConfiguration {
     @Bean
     public ProcessEntityAwareExpressionManager processEntityAwareExpressionManager() {
 
-        return new ProcessEntityAwareExpressionManager(applicationContext);
+        return new ProcessEntityAwareExpressionManager(
+                applicationContext,
+                connectableServices);
 
     }
 

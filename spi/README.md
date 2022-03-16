@@ -301,95 +301,53 @@ public void sendAcceptedMail(
 @WorkflowTask
 public void sendAcceptedMail(
     ApprovalOfVacation entity,
-    @MultiInstance String participant) {
+    @MultiInstanceElement String participant) {
   ...
 }
 ```
 
 ##### Embedded subprocesses
 
-For multi-instance embedded-subprocesses the iteration is used at tasks within that embedded-subprocess. The value to the annotation can be used to specify the requested multi-instance context:
-
-1. No value: Use current activity if multi-instance or first if one parent-activity is multi-instance
-1. `@MultiInstanceIndex`: The name of the multi-instance activity
-1. `@MultiInstanceTotal`: The name of the multi-instance activity
-1. `@MultiInstance`: The name of the process-variable
-
-*Cardinatilty-based:*
-
-```java
-@WorkflowTask
-public void sendInvitationMailForClearance(
-    ApprovalOfVacation entity,
-    @MultiInstanceIndex("SendInvitation") int index) {
-  ...
-}
-```
-
-*Collection-based:*
-
-```java
-@WorkflowTask
-public void sendInvitationForClearanceMail(
-    ApprovalOfVacation entity,
-    @MultiInstance("authorityPerson") String) {
-  ...
-}
-```
+For multi-instance embedded-subprocesses the iteration is used at tasks within that embedded-subprocess. For given annotations `@MultiInstanceIndex`, `@MultiInstanceTotal` or  `@MultiInstance` the values of the first mulit-instance parent-activity are passed to the business method.
 
 *Nested multi-instance activities*:
 
-In this example each order item of an order (processed by a multi-instance embedded-subprocess) is checked for availability in all storages (processed by a multi-instance service-task):
+One can design processes having more than one multi-instance context active:
+* Multi-instance task within a multi-instance embedded sub-process
+* Multi-instance task within a multi-instance call-activity
+* Task within a multi-instance call-activity within a multi-instance embedded-subprocess
+* etc.
+
+To handle this complex situations a `MultiInstanceElementResolver` bean can be specified as part of the annotation `@MultiInstanceElement`:
 
 ```java
 @WorkflowTask
-public void sendCheckAvailability(
-    ApprovalOfVacation entity,
-    @MultiInstance("orderItem") String orderItem,
-    @MultiInstanceIndex("storage") int storageIndex) {
+public void registerOrderItemProductLicense(
+    Order order,
+    @MultiInstanceElement(resolver = OrderItemProductLicenseResolver.class)
+    ProductLicense license) {
   ...
 }
 ```
 
+A Spring-bean implementing the resolver class is used to convert the current multi-instance execution-context into an object used by the business-method. Using this technique hides the complexity and make it reusable for different activities within the same BPMN-context. A resolver has to implement the interface `MultiInstanceElementResolver`.
+
+Example:
+
 ```java
-public interface MultiInstanceItem {
-  int getItemNo();
-  int getTotalItems();
-  String getLoopDataInputName();
-  String getInputDataItem();
-}
-
-/**
- *
- */
-public interface MultiInstanceItemResolver<T, R> {
-  /**
-   * @param aggregate
-   * @param items
-   */
-  R resolve(T aggregate, List<MultiInstanceItem> items);
-}
-
 @Component
-public class AuthorityPersonResolver implements MultiInstanceItemResolver<ApprovalOfVacation, Authority> {
-
-  @Autowired
-  private AuthorityRepository repo;
-
-  public Authority resolve(ApprovalOfVacation request, List<MultiInstanceItem> items) {
-    final Order order = request.getOrders().get(items.get(0).getItemNo());
-    return repo.findByName(order.getAuthorityName());
-  }
+public class OrderItemProductLicenseResolver implements MultiInstanceElementResolver<Order, OrderItem> {
+    @Autowired
+    private ProductLicenseService productLicenseService;
     
+    public ProductLicense resolve(Order order,
+            Map<String, MultiInstance<Object>> nestedMultiInstanceContext) {
+        String orderItemId = nestedMultiInstanceContext
+                .get("OrderItemsEmbeddedSubprocess").getElement();
+        String index = nestedMultiInstanceContext.get("ProcessItem").getIndex();
+        
+        return productLicenseService.getLicense(order.getId(), orderItemId, index);
+    }
 }
-
-
-
-@WorkflowTask
-public void sendInvitationForClearanceMail(
-    ApprovalOfVacation entity,
-    @MultiInstance(resolver = AuthorityPersonResolver.class) Authority) {
-  ...
-}
-
 ```
+In this example for each order-item a given number of product licenses are fetched based on the quantity of products for a single item.

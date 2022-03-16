@@ -1,5 +1,7 @@
 package org.blueprint.bp.blueprint.test1;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +23,7 @@ public class Test1Controller {
 
         final var domainEntity = new Test1DomainEntity();
         domainEntity.setId(id);
+        domainEntity.setItemIds(List.of("itemNamedA", "itemNamedB"));
 
         test1ProcessService.startWorkflow(domainEntity);
 
