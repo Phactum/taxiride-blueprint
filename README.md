@@ -18,7 +18,7 @@ As a side-effect of doing loose-coupling the outcoming software is much easier t
 
 To support the entire lifecycle of a software in a good way, it turned out that loose-coupling the business-processing engine itself should be preferred. A good fit for this is to use a domain-driven-design approach.
 
-Check out [this module](./ddd/README.md) to learn about how this looks like.
+Check out [this module](./spi/README.md) to learn about how this looks like.
 
 ### Runtime environment
 
