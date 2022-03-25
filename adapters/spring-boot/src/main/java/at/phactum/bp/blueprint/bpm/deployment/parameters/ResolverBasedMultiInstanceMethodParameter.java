@@ -1,17 +1,15 @@
-package at.phactum.bp.blueprint.bpm.deployment;
+package at.phactum.bp.blueprint.bpm.deployment.parameters;
 
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
-public class ResolverBasedMethodParameter extends MethodParameter {
+public class ResolverBasedMultiInstanceMethodParameter extends MethodParameter {
 
-    private MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> resolverBean;
-    
-    public ResolverBasedMethodParameter(
-            final Type type,
+    protected final MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> resolverBean;
+
+    public ResolverBasedMultiInstanceMethodParameter(
             final MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> resolverBean) {
         
-        super(type);
         this.resolverBean = resolverBean;
         
     }
@@ -19,5 +17,5 @@ public class ResolverBasedMethodParameter extends MethodParameter {
     public MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> getResolverBean() {
         return resolverBean;
     }
-
+    
 }

@@ -3,6 +3,7 @@ package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 import at.phactum.bp.blueprint.bpm.deployment.Connectable;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 import io.camunda.zeebe.model.bpmn.instance.Process;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
 public class Camunda8Connectable implements Connectable {
@@ -14,10 +15,13 @@ public class Camunda8Connectable implements Connectable {
     public Camunda8Connectable(
             final Process process,
             final String elementId,
-            final ZeebeTaskDefinition taskDefinition) {
+            final ZeebeTaskDefinition taskDefinition,
+            final ZeebeLoopCharacteristics loopCharacteristics) {
+
         this.process = process;
         this.elementId = elementId;
         this.taskDefinition = taskDefinition;
+
     }
     
     @Override
@@ -35,6 +39,7 @@ public class Camunda8Connectable implements Connectable {
 
     }
     
+    @Override
     public boolean isExecutableProcess() {
 
         return process.isExecutable();

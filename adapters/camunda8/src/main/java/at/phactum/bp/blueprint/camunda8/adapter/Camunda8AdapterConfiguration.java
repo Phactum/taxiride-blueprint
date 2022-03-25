@@ -9,15 +9,18 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
+import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentRepository;
+import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentResourceRepository;
+import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentService;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskHandler;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
@@ -27,7 +30,7 @@ import io.camunda.zeebe.spring.client.EnableZeebeClient;
 import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlingStrategy;
 
-@Configuration
+@AutoConfigurationPackage(basePackageClasses = Camunda8AdapterConfiguration.class)
 @EnableZeebeClient
 public class Camunda8AdapterConfiguration {
 
@@ -45,6 +48,12 @@ public class Camunda8AdapterConfiguration {
     @Autowired
     private DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
+    @Autowired
+    private DeploymentRepository deploymentRepository;
+
+    @Autowired
+    private DeploymentResourceRepository deploymentResourceRepository;
+
     @Bean
     public SpringDataTool springDataTool() {
 
@@ -54,9 +63,11 @@ public class Camunda8AdapterConfiguration {
 
     @Bean
     public Camunda8DeploymentAdapter camunda8Adapter(
+            final DeploymentService deploymentService,
             final Camunda8TaskWiring camunda8TaskWiring) {
 
         return new Camunda8DeploymentAdapter(
+                deploymentService,
                 clientLifecycle,
                 camunda8TaskWiring);
 
@@ -90,7 +101,6 @@ public class Camunda8AdapterConfiguration {
         final var workflowDomainEntityRepository = springDataTool
                 .getJpaRepository(workflowDomainEntityClass);
         
-        
         final var result = new Camunda8ProcessService<DE>(
                 (JpaRepository<DE, String>) workflowDomainEntityRepository,
                 workflowDomainEntityClass);
@@ -102,6 +112,13 @@ public class Camunda8AdapterConfiguration {
     }
     
     @Bean
+    public DeploymentService deploymentService() {
+
+        return new DeploymentService(deploymentRepository, deploymentResourceRepository);
+
+    }
+
+    @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public Camunda8TaskHandler camunda8TaskHandler(
             final JpaRepository<WorkflowDomainEntity, String> repository,
@@ -111,6 +128,7 @@ public class Camunda8AdapterConfiguration {
             final List<MethodParameter> parameters) {
         
         return new Camunda8TaskHandler(
+                deploymentService(),
                 commandExceptionHandlingStrategy,
                 repository,
                 bean,

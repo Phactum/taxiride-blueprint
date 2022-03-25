@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
@@ -15,9 +16,9 @@ import org.camunda.bpm.model.xml.ModelInstance;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
 import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
@@ -39,9 +40,16 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
     public void execute(
             final DelegateExecution execution) throws Exception {
         
+        final var multiInstanceCache = new Map[] { null };
+
         result = super.execute(
                 execution.getBusinessKey(),
-                () -> getMultiInstanceContext(execution));
+                multiInstanceActivity -> {
+                    if (multiInstanceCache[0] == null) {
+                        multiInstanceCache[0] = getMultiInstanceContext(execution);
+                    }
+                    return multiInstanceCache[0].get(multiInstanceActivity);
+                });
 
     }
     
@@ -49,6 +57,46 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
 
         return result;
 
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    protected MultiInstance<Object> getMultiInstance(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return (MultiInstance<Object>) multiInstanceSupplier.apply(name);
+        
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Object getMultiInstanceElement(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getElement();
+        
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Integer getMultiInstanceTotal(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getTotal();
+        
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Integer getMultiInstanceIndex(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getIndex();
+        
     }
 
     protected Map<String, MultiInstanceElementResolver.MultiInstance<Object>> getMultiInstanceContext(
@@ -73,7 +121,8 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
 
             // if still not found then check parent
             if (loopCharacteristics == null) {
-                miExecution = miExecution.getParentId() != null ? ((ExecutionEntity) miExecution).getParent()
+                miExecution = miExecution.getParentId() != null
+                        ? ((ExecutionEntity) miExecution).getParent()
                         : miExecution.getSuperExecution();
             }
             // multi-instance found
@@ -91,8 +140,10 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
             // if there is no parent then multi-instance task was used in a
             // non-multi-instance environment
             if ((miExecution == null) && (loopCharacteristics == null)) {
-                throw new RuntimeException("No multi-instance context found for element '"
-                        + execution.getBpmnModelElementInstance().getId() + "' or its parents");
+                throw new RuntimeException(
+                        "No multi-instance context found for element '"
+                        + execution.getBpmnModelElementInstance().getId()
+                        + "' or its parents!");
             }
 
         }

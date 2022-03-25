@@ -7,8 +7,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
-import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 

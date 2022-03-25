@@ -11,6 +11,7 @@ import at.phactum.bp.blueprint.service.WorkflowTask;
 
 @Service
 @WorkflowService(bpmnProcessId = "Process_Test1")
+@WorkflowService(bpmnProcessId = "Process_Test2")
 public class Test1WorkflowService implements WorkflowServicePort<Test1DomainEntity> {
 
     @WorkflowTask(taskDefinition = "TEST1")
@@ -31,27 +32,26 @@ public class Test1WorkflowService implements WorkflowServicePort<Test1DomainEnti
     @WorkflowTask(taskDefinition = "TEST3")
     public void doTest3Task(
             final Test1DomainEntity rootEntity,
-            final @MultiInstanceElement String element,
-            final @MultiInstanceTotal int total,
-            final @MultiInstanceIndex int index) {
+            final @MultiInstanceTotal("MiTask") int total,
+            final @MultiInstanceIndex("MiTask") int index) {
         
-        System.err.println("YEAH 3: " + element + " (" + index + "/" + total + ")");
+        System.err.println("YEAH 3: " + index + "/" + total);
         
     }
 
     @WorkflowTask(taskDefinition = "TEST4")
     public void doTest4Task(
             final Test1DomainEntity rootEntity,
-            final @MultiInstanceElement String itemId,
-            final @MultiInstanceTotal int total,
-            final @MultiInstanceIndex int index) {
+            final @MultiInstanceElement("EmbeddedSubprocess") String itemId,
+            final @MultiInstanceTotal("EmbeddedSubprocess") int total,
+            final @MultiInstanceIndex("EmbeddedSubprocess") int index) {
         
         System.err.println("YEAH 4: " + itemId + " (" + index + "/" + total + ")");
         
     }
     
     @WorkflowTask(taskDefinition = "TEST5")
-    public void doTest4Task(
+    public void doTest5Task(
             final Test1DomainEntity rootEntity,
             final @MultiInstanceElement(resolverBean = KebapItemIdResolver.class) String kebapItemId) {
 

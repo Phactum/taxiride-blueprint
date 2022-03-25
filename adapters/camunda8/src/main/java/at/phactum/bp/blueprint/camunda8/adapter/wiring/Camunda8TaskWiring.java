@@ -1,6 +1,7 @@
 package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
 import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -9,15 +10,18 @@ import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 
-import at.phactum.bp.blueprint.bpm.deployment.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MethodParameterFactory;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.ParameterVariables;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
 import io.camunda.zeebe.model.bpmn.instance.BaseElement;
 import io.camunda.zeebe.model.bpmn.instance.Process;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
 public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camunda8ProcessService<?>>
@@ -37,7 +41,7 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
             final ObjectProvider<Camunda8TaskHandler> taskHandlers,
             final List<Camunda8ProcessService<?>> connectableServices) {
         
-        super(applicationContext);
+        super(applicationContext, new Camunda8MethodParameterFactory());
         this.workerId = workerId;
         this.taskHandlers = taskHandlers;
         this.connectableServices = connectableServices;
@@ -67,13 +71,14 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
                 .stream()
                 .filter(element -> getOwningProcess(element).equals(process))
                 .map(element -> new Camunda8Connectable(process, element.getId(),
-                        element.getSingleExtensionElement(ZeebeTaskDefinition.class)))
+                        element.getSingleExtensionElement(ZeebeTaskDefinition.class),
+                        element.getSingleExtensionElement(ZeebeLoopCharacteristics.class)))
                 .filter(connectable -> connectable.isExecutableProcess())
                 .filter(connectable -> connectable.getTaskDefinition() != null);
         
     }
     
-    private Process getOwningProcess(
+    static Process getOwningProcess(
             final ModelElementInstance element) {
 
         if (element instanceof Process) {
@@ -123,12 +128,14 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
                 method,
                 parameters);
 
+        final var variablesToFetch = getVariablesToFetch(parameters);
+
         client
                 .newWorker()
                 .jobType(connectable.getTaskDefinition())
                 .handler(taskHandler)
                 .name(workerId)
-                .fetchVariables(List.of("id"))
+                .fetchVariables(variablesToFetch)
                 .open();
 
               // using defaults from config if null, 0 or negative
@@ -152,6 +159,24 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
 //              if (zeebeWorkerValue.getFetchVariables().length > 0) {
 //                builder.fetchVariables(zeebeWorkerValue.getFetchVariables());
 //              }
+        
+    }
+
+    private List<String> getVariablesToFetch(
+            final List<MethodParameter> parameters) {
+        
+        final var result = new LinkedList<String>();
+        
+        // the domain entity's id aka the business key
+        result.add("id");
+        
+        parameters
+                .stream()
+                .filter(parameter -> parameter instanceof ParameterVariables)
+                .flatMap(parameter -> ((ParameterVariables) parameter).getVariables().stream())
+                .forEach(result::add); 
+        
+        return result;
         
     }
 

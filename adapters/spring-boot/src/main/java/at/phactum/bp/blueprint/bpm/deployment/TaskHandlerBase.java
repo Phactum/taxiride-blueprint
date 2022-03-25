@@ -1,18 +1,23 @@
 package at.phactum.bp.blueprint.bpm.deployment;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import at.phactum.bp.blueprint.bpm.deployment.MethodParameter.Type;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.DomainEntityMethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceElementMethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceIndexMethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceTotalMethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.ResolverBasedMultiInstanceMethodParameter;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
-public class TaskHandlerBase {
+public abstract class TaskHandlerBase {
 
     protected final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository;
 
@@ -35,30 +40,42 @@ public class TaskHandlerBase {
 
     }
     
-    @SuppressWarnings("unchecked")
     protected Object execute(
             final String workflowDomainEntityId,
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier)
+            final Function<String, Object> multiInstanceSupplier)
             throws Exception {
         
         final var domainEntity = new WorkflowDomainEntity[] { null };
-        final var multiInstance = new Map[] { null };
 
         final var args = new Object[parameters.size()];
+        
+        // first, find domain entity as a parameter if required
         final var index = new int[] { -1 };
         parameters
                 .stream()
                 .peek(param -> ++index[0])
-                .filter(param -> processDomainEntityParameter(
-                        args, index[0], param, domainEntity, workflowDomainEntityId))
+                .anyMatch(param -> processDomainEntityParameter(
+                        args, index[0], param, domainEntity, workflowDomainEntityId));
+        
+        // second, fill all the other parameters
+        index[0] = -1;
+        parameters
+                .stream()
+                .peek(param -> ++index[0])
                 .filter(param -> processMultiInstanceTotalParameter(args, index[0], param,
-                        () -> cachedMultiInstance(multiInstanceSupplier, multiInstance)))
+                        multiInstanceSupplier))
                 .filter(param -> processMultiInstanceIndexParameter(args, index[0], param,
-                        () -> cachedMultiInstance(multiInstanceSupplier, multiInstance)))
+                        multiInstanceSupplier))
                 .filter(param -> processMultiInstanceElementParameter(args, index[0], param,
-                        () -> cachedMultiInstance(multiInstanceSupplier, multiInstance)))
+                        multiInstanceSupplier))
                 .filter(param -> processMultiInstanceResolverParameter(args, index[0], param,
-                        () -> cachedMultiInstance(multiInstanceSupplier, multiInstance)))
+                        () -> {
+                            if (domainEntity[0] == null) {
+                                domainEntity[0] = (WorkflowDomainEntity) workflowDomainEntityRepository
+                                        .getById(workflowDomainEntityId);
+                            }
+                            return domainEntity[0];
+                        }, multiInstanceSupplier))
                 // ignore unknown parameters, but they should be filtered as part of validation
                 .forEach(param -> { /* */ });
         
@@ -71,102 +88,100 @@ public class TaskHandlerBase {
         return result;
         
     }
+
+    protected abstract Integer getMultiInstanceTotal(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier); 
     
-    private Map<String, MultiInstanceElementResolver.MultiInstance<Object>> cachedMultiInstance(
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier,
-            final Map<String, MultiInstanceElementResolver.MultiInstance<Object>>[] cache) {
-
-        if (cache[0] == null) {
-            cache[0] = multiInstanceSupplier.get();
-        }
-        
-        return cache[0];
-
-    }
-
     private boolean processMultiInstanceTotalParameter(
             final Object[] args,
             final int index,
             final MethodParameter param,
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier) {
+            final Function<String, Object> multiInstanceSupplier) {
 
-        if (param.getType() != Type.MULTIINSTANCE_TOTAL) {
+        if (!(param instanceof MultiInstanceTotalMethodParameter)) {
             return true;
         }
 
-        return processMultiInstanceParameter(args, index, param, multiInstanceSupplier,
-                MultiInstanceElementResolver.MultiInstance::getTotal);
+        args[index] = getMultiInstanceTotal(
+                ((MultiInstanceTotalMethodParameter) param).getName(),
+                multiInstanceSupplier);
+        
+        return false;
         
     }
+
+    protected abstract Integer getMultiInstanceIndex(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier); 
 
     private boolean processMultiInstanceIndexParameter(
             final Object[] args,
             final int index,
             final MethodParameter param,
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier) {
+            final Function<String, Object> multiInstanceSupplier) {
 
-        if (param.getType() != Type.MULTIINSTANCE_INDEX) {
+        if (!(param instanceof MultiInstanceIndexMethodParameter)) {
             return true;
         }
 
-        return processMultiInstanceParameter(args, index, param, multiInstanceSupplier,
-                MultiInstanceElementResolver.MultiInstance::getIndex);
+        args[index] = getMultiInstanceIndex(
+                ((MultiInstanceIndexMethodParameter) param).getName(),
+                multiInstanceSupplier);
+        
+        return false;
         
     }
+
+    protected abstract Object getMultiInstanceElement(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier); 
 
     private boolean processMultiInstanceElementParameter(
             final Object[] args,
             final int index,
             final MethodParameter param,
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier) {
+            final Function<String, Object> multiInstanceSupplier) {
 
-        if (param.getType() != Type.MULTIINSTANCE_ELEMENT) {
+        if (!(param instanceof MultiInstanceElementMethodParameter)) {
             return true;
         }
         
-        return processMultiInstanceParameter(args, index, param, multiInstanceSupplier,
-                MultiInstanceElementResolver.MultiInstance::getElement);
+        args[index] = getMultiInstanceElement(
+                ((MultiInstanceElementMethodParameter) param).getName(),
+                multiInstanceSupplier);
         
-    }
-
-    private boolean processMultiInstanceParameter(
-            final Object[] args,
-            final int index,
-            final MethodParameter param,
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier,
-            final Function<MultiInstanceElementResolver.MultiInstance<Object>, Object> resultFunction) {
-        
-        final var multiInstance = multiInstanceSupplier.get();
-        
-        if ((multiInstance == null)
-                || multiInstance.isEmpty()) {
-            throw new RuntimeException("No multi-instance context available!");
-        }
-
-        final var multiInstanceActivityId = new String[] { null };
-        multiInstance
-                .keySet()
-                .forEach(activityId -> multiInstanceActivityId[0] = activityId);
-        args[index] = resultFunction.apply(multiInstance.get(multiInstanceActivityId[0]));
-
         return false;
-
+        
     }
     
+    protected abstract MultiInstance<Object> getMultiInstance(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier); 
+            
     private boolean processMultiInstanceResolverParameter(
             final Object[] args,
             final int index,
             final MethodParameter param,
-            final Supplier<Map<String, MultiInstanceElementResolver.MultiInstance<Object>>> multiInstanceSupplier) {
+            final Supplier<WorkflowDomainEntity> workflowDomainEntity,
+            final Function<String, Object> multiInstanceSupplier) {
 
-        if (param.getType() != Type.MULTIINSTANCE_RESOLVER) {
+        if (!(param instanceof ResolverBasedMultiInstanceMethodParameter)) {
             return true;
         }
-
-        final var multiInstances = multiInstanceSupplier.get();
         
-        final var resolver = ((ResolverBasedMethodParameter) param).getResolverBean();
-        args[index] = resolver.resolve(null, multiInstances);
+        @SuppressWarnings("unchecked")
+        final var resolver =
+                (MultiInstanceElementResolver<WorkflowDomainEntity, Object>)
+                ((ResolverBasedMultiInstanceMethodParameter) param).getResolverBean();
+
+        final var multiInstances = new HashMap<String, MultiInstanceElementResolver.MultiInstance<Object>>();
+        
+        resolver
+                .getNames()
+                .forEach(name -> multiInstances.put(name, getMultiInstance(name, multiInstanceSupplier)));
+
+        args[index] = resolver.resolve(workflowDomainEntity.get(), multiInstances);
         
         return false;
         
@@ -179,7 +194,7 @@ public class TaskHandlerBase {
             final WorkflowDomainEntity[] domainEntity,
             final String workflowDomainEntityId) {
 
-        if (param.getType() != Type.DOMAINENTITY) {
+        if (!(param instanceof DomainEntityMethodParameter)) {
             return true;
         }
         

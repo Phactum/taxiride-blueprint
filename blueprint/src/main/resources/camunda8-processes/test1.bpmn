@@ -5,7 +5,7 @@
       <bpmn:outgoing>Flow_1f1fb15</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_1f1fb15" sourceRef="StartEvent_1" targetRef="Activity_1grq1v5" />
-    <bpmn:sequenceFlow id="Flow_04wkfko" sourceRef="Activity_1grq1v5" targetRef="Event_1ed01sx" />
+    <bpmn:sequenceFlow id="Flow_04wkfko" sourceRef="Activity_1grq1v5" targetRef="EmbeddedSubprocess" />
     <bpmn:serviceTask id="Activity_1grq1v5" name="do test 1">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="TEST1" />
@@ -13,38 +13,128 @@
       <bpmn:incoming>Flow_1f1fb15</bpmn:incoming>
       <bpmn:outgoing>Flow_04wkfko</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:endEvent id="Event_1ed01sx" name="test 1 done">
+    <bpmn:endEvent id="Event_1ed01sx" name="test 2 done">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="TEST2" />
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_04wkfko</bpmn:incoming>
+      <bpmn:incoming>Flow_0ehwfzv</bpmn:incoming>
       <bpmn:messageEventDefinition id="MessageEventDefinition_1ke5thj" />
     </bpmn:endEvent>
+    <bpmn:subProcess id="EmbeddedSubprocess">
+      <bpmn:extensionElements>
+        <zeebe:ioMapping>
+          <zeebe:input source="=count(itemIds)" target="EmbeddedSubprocess_total" />
+          <zeebe:input source="=loopCounter" target="EmbeddedSubprocess_index" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04wkfko</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ehwfzv</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=itemIds" inputElement="EmbeddedSubprocess" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_1dhi2lt">
+        <bpmn:outgoing>Flow_1ksymqt</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_1ksymqt" sourceRef="Event_1dhi2lt" targetRef="MiTask" />
+      <bpmn:sequenceFlow id="Flow_1azjieh" sourceRef="MiTask" targetRef="Event_0dtync5" />
+      <bpmn:sequenceFlow id="Flow_1cqfoep" sourceRef="Event_0dtync5" targetRef="Event_0owqm1q" />
+      <bpmn:intermediateThrowEvent id="Event_0dtync5" name="test 5">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="TEST5" />
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1azjieh</bpmn:incoming>
+        <bpmn:outgoing>Flow_1cqfoep</bpmn:outgoing>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_1h6nyrs" />
+      </bpmn:intermediateThrowEvent>
+      <bpmn:endEvent id="Event_0owqm1q" name="test 4 done">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="TEST4" />
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1cqfoep</bpmn:incoming>
+        <bpmn:messageEventDefinition id="MessageEventDefinition_1llv076" />
+      </bpmn:endEvent>
+      <bpmn:serviceTask id="MiTask" name="do test 3">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="TEST3" />
+          <zeebe:ioMapping>
+            <zeebe:input source="=3" target="MiTask_total" />
+            <zeebe:input source="=loopCounter" target="MiTask_index" />
+          </zeebe:ioMapping>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1ksymqt</bpmn:incoming>
+        <bpmn:outgoing>Flow_1azjieh</bpmn:outgoing>
+        <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+          <bpmn:extensionElements>
+            <zeebe:loopCharacteristics inputCollection="=[1,2,3]" inputElement="MiTask" />
+          </bpmn:extensionElements>
+        </bpmn:multiInstanceLoopCharacteristics>
+      </bpmn:serviceTask>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_0ehwfzv" sourceRef="EmbeddedSubprocess" targetRef="Event_1ed01sx" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Test1">
+      <bpmndi:BPMNEdge id="Flow_0ehwfzv_di" bpmnElement="Flow_0ehwfzv">
+        <di:waypoint x="850" y="177" />
+        <di:waypoint x="912" y="177" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_04wkfko_di" bpmnElement="Flow_04wkfko">
-        <di:waypoint x="370" y="117" />
-        <di:waypoint x="432" y="117" />
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="430" y="177" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1f1fb15_di" bpmnElement="Flow_1f1fb15">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <dc:Bounds x="179" y="159" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="164" y="142" width="66" height="14" />
+          <dc:Bounds x="164" y="202" width="66" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1lf4nbv_di" bpmnElement="Activity_1grq1v5">
-        <dc:Bounds x="270" y="77" width="100" height="80" />
+        <dc:Bounds x="270" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_033x6vt_di" bpmnElement="Event_1ed01sx">
-        <dc:Bounds x="432" y="99" width="36" height="36" />
+        <dc:Bounds x="912" y="159" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="423" y="142" width="55" height="14" />
+          <dc:Bounds x="903" y="202" width="55" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0szunq3_di" bpmnElement="EmbeddedSubprocess" isExpanded="true">
+        <dc:Bounds x="430" y="77" width="420" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1cqfoep_di" bpmnElement="Flow_1cqfoep">
+        <di:waypoint x="728" y="177" />
+        <di:waypoint x="772" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1azjieh_di" bpmnElement="Flow_1azjieh">
+        <di:waypoint x="650" y="177" />
+        <di:waypoint x="692" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ksymqt_di" bpmnElement="Flow_1ksymqt">
+        <di:waypoint x="508" y="177" />
+        <di:waypoint x="550" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1dhi2lt_di" bpmnElement="Event_1dhi2lt">
+        <dc:Bounds x="472" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1xqrhfb_di" bpmnElement="Event_0dtync5">
+        <dc:Bounds x="692" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="697" y="202" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1yovc6x_di" bpmnElement="Event_0owqm1q">
+        <dc:Bounds x="772" y="159" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="763" y="202" width="55" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1cbkbb8_di" bpmnElement="MiTask">
+        <dc:Bounds x="550" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

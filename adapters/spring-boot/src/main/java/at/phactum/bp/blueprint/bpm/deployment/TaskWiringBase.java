@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 
-import at.phactum.bp.blueprint.bpm.deployment.MethodParameter.Type;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameterFactory;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
@@ -26,11 +27,22 @@ import at.phactum.bp.blueprint.service.WorkflowTask;
 public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessServiceImplementation<?>> {
 
     protected final ApplicationContext applicationContext;
+    
+    protected final MethodParameterFactory methodParameterFactory;
+
+    public TaskWiringBase(
+            final ApplicationContext applicationContext,
+            final MethodParameterFactory methodParameterFactory) {
+        
+        this.applicationContext = applicationContext;
+        this.methodParameterFactory = methodParameterFactory;
+        
+    }
 
     public TaskWiringBase(
             final ApplicationContext applicationContext) {
         
-        this.applicationContext = applicationContext;
+        this(applicationContext, new MethodParameterFactory());
         
     }
 
@@ -284,7 +296,8 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         return true;
                     }
 
-                    parameters.add(new MethodParameter(Type.DOMAINENTITY));
+                    parameters.add(methodParameterFactory
+                            .getDomainEntityMethodParameter());
                     return false;
                 }).filter(param -> {
                     final var miTotalAnnotation = param.getAnnotation(MultiInstanceTotal.class);
@@ -292,7 +305,8 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         return true;
                     }
 
-                    parameters.add(new MethodParameter(Type.MULTIINSTANCE_TOTAL));
+                    parameters.add(methodParameterFactory
+                            .getMultiInstanceTotalMethodParameter(miTotalAnnotation.value()));
                     return false;
                 }).filter(param -> {
                     final var miIndexAnnotation = param.getAnnotation(MultiInstanceIndex.class);
@@ -300,7 +314,8 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         return true;
                     }
 
-                    parameters.add(new MethodParameter(Type.MULTIINSTANCE_INDEX));
+                    parameters.add(methodParameterFactory
+                            .getMultiInstanceIndexMethodParameter(miIndexAnnotation.value()));
                     return false;
                 }).filter(param -> {
                     final var miElementAnnotation = param.getAnnotation(MultiInstanceElement.class);
@@ -308,18 +323,29 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         return true;
                     }
 
-                    if (miElementAnnotation.resolverBean().equals(NoResolver.class)) {
-
-                        parameters.add(new MethodParameter(Type.MULTIINSTANCE_ELEMENT));
-
-                    } else {
+                    if (!miElementAnnotation.resolverBean().equals(NoResolver.class)) {
 
                         final var resolver = applicationContext
                                 .getBean(miElementAnnotation.resolverBean());
 
-                        parameters.add(new ResolverBasedMethodParameter(
-                                Type.MULTIINSTANCE_RESOLVER, resolver));
+                        parameters.add(methodParameterFactory
+                                .getResolverBasedMultiInstanceMethodParameter(resolver));
 
+                    } else if (!MultiInstanceElement.USE_RESOLVER.equals(miElementAnnotation.value())) {
+
+                        parameters.add(methodParameterFactory
+                                .getMultiInstanceElementMethodParameter(miElementAnnotation.value()));
+                        
+                    } else {
+                        
+                        throw new RuntimeException(
+                                "Either attribute 'value' or 'resolver' of annotation @"
+                                + MultiInstanceElement.class.getSimpleName()
+                                + " has to be defined. Missing both at parameter "
+                                + index[0]
+                                + " of method "
+                                + method);
+                        
                     }
                     return false;
                 }).forEach(param -> {
