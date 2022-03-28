@@ -1,6 +1,5 @@
 package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,6 +7,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.camunda.bpm.model.xml.ModelInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +20,7 @@ import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiI
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
-import io.camunda.zeebe.client.api.command.CompleteJobCommandStep1;
+import at.phactum.bp.blueprint.service.TaskException;
 import io.camunda.zeebe.client.api.command.FinalCommandStep;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -27,11 +28,12 @@ import io.camunda.zeebe.client.api.worker.JobHandler;
 import io.camunda.zeebe.model.bpmn.instance.Activity;
 import io.camunda.zeebe.model.bpmn.instance.BaseElement;
 import io.camunda.zeebe.model.bpmn.instance.MultiInstanceLoopCharacteristics;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import io.camunda.zeebe.spring.client.jobhandling.CommandWrapper;
 import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlingStrategy;
 
 public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(Camunda8TaskHandler.class);
 
     private final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
@@ -61,16 +63,18 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
         try {
             final var businessKey = (String) job.getVariablesAsMap().get("id");
             
-            Object result = super.execute(
+            final var domainEntity = super.execute(
                     businessKey,
                     multiInstanceVariable -> getVariable(job, multiInstanceVariable));
 
-            command = new CommandWrapper(createCompleteCommand(client, job, result), job,
-                    commandExceptionHandlingStrategy);
-        } catch (ZeebeBpmnError bpmnError) {
-            command = new CommandWrapper(createThrowErrorCommand(client, job, bpmnError), job,
-                    commandExceptionHandlingStrategy);
+            command = createCompleteCommand(client, job, domainEntity);
+        } catch (TaskException bpmnError) {
+            command = createThrowErrorCommand(client, job, bpmnError);
+        } catch (Exception e) {
+            logger.error("Failed to execute job '{}'", job.getKey(), e);
+            command = createFailedCommand(client, job, e);
         }
+
         command.executeAsync();
 
     }
@@ -179,37 +183,55 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
 
     }
 
-    public FinalCommandStep createCompleteCommand(
+    @SuppressWarnings("unchecked")
+    public CommandWrapper createCompleteCommand(
             final JobClient jobClient,
             final ActivatedJob job,
-            final Object result) {
+            final WorkflowDomainEntity domainEntity) {
 
-        CompleteJobCommandStep1 completeCommand = jobClient.newCompleteCommand(job.getKey());
-        if (result != null) {
-            if (result.getClass().isAssignableFrom(Map.class)) {
-                completeCommand = completeCommand.variables((Map) result);
-            } else if (result.getClass().isAssignableFrom(String.class)) {
-                completeCommand = completeCommand.variables((String) result);
-            } else if (result.getClass().isAssignableFrom(InputStream.class)) {
-                completeCommand = completeCommand.variables((InputStream) result);
-            } else {
-                completeCommand = completeCommand.variables(result);
-            }
+        var completeCommand = jobClient
+                .newCompleteCommand(job.getKey());
+        
+        if (domainEntity != null) {
+            completeCommand = completeCommand.variables(domainEntity);
         }
-        return completeCommand;
+        
+        return new CommandWrapper(
+                (FinalCommandStep<Void>) ((FinalCommandStep<?>) completeCommand),
+                job,
+                commandExceptionHandlingStrategy);
 
     }
 
-    private FinalCommandStep<Void> createThrowErrorCommand(
+    private CommandWrapper createThrowErrorCommand(
             final JobClient jobClient,
             final ActivatedJob job,
-            final ZeebeBpmnError bpmnError) {
+            final TaskException bpmnError) {
 
-        FinalCommandStep<Void> command = jobClient.newThrowErrorCommand(job.getKey()) // TODO: PR for taking a job only
-                                                                                      // in command chain
-                .errorCode(bpmnError.getErrorCode()).errorMessage(bpmnError.getErrorMessage());
-        return command;
+        return new CommandWrapper(
+                jobClient
+                        .newThrowErrorCommand(job.getKey())
+                        .errorCode(bpmnError.getErrorCode())
+                        .errorMessage(bpmnError.getErrorName()),
+                job,
+                commandExceptionHandlingStrategy);
 
+    }
+    
+    @SuppressWarnings("unchecked")
+    private CommandWrapper createFailedCommand(
+            final JobClient jobClient,
+            final ActivatedJob job,
+            final Exception e) {
+        
+        return new CommandWrapper(
+                (FinalCommandStep<Void>) ((FinalCommandStep<?>) jobClient
+                        .newFailCommand(job)
+                        .retries(0)
+                        .errorMessage(e.getMessage())),
+                job,
+                commandExceptionHandlingStrategy);
+        
     }
 
 }

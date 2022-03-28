@@ -40,7 +40,7 @@ public abstract class TaskHandlerBase {
 
     }
     
-    protected Object execute(
+    protected WorkflowDomainEntity execute(
             final String workflowDomainEntityId,
             final Function<String, Object> multiInstanceSupplier)
             throws Exception {
@@ -79,13 +79,14 @@ public abstract class TaskHandlerBase {
                 // ignore unknown parameters, but they should be filtered as part of validation
                 .forEach(param -> { /* */ });
         
-        final var result = method.invoke(bean, args);
+        method.invoke(bean, args);
 
         if (domainEntity[0] != null) {
             workflowDomainEntityRepository.saveAndFlush(domainEntity[0]);
+            return domainEntity[0];
         }
 
-        return result;
+        return null;
         
     }
 
@@ -198,8 +199,13 @@ public abstract class TaskHandlerBase {
             return true;
         }
         
+        // Using findById is required to get an object instead of a Hibernate proxy.
+        // Otherwise for e.g. Camunda8 connector JSON serialization of the
+        // domain-entity is not possible.
         domainEntity[0] = (WorkflowDomainEntity) workflowDomainEntityRepository
-                .getById(workflowDomainEntityId);
+                .findById(workflowDomainEntityId)
+                .get();
+
         args[index] = domainEntity[0];
 
         return false;

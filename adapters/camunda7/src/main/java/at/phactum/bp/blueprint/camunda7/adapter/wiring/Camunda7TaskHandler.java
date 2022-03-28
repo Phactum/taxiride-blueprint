@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
@@ -21,6 +22,7 @@ import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
+import at.phactum.bp.blueprint.service.TaskException;
 
 public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate {
 
@@ -42,14 +44,18 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
         
         final var multiInstanceCache = new Map[] { null };
 
-        result = super.execute(
-                execution.getBusinessKey(),
-                multiInstanceActivity -> {
-                    if (multiInstanceCache[0] == null) {
-                        multiInstanceCache[0] = getMultiInstanceContext(execution);
-                    }
-                    return multiInstanceCache[0].get(multiInstanceActivity);
-                });
+        try {
+            super.execute(
+                    execution.getBusinessKey(),
+                    multiInstanceActivity -> {
+                        if (multiInstanceCache[0] == null) {
+                            multiInstanceCache[0] = getMultiInstanceContext(execution);
+                        }
+                        return multiInstanceCache[0].get(multiInstanceActivity);
+                    });
+        } catch (TaskException e) {
+            throw new BpmnError(e.getErrorCode(), e.getErrorName(), e);
+        }
 
     }
     

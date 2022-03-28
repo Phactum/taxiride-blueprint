@@ -286,6 +286,14 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
 
         final var unknown = new StringBuffer();
 
+        if (!void.class.equals(method.getReturnType())) {
+            throw new RuntimeException(
+                    "Expected return-type 'void' for '"
+                    + method
+                    + "' but got: "
+                    + method.getReturnType());
+        }
+        
         final var index = new int[] { -1 };
         Arrays
                 .stream(method.getParameters())
