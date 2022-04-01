@@ -9,6 +9,8 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
+
 /**
  * Used to wire workflow-services to the processes they are responsible for.
  * 
@@ -22,6 +24,11 @@ import java.lang.annotation.Target;
 public @interface WorkflowService {
 
     static String USE_BEAN_NAME = "";
+
+    /**
+     * @return The workflow-aggregate associated with the annotated service
+     */
+    Class<? extends WorkflowDomainEntity> workflowAggregateClass();
 
     /**
      * @return The process-id as defined in the BPMN for which the annotated service

@@ -6,13 +6,16 @@ import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.WorkflowService;
-import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
 @Service
-@WorkflowService(bpmnProcessId = "Process_Test1")
-@WorkflowService(bpmnProcessId = "Process_Test2")
-public class Test1WorkflowService implements WorkflowServicePort<Test1DomainEntity> {
+@WorkflowService(
+        workflowAggregateClass = Test1DomainEntity.class,
+        bpmnProcessId = "Process_Test1")
+@WorkflowService(
+        workflowAggregateClass = Test1DomainEntity.class,
+        bpmnProcessId = "Process_Test2")
+public class Test1WorkflowService {
 
     @WorkflowTask(taskDefinition = "TEST1")
     public void doTest1Task(

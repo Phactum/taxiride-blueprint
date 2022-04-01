@@ -1,7 +1,6 @@
 package at.phactum.bp.blueprint.bpm.deployment;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +20,6 @@ import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.NoResolver;
 import at.phactum.bp.blueprint.service.WorkflowService;
-import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
 public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessServiceImplementation<?>> {
@@ -55,30 +53,29 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
 
         final var serviceClass = targetClass(bean);
 
-        if (serviceClass.isAssignableFrom(WorkflowServicePort.class)) {
-            return null;
+        final var aggregateClassNames = new LinkedList<String>();
+        
+        final var workflowDomainEntityClass = Arrays
+                .stream(serviceClass.getAnnotationsByType(WorkflowService.class))
+                .collect(Collectors.groupingBy(annotation -> annotation.workflowAggregateClass()))
+                .keySet()
+                .stream()
+                .peek(aggregateClass -> aggregateClassNames.add(aggregateClass.getName()))
+                .findFirst()
+                .get();
+        
+        if (aggregateClassNames.size() > 1) {
+            throw new RuntimeException(
+                    "The bean '"
+                    + serviceClass.getName()
+                    + "' has annotations of type @WorkflowService having attributes "
+                    + "'workflowAggregateClass' pointing to multiple classes: "
+                    + aggregateClassNames.stream().collect(Collectors.joining(", ")));
         }
         
-        try {
-            
-            @SuppressWarnings("unchecked")
-            final var workflowDomainEntityClass =
-                    (Class<? extends WorkflowDomainEntity>) Arrays
-                            .stream(bean
-                                    .getClass()
-                                    .getGenericInterfaces())
-                            .map(type -> (ParameterizedType) type)
-                            .filter(type -> type.getRawType().equals(WorkflowServicePort.class))
-                            .findFirst()
-                            .get().getActualTypeArguments()[0];
-
-            return Map.entry(serviceClass, workflowDomainEntityClass);
-
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Could not load WorkflowDomainEntity", e);
-        }
+        return Map.entry(
+                serviceClass,
+                workflowDomainEntityClass);
 
     }
 
@@ -124,9 +121,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
             throw new RuntimeException(
                     "No bean annotated with @WorkflowService(bpmnProcessId=\""
                     + bpmnProcessId
-                    + "\") and extending "
-                    + WorkflowServicePort.class.getName()
-                    + " found. Tested for: "
+                    + "\"). Tested for: "
                     + tested);
         }
         
@@ -151,11 +146,9 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         found.append(matchingService.getName());
                     });
             throw new RuntimeException(
-                    "Beans annotated with @WorkflowService(bpmnProcessId=\""
+                    "Multiple beans annotated with @WorkflowService(bpmnProcessId=\""
                     + bpmnProcessId
-                    + "\") and extending "
-                    + WorkflowServicePort.class.getName()
-                    + " found having different generic parameters, but should all the same: "
+                    + "\") found having different generic parameters, but should all the same: "
                     + found);
             
         }

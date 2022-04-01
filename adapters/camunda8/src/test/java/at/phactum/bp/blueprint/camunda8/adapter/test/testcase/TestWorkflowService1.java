@@ -1,11 +1,12 @@
 package at.phactum.bp.blueprint.camunda8.adapter.test.testcase;
 
 import at.phactum.bp.blueprint.service.WorkflowService;
-import at.phactum.bp.blueprint.service.WorkflowServicePort;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
-@WorkflowService(bpmnProcessId = "Process_ConnectableTest1")
-public class TestWorkflowService1 implements WorkflowServicePort<TestWorkflowDomainEntity> {
+@WorkflowService(
+        workflowAggregateClass = TestWorkflowDomainEntity.class,
+        bpmnProcessId = "Process_ConnectableTest1")
+public class TestWorkflowService1 {
 
     @WorkflowTask(taskDefinition = "SERVICE")
     public void doServiceTask() {
