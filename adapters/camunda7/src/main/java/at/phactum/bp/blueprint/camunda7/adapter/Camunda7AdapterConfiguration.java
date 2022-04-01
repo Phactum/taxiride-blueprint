@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
 import org.springframework.beans.factory.InjectionPoint;
@@ -43,6 +44,9 @@ public class Camunda7AdapterConfiguration {
     
     @Autowired
     private RuntimeService runtimeService;
+
+    @Autowired
+    private RepositoryService repositoryService;
 
     @Bean
     public SpringDataTool springDataTool() {
@@ -116,6 +120,7 @@ public class Camunda7AdapterConfiguration {
         @SuppressWarnings("unchecked")
         final var result = new Camunda7ProcessService<DE>(
                 runtimeService,
+                repositoryService,
                 (JpaRepository<DE, String>) workflowDomainEntityRepository,
                 workflowDomainEntityClass);
 

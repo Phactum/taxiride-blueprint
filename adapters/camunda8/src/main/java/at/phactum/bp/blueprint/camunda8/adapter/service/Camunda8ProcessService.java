@@ -2,6 +2,8 @@ package at.phactum.bp.blueprint.camunda8.adapter.service;
 
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
@@ -11,6 +13,8 @@ import io.camunda.zeebe.client.ZeebeClient;
 public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
         implements ProcessServiceImplementation<DE> {
 
+    private static final Logger logger = LoggerFactory.getLogger(Camunda8ProcessService.class);
+    
     private final JpaRepository<DE, String> workflowDomainEntityRepository;
 
     private final Class<DE> workflowDomainEntityClass;
@@ -83,6 +87,45 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
             // processEntity);
             throw exception;
         }
+        
+    }
+
+    @Override
+    public void correlateMessage(
+            final DE domainEntity,
+            final String messageName) {
+        
+        final var messageKey = client
+                .newPublishMessageCommand()
+                .messageName(messageName)
+                .correlationKey(domainEntity.getId())
+                .variables(domainEntity)
+                .send()
+                .join()
+                .getMessageKey();
+        
+        logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}' as '{}'",
+                messageName, domainEntity.getId(), bpmnProcessId, messageKey);
+        
+    }
+
+    @Override
+    public void correlateMessage(
+            final DE domainEntity,
+            final String messageName,
+            final String correlationId) {
+            
+        final var messageKey = client
+                .newPublishMessageCommand()
+                .messageName(messageName)
+                .correlationKey(correlationId)
+                .variables(domainEntity)
+                .send()
+                .join()
+                .getMessageKey();
+        
+        logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}' as '{}'",
+                messageName, correlationId, bpmnProcessId, messageKey);
         
     }
     

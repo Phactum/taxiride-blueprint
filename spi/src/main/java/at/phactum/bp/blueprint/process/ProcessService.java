@@ -20,4 +20,23 @@ public interface ProcessService<DE extends WorkflowDomainEntity> {
      */
     String getBpmnProcessId();
 
+    /**
+     * Correlate a message for the domain-entity's workflow or it's sub-workflows
+     * (call-activities).
+     *
+     * @param processEntity The domain-entity
+     * @param messageName   The message name to be correlated
+     */
+    void correlateMessage(DE domainEntity, String messageName);
+
+    /**
+     * Correlate a message for the domain-entity's workflow or it's sub-workflows
+     * (call-activities).
+     *
+     * @param processEntity The domain-entity
+     * @param messageName   The message name to be correlated
+     * @param correlationId The correlation-id
+     */
+    void correlateMessage(DE domainEntity, String messageName, String correlationId);
+
 }
