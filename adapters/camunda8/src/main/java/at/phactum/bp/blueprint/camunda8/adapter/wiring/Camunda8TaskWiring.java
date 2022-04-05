@@ -16,7 +16,6 @@ import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAda
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MethodParameterFactory;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.ParameterVariables;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
 import io.camunda.zeebe.model.bpmn.instance.BaseElement;
@@ -95,7 +94,8 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
     }
     
     @Override
-    protected <DE extends WorkflowDomainEntity> Camunda8ProcessService<?> connectToBpms(
+    protected <DE> Camunda8ProcessService<?> connectToBpms(
+            final String workflowModuleId,
             final Class<DE> workflowDomainEntityClass,
             final String bpmnProcessId) {
         
@@ -105,7 +105,7 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
                 .findFirst()
                 .get();
 
-        processService.wire(client, bpmnProcessId);
+        processService.wire(client, workflowModuleId, bpmnProcessId);
 
         return processService;
         

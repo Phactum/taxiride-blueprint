@@ -1,7 +1,6 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
 import at.phactum.bp.blueprint.bpm.deployment.Connectable;
-import at.phactum.bp.blueprint.service.WorkflowTask;
 
 public class Camunda7Connectable implements Connectable {
 
@@ -27,18 +26,10 @@ public class Camunda7Connectable implements Connectable {
 
     }
     
-    @Override
-    public boolean applies(
-            final WorkflowTask workflowTask) {
-
-        return applies(workflowTask.id(), workflowTask.taskDefinition());
-
-    }
-    
     public boolean applies(
             final String elementId,
             final String taskDefinition) {
-        
+
         return getElementId().equals(elementId)
                 || getTaskDefinition().equals(taskDefinition);
         
@@ -57,6 +48,7 @@ public class Camunda7Connectable implements Connectable {
 
     }
     
+    @Override
     public String getElementId() {
         
         return elementId;

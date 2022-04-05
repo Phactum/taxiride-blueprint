@@ -20,7 +20,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
 import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 import at.phactum.bp.blueprint.service.TaskException;
 
@@ -29,13 +28,19 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
     private Object result;
 
     public Camunda7TaskHandler(
-            final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository,
+            final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
             final Method method,
             final List<MethodParameter> parameters) {
         
         super(workflowDomainEntityRepository, bean, method, parameters);
         
+    }
+
+    public String getMethodName() {
+
+        return method.getName();
+
     }
 
     @Override

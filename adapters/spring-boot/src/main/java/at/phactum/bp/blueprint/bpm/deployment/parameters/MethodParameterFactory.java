@@ -1,6 +1,5 @@
 package at.phactum.bp.blueprint.bpm.deployment.parameters;
 
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
 public class MethodParameterFactory {
@@ -30,7 +29,7 @@ public class MethodParameterFactory {
     }
 
     public ResolverBasedMultiInstanceMethodParameter getResolverBasedMultiInstanceMethodParameter(
-            MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> resolverBean) {
+            MultiInstanceElementResolver<?, ?> resolverBean) {
 
         return new ResolverBasedMultiInstanceMethodParameter(resolverBean);
 

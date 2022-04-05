@@ -98,7 +98,7 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                                 inputStream.hashCode(),
                                 resource.getDescription());
 
-                        processBpmnModel(deployedProcesses, bpmn, model);
+                        processBpmnModel(workflowModuleId, deployedProcesses, bpmn, model);
                         deploymentHashCode[0] = inputStream.getTotalHashCode();
 
                     	return deployProcessCommand.addProcessModel(model, resource.getFilename());
@@ -120,6 +120,7 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
     }
     
     private void processBpmnModel(
+            final String workflowModuleId,
             final Map<String, DeployedBpmn> deployedProcesses,
             final DeployedBpmn bpmn,
     		final BpmnModelInstanceImpl model) {
@@ -133,7 +134,7 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                 .filter(Process::isExecutable)
                 // wire service port
                 .peek(process -> {
-                    processService[0] = taskWiring.wireService(process.getId());
+                    processService[0] = taskWiring.wireService(workflowModuleId, process.getId());
                     deployedProcesses.put(process.getId(), bpmn);
                 })
                 // wire task methods

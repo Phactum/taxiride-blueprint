@@ -3,9 +3,7 @@ package at.phactum.bp.blueprint.service;
 import java.util.Collection;
 import java.util.Map;
 
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-
-public interface MultiInstanceElementResolver<DE extends WorkflowDomainEntity, T> {
+public interface MultiInstanceElementResolver<DE, T> {
 
     interface MultiInstance<E> {
         E getElement();

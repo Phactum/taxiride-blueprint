@@ -14,7 +14,7 @@ import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameterFactory;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
+import at.phactum.bp.blueprint.service.BpmnProcess;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
@@ -44,11 +44,10 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
         
     }
 
-    protected abstract <DE extends WorkflowDomainEntity> PS connectToBpms(
-            final Class<DE> workflowDomainEntityClass,
-            final String bpmnProcessId);
+    protected abstract <DE> PS connectToBpms(
+            String workflowModuleId, Class<DE> workflowDomainEntityClass, String bpmnProcessId);
 
-    protected Entry<Class<?>, Class<? extends WorkflowDomainEntity>> determineWorkflowEntityClass(
+    protected Entry<Class<?>, Class<?>> determineWorkflowEntityClass(
             final Object bean) {
 
         final var serviceClass = targetClass(bean);
@@ -64,15 +63,6 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                 .findFirst()
                 .get();
         
-        if (aggregateClassNames.size() > 1) {
-            throw new RuntimeException(
-                    "The bean '"
-                    + serviceClass.getName()
-                    + "' has annotations of type @WorkflowService having attributes "
-                    + "'workflowAggregateClass' pointing to multiple classes: "
-                    + aggregateClassNames.stream().collect(Collectors.joining(", ")));
-        }
-        
         return Map.entry(
                 serviceClass,
                 workflowDomainEntityClass);
@@ -80,22 +70,23 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
     }
 
     private boolean isExtendingWorkflowServicePort(
-            final Entry<Class<?>, Class<? extends WorkflowDomainEntity>> classes) {
+            final Entry<Class<?>, Class<?>> classes) {
 
         return classes != null;
 
     }
 
     public PS wireService(
+            final String workflowModuleId,
             final String bpmnProcessId) {
 
         final var workflowDomainEntityClass = determineAndValidateWorkflowDomainEntityClass(bpmnProcessId);
 
-        return connectToBpms(workflowDomainEntityClass, bpmnProcessId);
+        return connectToBpms(workflowModuleId, workflowDomainEntityClass, bpmnProcessId);
         
     }
 
-    private Class<? extends WorkflowDomainEntity> determineAndValidateWorkflowDomainEntityClass(
+    private Class<?> determineAndValidateWorkflowDomainEntityClass(
             final String bpmnProcessId) {
 
         final var tested = new StringBuilder();
@@ -187,7 +178,10 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
 
         return Arrays
                 .stream(workflowServiceAnnotations)
-                .anyMatch(annotation -> annotation.bpmnProcessId().equals(bpmnProcessId));
+                .flatMap(workflowServiceAnnotation -> Arrays.stream(workflowServiceAnnotation.bpmnProcess()))
+                .anyMatch(annotation -> annotation.bpmnProcessId().equals(bpmnProcessId)
+                        || (annotation.bpmnProcessId().equals(BpmnProcess.USE_BEAN_NAME)
+                                && bpmnProcessId.equals(beanClass.getSimpleName())));
 
     }
     
@@ -199,11 +193,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
     }
 
     protected abstract void connectToBpms(
-            final PS processService,
-            final Object bean,
-            final T connectable,
-            final Method method,
-            final List<MethodParameter> parameters);
+            PS processService, Object bean, T connectable, Method method, List<MethodParameter> parameters);
 
     private void connectConnectableToBean(
             final PS processService,
@@ -230,7 +220,9 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                     tested.append('#');
                     tested.append(m.getKey().toString());
                 })
-                .filter(m -> connectable.applies(m.getValue()))
+                .filter(m -> connectable.getElementId().equals(m.getValue().id())
+                        || connectable.getTaskDefinition().equals(m.getValue().taskDefinition())
+                        || connectable.getTaskDefinition().equals(m.getKey().getName()))
                 .peek(m -> {
                     if (matching.length() > 0) {
                         matching.append(", ");

@@ -1,16 +1,16 @@
 package at.phactum.bp.blueprint.camunda8.adapter.service;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import io.camunda.zeebe.client.ZeebeClient;
 
-public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
+public class Camunda8ProcessService<DE>
         implements ProcessServiceImplementation<DE> {
 
     private static final Logger logger = LoggerFactory.getLogger(Camunda8ProcessService.class);
@@ -19,25 +19,33 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
 
     private final Class<DE> workflowDomainEntityClass;
 
+    private final Function<DE, String> getDomainEntityId;
+
     private ZeebeClient client;
     
+    private String workflowModuleId;
+
     private String bpmnProcessId;
     
     public Camunda8ProcessService(
             final JpaRepository<DE, String> workflowDomainEntityRepository,
+            final Function<DE, String> getDomainEntityId,
             final Class<DE> workflowDomainEntityClass) {
         
         super();
         this.workflowDomainEntityRepository = workflowDomainEntityRepository;
         this.workflowDomainEntityClass = workflowDomainEntityClass;
+        this.getDomainEntityId = getDomainEntityId;
                 
     }
     
     public void wire(
             final ZeebeClient client,
+            final String workflowModuleId,
             final String bpmnProcessId) {
         
         this.client = client;
+        this.workflowModuleId = workflowModuleId;
         this.bpmnProcessId = bpmnProcessId;
         
     }
@@ -67,7 +75,7 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
     public DE startWorkflow(
             final DE domainEntity) throws Exception {
         
-        final var processInstance = client
+        client
                 .newCreateInstanceCommand()
                 .bpmnProcessId(bpmnProcessId)
                 .latestVersion()
@@ -75,11 +83,6 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
                 .send()
                 .get(10, TimeUnit.SECONDS);
 
-        domainEntity.setBpmnProcessId(bpmnProcessId);
-        domainEntity.setWorkflowId(Long.toHexString(processInstance.getProcessInstanceKey()));
-        domainEntity.setRootWorkflowId(domainEntity.getWorkflowId());
-        domainEntity.setDeployedProcessId(Long.toHexString(processInstance.getProcessDefinitionKey()));
-        
         try {
             return workflowDomainEntityRepository.saveAndFlush(domainEntity);
         } catch (RuntimeException exception) {
@@ -95,17 +98,19 @@ public class Camunda8ProcessService<DE extends WorkflowDomainEntity>
             final DE domainEntity,
             final String messageName) {
         
+        final var id = getDomainEntityId.apply(domainEntity);
+
         final var messageKey = client
                 .newPublishMessageCommand()
                 .messageName(messageName)
-                .correlationKey(domainEntity.getId())
+                .correlationKey(id)
                 .variables(domainEntity)
                 .send()
                 .join()
                 .getMessageKey();
         
         logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}' as '{}'",
-                messageName, domainEntity.getId(), bpmnProcessId, messageKey);
+                messageName, id, bpmnProcessId, messageKey);
         
     }
 

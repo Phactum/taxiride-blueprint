@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
 import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
@@ -24,7 +25,6 @@ import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiringPlugin;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.ProcessEntityAwareExpressionManager;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.utilities.SpringDataTool;
 
 @AutoConfigurationPackage(basePackageClasses = Camunda7AdapterConfiguration.class)
@@ -48,10 +48,13 @@ public class Camunda7AdapterConfiguration {
     @Autowired
     private RepositoryService repositoryService;
 
+    @Autowired
+    private LocalContainerEntityManagerFactoryBean containerEntityManagerFactoryBean;
+
     @Bean
     public SpringDataTool springDataTool() {
         
-        return new SpringDataTool(applicationContext);
+        return new SpringDataTool(applicationContext, containerEntityManagerFactoryBean);
         
     }
     
@@ -103,7 +106,7 @@ public class Camunda7AdapterConfiguration {
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public <DE extends WorkflowDomainEntity> Camunda7ProcessService<DE> camunda7ProcessService(
+    public <DE> Camunda7ProcessService<DE> camunda7ProcessService(
             final SpringDataTool springDataTool,
             final InjectionPoint injectionPoint) throws Exception {
 
@@ -121,6 +124,7 @@ public class Camunda7AdapterConfiguration {
         final var result = new Camunda7ProcessService<DE>(
                 runtimeService,
                 repositoryService,
+                domainEntity -> springDataTool.getDomainEntityId(domainEntity),
                 (JpaRepository<DE, String>) workflowDomainEntityRepository,
                 workflowDomainEntityClass);
 

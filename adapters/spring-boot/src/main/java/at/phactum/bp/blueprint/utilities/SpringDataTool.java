@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.support.Repositories;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
 public class SpringDataTool {
 
@@ -14,8 +15,15 @@ public class SpringDataTool {
     
     private final ApplicationContext applicationContext;
 
-    public SpringDataTool(ApplicationContext applicationContext) {
+    private final LocalContainerEntityManagerFactoryBean containerEntityManagerFactoryBean;
+    
+    public SpringDataTool(
+            final ApplicationContext applicationContext,
+            final LocalContainerEntityManagerFactoryBean containerEntityManagerFactoryBean) {
+        
         this.applicationContext = applicationContext;
+        this.containerEntityManagerFactoryBean = containerEntityManagerFactoryBean;
+        
     }
 
     @SuppressWarnings("unchecked")
@@ -54,4 +62,18 @@ public class SpringDataTool {
 
     }
 
+    public String getDomainEntityId(
+            final Object domainEntity) {
+        
+        final Object id = containerEntityManagerFactoryBean
+                .getNativeEntityManagerFactory()
+                .getPersistenceUnitUtil()
+                .getIdentifier(domainEntity);
+        if (id == null) {
+            throw new RuntimeException("No id given for domainEntity: " + domainEntity);
+        }
+        return id.toString();
+        
+    }
+    
 }

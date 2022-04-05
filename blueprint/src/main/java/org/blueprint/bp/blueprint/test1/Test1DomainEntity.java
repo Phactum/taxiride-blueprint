@@ -7,16 +7,17 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.Table;
 
-import org.blueprint.bp.blueprint.config.ApplicationProperties;
-
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-
 @Entity
 @Table(name = "TEST1")
-public class Test1DomainEntity extends WorkflowDomainEntity {
+public class Test1DomainEntity {
+
+    @Id
+    @Column(name = "ID", columnDefinition = "VARCHAR(40)")
+    private String id;
 
     @Lob
     @Column(name = "ITEM_IDS", columnDefinition = "BLOB")
@@ -24,19 +25,20 @@ public class Test1DomainEntity extends WorkflowDomainEntity {
     @ElementCollection
     private List<String> itemIds;
 
-    @Override
-    public String getWorkflowModuleId() {
-
-        return ApplicationProperties.WORKFLOW_MODULE_ID;
-
-    }
-
     public List<String> getItemIds() {
         return itemIds;
     }
 
     public void setItemIds(List<String> itemIds) {
         this.itemIds = itemIds;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
 }

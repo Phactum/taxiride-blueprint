@@ -4,14 +4,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import at.phactum.bp.blueprint.bpm.deployment.parameters.ResolverBasedMultiInstanceMethodParameter;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
 public class Camunda8ResolverBasedMethodParameter extends ResolverBasedMultiInstanceMethodParameter
         implements ParameterVariables {
 
     public Camunda8ResolverBasedMethodParameter(
-            final MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> resolverBean) {
+            final MultiInstanceElementResolver<?, ?> resolverBean) {
 
         super(resolverBean);
 

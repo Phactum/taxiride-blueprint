@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 
 @Component
 public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camunda7ProcessService<?>> {
@@ -32,7 +31,7 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
     
     @Override
     protected void connectToBpms(
-            final Camunda7ProcessService<? extends WorkflowDomainEntity> processService,
+            final Camunda7ProcessService<?> processService,
             final Object bean,
             final Camunda7Connectable connectable,
             final Method method,
@@ -42,7 +41,7 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
         
         @SuppressWarnings("unchecked")
         final var taskHandler = new Camunda7TaskHandler(
-                (JpaRepository<WorkflowDomainEntity, String>) repository,
+                (JpaRepository<Object, String>) repository,
                 bean,
                 method,
                 parameters);
@@ -52,7 +51,8 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
     }
     
     @Override
-    protected <DE extends WorkflowDomainEntity> Camunda7ProcessService<?> connectToBpms(
+    protected <DE> Camunda7ProcessService<?> connectToBpms(
+            final String workflowModuleId,
             final Class<DE> workflowDomainEntityClass,
             final String bpmnProcessId) {
         
@@ -62,7 +62,7 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
                 .findFirst()
                 .get();
 
-        processService.wire(bpmnProcessId);
+        processService.wire(workflowModuleId, bpmnProcessId);
 
         return processService;
         

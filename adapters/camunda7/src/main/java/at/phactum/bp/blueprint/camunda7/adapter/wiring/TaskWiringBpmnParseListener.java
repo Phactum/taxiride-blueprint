@@ -19,28 +19,45 @@ import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
 public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
 
     private static final Pattern CAMUNDA_EL_PATTERN = Pattern.compile("^[\\$\\#]\\{(.*)\\}$");
+
+    private static final ThreadLocal<String> workflowModuleId = new ThreadLocal<>();
     
     private final Camunda7TaskWiring taskWiring;
 
     private List<Camunda7Connectable> connectables = new LinkedList<>();
 
     private Map<String, Camunda7Connectable> serviceTaskLikeElements = new HashMap<>();
-
-    public TaskWiringBpmnParseListener(Camunda7TaskWiring taskWiring) {
+    
+    public TaskWiringBpmnParseListener(
+            final Camunda7TaskWiring taskWiring) {
 
         super();
         this.taskWiring = taskWiring;
 
     }
-
+    
+    public static void setWorkflowModuleId(
+            final String workflowModuleId) {
+        
+        TaskWiringBpmnParseListener.workflowModuleId.set(workflowModuleId);
+        
+    }
+    
+    public static void clearWorkflowModuleId() {
+        
+        TaskWiringBpmnParseListener.workflowModuleId.remove();
+        
+    }
+    
     @Override
     public void parseProcess(
             final Element processElement,
             final ProcessDefinitionEntity processDefinition) {
 
+        final var workflowModuleId = TaskWiringBpmnParseListener.workflowModuleId.get();
         final var bpmnProcessId = processDefinition.getKey();
 
-        final var processService = taskWiring.wireService(bpmnProcessId);
+        final var processService = taskWiring.wireService(workflowModuleId, bpmnProcessId);
 
         connectables.forEach(connectable -> taskWiring.wireTask(processService, connectable));
 

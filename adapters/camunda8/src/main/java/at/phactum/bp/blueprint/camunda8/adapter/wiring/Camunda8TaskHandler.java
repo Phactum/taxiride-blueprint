@@ -18,7 +18,6 @@ import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiInstanceIndexMethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiInstanceTotalMethodParameter;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 import at.phactum.bp.blueprint.service.TaskException;
 import io.camunda.zeebe.client.api.command.FinalCommandStep;
@@ -42,7 +41,7 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
     public Camunda8TaskHandler(
             final DeploymentService deploymentService,
             final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy,
-            final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository,
+            final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
             final Method method,
             final List<MethodParameter> parameters) {
@@ -187,7 +186,7 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
     public CommandWrapper createCompleteCommand(
             final JobClient jobClient,
             final ActivatedJob job,
-            final WorkflowDomainEntity domainEntity) {
+            final Object domainEntity) {
 
         var completeCommand = jobClient
                 .newCompleteCommand(job.getKey());

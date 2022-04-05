@@ -93,7 +93,9 @@ public class ProcessEntityELResolver extends ELResolver {
                         return false;
                     }
                     
-                    return connectable.applies(element.getId(), property.toString());
+                    return connectable.applies(
+                            element.getId(),
+                            property.toString());
                 })
                 .findFirst()
                 // found handler-reference

@@ -1,5 +1,7 @@
 package at.phactum.bp.blueprint.camunda7.adapter.service;
 
+import java.util.function.Function;
+
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.slf4j.Logger;
@@ -8,9 +10,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 
-public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
+public class Camunda7ProcessService<DE>
         implements ProcessServiceImplementation<DE> {
 
     private static final Logger logger = LoggerFactory.getLogger(Camunda7ProcessService.class);
@@ -20,12 +21,17 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
     private final JpaRepository<DE, String> workflowDomainEntityRepository;
     
     private final Class<DE> workflowDomainEntityClass;
+    
+    private final Function<DE, String> getDomainEntityId;
+
+    private String workflowModuleId;
 
     private String bpmnProcessId;
 
     public Camunda7ProcessService(
             final RuntimeService runtimeService,
             final RepositoryService repositoryService,
+            final Function<DE, String> getDomainEntityId,
             final JpaRepository<DE, String> workflowDomainEntityRepository,
             final Class<DE> workflowDomainEntityClass) {
 
@@ -33,12 +39,15 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
         this.runtimeService = runtimeService;
         this.workflowDomainEntityRepository = workflowDomainEntityRepository;
         this.workflowDomainEntityClass = workflowDomainEntityClass;
+        this.getDomainEntityId = getDomainEntityId;
 
     }
 
     public void wire(
+            final String workflowModuleId,
             final String bpmnProcessId) {
         
+        this.workflowModuleId = workflowModuleId;
         this.bpmnProcessId = bpmnProcessId;
         
     }
@@ -68,17 +77,13 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
     public DE startWorkflow(
             final DE domainEntity) throws Exception {
 
-        final var processInstance =
-                runtimeService
-                        .createProcessInstanceByKey(bpmnProcessId)
-                        .businessKey(domainEntity.getId())
-                        .processDefinitionTenantId(domainEntity.getWorkflowModuleId())
-                        .execute();
-
-        domainEntity.setBpmnProcessId(bpmnProcessId);
-        domainEntity.setWorkflowId(processInstance.getId());
-        domainEntity.setRootWorkflowId(processInstance.getId());
-        domainEntity.setDeployedProcessId(processInstance.getProcessDefinitionId());
+        final var id = getDomainEntityId.apply(domainEntity);
+        
+        runtimeService
+                .createProcessInstanceByKey(bpmnProcessId)
+                .businessKey(id)
+                .processDefinitionTenantId(workflowModuleId)
+                .execute();
         
         try {
             return workflowDomainEntityRepository.saveAndFlush(domainEntity);
@@ -111,7 +116,7 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
             final String correlationId) {
         
         final var correlationIdLocalVariableName =
-                domainEntity.getBpmnProcessId()
+                bpmnProcessId
                 + "-"
                 + messageName;
 
@@ -131,9 +136,11 @@ public class Camunda7ProcessService<DE extends WorkflowDomainEntity>
 
         workflowDomainEntityRepository.saveAndFlush(domainEntity);
 
+        final var id = getDomainEntityId.apply(domainEntity);
+        
         final var correlation = runtimeService
                 .createMessageCorrelation(messageName)
-                .processInstanceBusinessKey(domainEntity.getId());
+                .processInstanceBusinessKey(id);
 
         if (correlationIdLocalVariableName != null) {
             correlation.localVariableEquals(

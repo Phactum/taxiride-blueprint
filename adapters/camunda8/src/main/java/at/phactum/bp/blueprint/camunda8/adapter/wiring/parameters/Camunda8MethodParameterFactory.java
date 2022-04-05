@@ -5,14 +5,13 @@ import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceElementMet
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceIndexMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.ResolverBasedMultiInstanceMethodParameter;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
 public class Camunda8MethodParameterFactory extends MethodParameterFactory {
 
     @Override
     public ResolverBasedMultiInstanceMethodParameter getResolverBasedMultiInstanceMethodParameter(
-            MultiInstanceElementResolver<? extends WorkflowDomainEntity, ?> resolverBean) {
+            MultiInstanceElementResolver<?, ?> resolverBean) {
 
         return new Camunda8ResolverBasedMethodParameter(resolverBean);
 

@@ -1,11 +1,9 @@
 package at.phactum.bp.blueprint.process;
 
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-
 /**
  * @param <DE> The workflow-aggregate domain-entity-class
  */
-public interface ProcessService<DE extends WorkflowDomainEntity> {
+public interface ProcessService<DE> {
 
     /**
      * Start a new workflow.

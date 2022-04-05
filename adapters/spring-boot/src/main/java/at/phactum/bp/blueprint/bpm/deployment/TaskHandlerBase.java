@@ -14,12 +14,11 @@ import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceElementMet
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceIndexMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.ResolverBasedMultiInstanceMethodParameter;
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
 public abstract class TaskHandlerBase {
 
-    protected final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository;
+    protected final JpaRepository<Object, String> workflowDomainEntityRepository;
 
     protected final List<MethodParameter> parameters;
 
@@ -28,7 +27,7 @@ public abstract class TaskHandlerBase {
     protected final Method method;
 
     public TaskHandlerBase(
-            final JpaRepository<WorkflowDomainEntity, String> workflowDomainEntityRepository,
+            final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
             final Method method,
             final List<MethodParameter> parameters) {
@@ -40,12 +39,12 @@ public abstract class TaskHandlerBase {
 
     }
     
-    protected WorkflowDomainEntity execute(
+    protected Object execute(
             final String workflowDomainEntityId,
             final Function<String, Object> multiInstanceSupplier)
             throws Exception {
         
-        final var domainEntity = new WorkflowDomainEntity[] { null };
+        final var domainEntity = new Object[] { null };
 
         final var args = new Object[parameters.size()];
         
@@ -71,7 +70,7 @@ public abstract class TaskHandlerBase {
                 .filter(param -> processMultiInstanceResolverParameter(args, index[0], param,
                         () -> {
                             if (domainEntity[0] == null) {
-                                domainEntity[0] = (WorkflowDomainEntity) workflowDomainEntityRepository
+                                domainEntity[0] = workflowDomainEntityRepository
                                         .getById(workflowDomainEntityId);
                             }
                             return domainEntity[0];
@@ -164,7 +163,7 @@ public abstract class TaskHandlerBase {
             final Object[] args,
             final int index,
             final MethodParameter param,
-            final Supplier<WorkflowDomainEntity> workflowDomainEntity,
+            final Supplier<Object> workflowDomainEntity,
             final Function<String, Object> multiInstanceSupplier) {
 
         if (!(param instanceof ResolverBasedMultiInstanceMethodParameter)) {
@@ -173,7 +172,7 @@ public abstract class TaskHandlerBase {
         
         @SuppressWarnings("unchecked")
         final var resolver =
-                (MultiInstanceElementResolver<WorkflowDomainEntity, Object>)
+                (MultiInstanceElementResolver<Object, Object>)
                 ((ResolverBasedMultiInstanceMethodParameter) param).getResolverBean();
 
         final var multiInstances = new HashMap<String, MultiInstanceElementResolver.MultiInstance<Object>>();
@@ -192,7 +191,7 @@ public abstract class TaskHandlerBase {
             final Object[] args,
             final int index,
             final MethodParameter param,
-            final WorkflowDomainEntity[] domainEntity,
+            final Object[] domainEntity,
             final String workflowDomainEntityId) {
 
         if (!(param instanceof DomainEntityMethodParameter)) {
@@ -202,7 +201,7 @@ public abstract class TaskHandlerBase {
         // Using findById is required to get an object instead of a Hibernate proxy.
         // Otherwise for e.g. Camunda8 connector JSON serialization of the
         // domain-entity is not possible.
-        domainEntity[0] = (WorkflowDomainEntity) workflowDomainEntityRepository
+        domainEntity[0] = workflowDomainEntityRepository
                 .findById(workflowDomainEntityId)
                 .get();
 

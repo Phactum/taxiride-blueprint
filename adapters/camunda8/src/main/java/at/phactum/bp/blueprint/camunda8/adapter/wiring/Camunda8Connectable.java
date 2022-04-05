@@ -1,7 +1,6 @@
 package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
 import at.phactum.bp.blueprint.bpm.deployment.Connectable;
-import at.phactum.bp.blueprint.service.WorkflowTask;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
@@ -25,14 +24,6 @@ public class Camunda8Connectable implements Connectable {
     }
     
     @Override
-    public boolean applies(
-            final WorkflowTask workflowTask) {
-        
-        return getElementId().equals(workflowTask.id())
-                || getTaskDefinition().equals(workflowTask.taskDefinition());
-
-    }
-    
     public String getElementId() {
 
         return elementId;

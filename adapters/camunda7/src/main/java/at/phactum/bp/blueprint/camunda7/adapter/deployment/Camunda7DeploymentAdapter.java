@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
 
 public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
@@ -72,7 +73,12 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
             }
         }
 
-        deploymentBuilder.deployWithResult();
+        try {
+            TaskWiringBpmnParseListener.setWorkflowModuleId(workflowModuleId);
+            deploymentBuilder.deployWithResult();
+        } finally {
+            TaskWiringBpmnParseListener.clearWorkflowModuleId();
+        }
         
     }
     

@@ -9,15 +9,13 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import at.phactum.bp.blueprint.domain.WorkflowDomainEntity;
-
 /**
  * This annotation is used to define a method for processing a certain
  * process-task (e.g. service-task, send-task, etc.):
  * 
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "doSomeWorkload")
- * public void doSomeWorkload(final {@link WorkflowDomainEntity MyDomainEntity} entity) throws {@link TaskException} {
+ * public void doSomeWorkload(final MyDomainEntity entity) throws {@link TaskException} {
  * </pre>
  */
 @Retention(RUNTIME)

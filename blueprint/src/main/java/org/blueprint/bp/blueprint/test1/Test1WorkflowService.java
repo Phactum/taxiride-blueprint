@@ -2,6 +2,7 @@ package org.blueprint.bp.blueprint.test1;
 
 import org.springframework.stereotype.Service;
 
+import at.phactum.bp.blueprint.service.BpmnProcess;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
@@ -11,10 +12,11 @@ import at.phactum.bp.blueprint.service.WorkflowTask;
 @Service
 @WorkflowService(
         workflowAggregateClass = Test1DomainEntity.class,
-        bpmnProcessId = "Process_Test1")
-@WorkflowService(
-        workflowAggregateClass = Test1DomainEntity.class,
-        bpmnProcessId = "Process_Test2")
+        bpmnProcess = {
+                @BpmnProcess(bpmnProcessId = "Process_Test1"),
+                @BpmnProcess(bpmnProcessId = "Process_Test2")
+            }
+    )
 public class Test1WorkflowService {
 
     @WorkflowTask(taskDefinition = "TEST1")
@@ -25,8 +27,8 @@ public class Test1WorkflowService {
         
     }
 
-    @WorkflowTask(taskDefinition = "TEST2")
-    public void doTest2Task() {
+    @WorkflowTask
+    public void TEST2() {
         
         System.err.println("YEAH 2");
         
