@@ -35,12 +35,12 @@ public class SpringDataTool {
     }
 
     @SuppressWarnings("unchecked")
-    public <O> JpaRepository<? super O, String> getJpaRepository(Class<O> type) {
+    public <O> JpaRepository<O, String> getJpaRepository(Class<O> type) {
 
         Class<? super O> cls = type;
 
         if (REPOSITORY_MAP.containsKey(cls))
-            return (JpaRepository<? super O, String>) REPOSITORY_MAP.get(cls);
+            return (JpaRepository<O, String>) REPOSITORY_MAP.get(cls);
 
         var repositories = new Repositories(applicationContext);
 
@@ -53,7 +53,7 @@ public class SpringDataTool {
 
         if (repository.isPresent()) {
             REPOSITORY_MAP.put(cls, (JpaRepository<?, String>) repository.get());
-            return (JpaRepository<? super O, String>) REPOSITORY_MAP.get(cls);
+            return (JpaRepository<O, String>) REPOSITORY_MAP.get(cls);
         }
 
         throw new IllegalStateException(
