@@ -64,7 +64,8 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
             
             final var domainEntity = super.execute(
                     businessKey,
-                    multiInstanceVariable -> getVariable(job, multiInstanceVariable));
+                    multiInstanceVariable -> getVariable(job, multiInstanceVariable),
+                    taskParameter -> getVariable(job, taskParameter));
 
             command = createCompleteCommand(client, job, domainEntity);
         } catch (TaskException bpmnError) {

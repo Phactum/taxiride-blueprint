@@ -11,6 +11,16 @@
       <bpmn:outgoing>Flow_15jja18</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:endEvent id="Event_173i7e4" name="test 2 done">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="listOfAAndB">
+            <camunda:list>
+              <camunda:value>A</camunda:value>
+              <camunda:value>B</camunda:value>
+            </camunda:list>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_1401sp8</bpmn:incoming>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0vlvard" camunda:delegateExpression="${TEST2}" />
     </bpmn:endEvent>

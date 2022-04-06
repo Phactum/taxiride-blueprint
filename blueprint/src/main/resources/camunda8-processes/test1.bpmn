@@ -16,6 +16,9 @@
     <bpmn:endEvent id="Event_1ed01sx" name="test 2 done">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="TEST2" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=[&#34;A&#34;, &#34;B&#34;]" target="listOfAAndB" />
+        </zeebe:ioMapping>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0ehwfzv</bpmn:incoming>
       <bpmn:messageEventDefinition id="MessageEventDefinition_1ke5thj" />

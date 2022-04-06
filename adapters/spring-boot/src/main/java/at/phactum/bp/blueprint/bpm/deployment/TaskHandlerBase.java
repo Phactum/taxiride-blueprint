@@ -14,6 +14,7 @@ import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceElementMet
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceIndexMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.ResolverBasedMultiInstanceMethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.TaskParameter;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 
 public abstract class TaskHandlerBase {
@@ -41,7 +42,8 @@ public abstract class TaskHandlerBase {
     
     protected Object execute(
             final String workflowDomainEntityId,
-            final Function<String, Object> multiInstanceSupplier)
+            final Function<String, Object> multiInstanceSupplier,
+            final Function<String, Object> taskParameterSupplier)
             throws Exception {
         
         final var domainEntity = new Object[] { null };
@@ -61,6 +63,8 @@ public abstract class TaskHandlerBase {
         parameters
                 .stream()
                 .peek(param -> ++index[0])
+                .filter(param -> processTaskParameter(args, index[0], param,
+                        taskParameterSupplier))
                 .filter(param -> processMultiInstanceTotalParameter(args, index[0], param,
                         multiInstanceSupplier))
                 .filter(param -> processMultiInstanceIndexParameter(args, index[0], param,
@@ -186,6 +190,24 @@ public abstract class TaskHandlerBase {
         return false;
         
     }
+    
+    private boolean processTaskParameter(
+            final Object[] args,
+            final int index,
+            final MethodParameter param,
+            final Function<String, Object> taskParameterSupplier) {
+        
+        if (!(param instanceof TaskParameter)) {
+            return true;
+        }
+        
+        args[index] = taskParameterSupplier.apply(
+                ((TaskParameter) param).getName());
+        
+        return false;
+        
+    }
+            
     
     private boolean processDomainEntityParameter(
             final Object[] args,

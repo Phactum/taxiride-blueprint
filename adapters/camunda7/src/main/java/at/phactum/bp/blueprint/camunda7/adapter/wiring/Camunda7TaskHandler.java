@@ -57,7 +57,8 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
                             multiInstanceCache[0] = getMultiInstanceContext(execution);
                         }
                         return multiInstanceCache[0].get(multiInstanceActivity);
-                    });
+                    },
+                    taskParameter -> execution.getVariableLocal(taskParameter));
         } catch (TaskException e) {
             throw new BpmnError(e.getErrorCode(), e.getErrorName(), e);
         }

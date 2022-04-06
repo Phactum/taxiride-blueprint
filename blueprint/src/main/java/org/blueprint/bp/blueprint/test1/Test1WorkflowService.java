@@ -1,11 +1,14 @@
 package org.blueprint.bp.blueprint.test1;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import at.phactum.bp.blueprint.service.BpmnProcess;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
+import at.phactum.bp.blueprint.service.TaskParam;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
@@ -28,9 +31,9 @@ public class Test1WorkflowService {
     }
 
     @WorkflowTask
-    public void TEST2() {
+    public void TEST2(@TaskParam("listOfAAndB") final List<String> listOfAAndB) {
         
-        System.err.println("YEAH 2");
+        System.err.println("YEAH 2: " + listOfAAndB);
         
     }
 

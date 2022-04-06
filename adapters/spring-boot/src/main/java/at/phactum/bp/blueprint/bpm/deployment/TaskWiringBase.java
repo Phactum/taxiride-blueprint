@@ -19,6 +19,7 @@ import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.NoResolver;
+import at.phactum.bp.blueprint.service.TaskParam;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
@@ -291,6 +292,15 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
 
                     parameters.add(methodParameterFactory
                             .getDomainEntityMethodParameter());
+                    return false;
+                }).filter(param -> {
+                    final var taskParamAnnotation = param.getAnnotation(TaskParam.class);
+                    if (taskParamAnnotation == null) {
+                        return true;
+                    }
+
+                    parameters.add(methodParameterFactory
+                            .getTaskParameter(taskParamAnnotation.value()));
                     return false;
                 }).filter(param -> {
                     final var miTotalAnnotation = param.getAnnotation(MultiInstanceTotal.class);
