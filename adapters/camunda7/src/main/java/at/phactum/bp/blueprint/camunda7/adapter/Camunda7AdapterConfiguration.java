@@ -39,27 +39,17 @@ public class Camunda7AdapterConfiguration {
     @Autowired
     private ApplicationContext applicationContext;
 
-    @Autowired
-    private ProcessEngine processEngine;
-    
-    @Autowired
-    private RuntimeService runtimeService;
-
-    @Autowired
-    private RepositoryService repositoryService;
-
-    @Autowired
-    private LocalContainerEntityManagerFactoryBean containerEntityManagerFactoryBean;
-
     @Bean
-    public SpringDataTool springDataTool() {
+    public SpringDataTool springDataTool(
+            final LocalContainerEntityManagerFactoryBean containerEntityManagerFactoryBean) {
         
         return new SpringDataTool(applicationContext, containerEntityManagerFactoryBean);
         
     }
     
     @Bean
-    public Camunda7DeploymentAdapter camunda7DeploymentAdapter() {
+    public Camunda7DeploymentAdapter camunda7DeploymentAdapter(
+            final ProcessEngine processEngine) {
 
         return new Camunda7DeploymentAdapter(processEngine);
 
@@ -107,6 +97,8 @@ public class Camunda7AdapterConfiguration {
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public <DE> Camunda7ProcessService<DE> camunda7ProcessService(
+            final RuntimeService runtimeService,
+            final RepositoryService repositoryService,
             final SpringDataTool springDataTool,
             final InjectionPoint injectionPoint) throws Exception {
 
@@ -120,7 +112,6 @@ public class Camunda7AdapterConfiguration {
         final var workflowDomainEntityRepository = springDataTool
                 .getJpaRepository(workflowDomainEntityClass);
 
-        @SuppressWarnings("unchecked")
         final var result = new Camunda7ProcessService<DE>(
                 runtimeService,
                 repositoryService,
