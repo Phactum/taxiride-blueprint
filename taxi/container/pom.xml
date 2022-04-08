@@ -6,25 +6,18 @@
 
 	<parent>
 		<groupId>at.phactum.bp.blueprint</groupId>
-		<artifactId>blueprint-parent</artifactId>
+		<artifactId>blueprint-taxi</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>blueprint</artifactId>
-	<name>Blueprint</name>
+	<artifactId>taxi-container</artifactId>
+	<name>Taxi Container</name>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-		<!--
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>blueprint-camunda8-adapter</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		-->
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>blueprint-camunda7-adapter</artifactId>
@@ -39,8 +32,9 @@
 			<artifactId>h2</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>taxi-ride</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 </project>

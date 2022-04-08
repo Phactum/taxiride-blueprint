@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  description: Driver API
+  version: '1.0'
+  title: driver
+servers:
+  - url: /api/v1
+
+paths:
+  /driver/drivers-nearby:
+    post:
+      tags:
+        - driverService
+      summary: a list of drivers nearby a given location
+      operationId: determineDriversNearby
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriversNearbyParameters'
+      responses:
+        200:
+          description: the drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+
+components:
+  schemas:
+    DriversNearbyParameters:
+      type: object
+      properties:
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+    Driver:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string

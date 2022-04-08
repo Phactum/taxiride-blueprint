@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>at.phactum.bp.blueprint</groupId>
+		<artifactId>driver-service-api</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>driver-service-api-client</artifactId>
+	<name>Driver Service API Client</name>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>5.4.0</version>
+				<executions>
+					<execution>
+						<id>generate-api-client</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/../driver-service-api.yaml</inputSpec>
+							<generatorName>java</generatorName>
+							<apiPackage>com.taxicompany.driver.client.v1</apiPackage>
+							<modelPackage>com.taxicompany.driver.client.v1</modelPackage>
+							<invokerPackage>com.taxicompany.driver.client.v1</invokerPackage>
+							<configOptions>
+								<java8>true</java8><!-- avoid build interface default implementations -->
+								<dateLibrary>java8</dateLibrary><!-- use OffsetDateTime -->
+								<ensureUniqueParams>false</ensureUniqueParams>
+								<useGzipFeature>true</useGzipFeature>
+							</configOptions>
+							<library>feign</library>
+							<addCompileSourceRoot>true</addCompileSourceRoot>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<supportingFilesToGenerate>RFC3339DateFormat.java,StringUtil.java,ApiResponse.java,ApiClient.java,EncodingUtils.java,HttpBasicAuth.java,ApiResponseDecoder.java,ApiKeyAuth.java,HttpBearerAuth.java</supportingFilesToGenerate>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>at.phactum.bp.blueprint</groupId>
+			<artifactId>blueprint-rest-adapter-client</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+    <dependency>
+      <groupId>at.phactum.bp.blueprint</groupId>
+      <artifactId>blueprint-spring-boot-adapter</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+		<dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-starter</artifactId>
+		  <scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

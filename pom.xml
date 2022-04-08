@@ -37,6 +37,7 @@
 		<module>spi</module>
 		<module>adapters</module>
 		<module>blueprint</module>
+		<module>taxi</module>
 	</modules>
 
 	<dependencyManagement>

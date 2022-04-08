@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -14,8 +16,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.util.StringUtils;
 
+import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 import at.phactum.bp.blueprint.rest.adapter.oauth.OauthBearerTokenHandler;
 import at.phactum.bp.blueprint.rest.adapter.tls.TlsTruststoreUtil;
 import feign.Feign.Builder;
@@ -207,6 +211,33 @@ public abstract class ClientsConfigurationBase {
             throw new RuntimeException(e);
         }
 
+    }
+
+    protected <T extends WorkflowModuleIdAwareProperties> T getProperties(
+            final InjectionPoint injectionPoint,
+            final Class<T> propertiesInterface,
+            final List<T> properties) {
+        
+        final var classPackageName = injectionPoint
+                .getMember()
+                .getDeclaringClass()
+                .getPackageName();
+        
+        return properties
+                .stream()
+                .filter(props -> classPackageName
+                        .contains(props
+                                .getWorkflowModuleId()
+                                .toLowerCase()
+                                .replaceAll("[^a-z]", "")))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException(
+                        "There is no bean implementing interface '"
+                        + propertiesInterface.getName()
+                        + "' in the workflow-module of class '"
+                        + injectionPoint.getMember().getDeclaringClass().getName()
+                        + "'!"));
+        
     }
     
 }

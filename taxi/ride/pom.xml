@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>at.phactum.bp.blueprint</groupId>
+		<artifactId>blueprint-taxi</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>taxi-ride</artifactId>
+	<name>Taxi Ride</name>
+	
+	<properties>
+    <mapstruct.version>1.4.2.Final</mapstruct.version>
+    <m2e.apt.activation>jdt_apt</m2e.apt.activation>
+	</properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.10.0</version>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct-processor</artifactId>
+              <version>${mapstruct.version}</version>
+            </path>
+          </annotationProcessorPaths>
+          <compilerArgs>
+            <compilerArg>
+              -Amapstruct.defaultComponentModel=spring
+            </compilerArg>
+            <compilerArg>
+              -Amapstruct.unmappedTargetPolicy=ERROR
+            </compilerArg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>5.4.0</version>
+        <executions>
+          <execution>
+            <id>generate-api-service</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/api/v1.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <apiPackage>com.taxicompany.ride.api.v1</apiPackage>
+              <modelPackage>com.taxicompany.ride.api.v1</modelPackage>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <configOptions>
+                <delegatePattern>true</delegatePattern>
+                <java8>true</java8> <!-- avoid build interface default implementations -->
+                <dateLibrary>java8</dateLibrary> <!-- use OffsetDateTime -->
+                <enablePostProcessFile>true</enablePostProcessFile>
+              </configOptions>
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>blueprint-spring-boot-adapter</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>blueprint-camunda7-adapter</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+    <dependency>
+      <groupId>at.phactum.bp.blueprint</groupId>
+      <artifactId>blueprint-rest-adapter-service</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>${mapstruct.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>driver-service-api-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.vladmihalcea</groupId>
+      <artifactId>hibernate-types-52</artifactId>
+      <version>2.15.1</version>
+    </dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+	</dependencies>
+</project>

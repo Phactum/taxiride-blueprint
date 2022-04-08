@@ -19,8 +19,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-core</artifactId>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>blueprint-spring-boot-adapter</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.openfeign</groupId>
