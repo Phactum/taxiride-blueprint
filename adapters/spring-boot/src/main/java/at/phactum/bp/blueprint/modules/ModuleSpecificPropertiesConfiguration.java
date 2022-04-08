@@ -28,19 +28,22 @@ public class ModuleSpecificPropertiesConfiguration {
      * @see https://stackoverflow.com/questions/35197175/spring-what-is-the-programmatic-equivalent-of-propertysource
      */
     @Bean
-    public static PropertySourcesPlaceholderConfigurer build(final Environment environment,
+    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer(
+            final Environment environment,
             final List<ModuleSpecificProperties> modules) {
 
         final var resources = new LinkedList<Resource>();
         for (final var module : modules) {
-            final var defaults = new ClassPathResource("/config/" + module.getName() + YAML_EXTENSTION);
+            final var defaults = new ClassPathResource(
+                    "/config/" + module.getName() + YAML_EXTENSTION);
             if (defaults.exists()) {
                 logger.debug("Adding yaml-file: {}", defaults.getDescription());
                 resources.add(defaults);
             }
 
             for (final var profile : environment.getActiveProfiles()) {
-                final var r = new ClassPathResource("/config/" + module.getName() + "-" + profile + YAML_EXTENSTION);
+                final var r = new ClassPathResource(
+                        "/config/" + module.getName() + "-" + profile + YAML_EXTENSTION);
                 if (r.exists()) {
                     logger.debug("Adding yaml-file: {}", r.getDescription());
                     resources.add(r);

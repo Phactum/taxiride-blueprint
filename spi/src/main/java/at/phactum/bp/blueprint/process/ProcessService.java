@@ -24,8 +24,9 @@ public interface ProcessService<DE> {
      *
      * @param processEntity The domain-entity
      * @param messageName   The message name to be correlated
+     * @return The domain-entity attached to JPA
      */
-    void correlateMessage(DE domainEntity, String messageName);
+    DE correlateMessage(DE domainEntity, String messageName);
 
     /**
      * Correlate a message for the domain-entity's workflow or it's sub-workflows
@@ -34,7 +35,8 @@ public interface ProcessService<DE> {
      * @param processEntity The domain-entity
      * @param messageName   The message name to be correlated
      * @param correlationId The correlation-id
+     * @return The domain-entity attached to JPA
      */
-    void correlateMessage(DE domainEntity, String messageName, String correlationId);
+    DE correlateMessage(DE domainEntity, String messageName, String correlationId);
 
 }

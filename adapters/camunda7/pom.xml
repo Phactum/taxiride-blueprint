@@ -17,7 +17,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<camunda-edition>ce</camunda-edition>
 		<camunda-version>7.16</camunda-version>
-		<camunda-version-minor>1</camunda-version-minor>
+		<camunda-version-minor>0</camunda-version-minor>
 	</properties>
 
 	<dependencyManagement>
@@ -37,11 +37,16 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>blueprint-spi</artifactId>
 			<version>${project.version}</version>
+
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>blueprint-spring-boot-adapter</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.camunda.bpm.springboot</groupId>
+			<artifactId>camunda-bpm-spring-boot-starter</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.camunda.bpm.springboot</groupId>
@@ -59,11 +64,7 @@
 		<profile>
 			<id>camunda-ee</id>
 			<activation>
-				<activeByDefault>true</activeByDefault>
-				<property>
-					<name>camunda-edition</name>
-					<value>ee</value>
-				</property>
+				<activeByDefault>false</activeByDefault>
 			</activation>
 			<properties>
 				<camunda-edition-suffix>-ee</camunda-edition-suffix>
@@ -72,14 +73,10 @@
 		<profile>
 			<id>camunda-ce</id>
 			<activation>
-				<activeByDefault>false</activeByDefault>
-				<property>
-					<name>camunda-edition</name>
-					<value>ce</value>
-				</property>
+				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<camunda-edition-suffix />
+				<camunda-edition-suffix></camunda-edition-suffix>
 				<camunda-version-minor>0</camunda-version-minor>
 			</properties>
 		</profile>

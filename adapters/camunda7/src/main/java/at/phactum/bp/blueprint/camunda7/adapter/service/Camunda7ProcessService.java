@@ -1,5 +1,6 @@
 package at.phactum.bp.blueprint.camunda7.adapter.service;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.camunda.bpm.engine.RepositoryService;
@@ -97,11 +98,11 @@ public class Camunda7ProcessService<DE>
 
     @Override
     @Transactional
-    public void correlateMessage(
+    public DE correlateMessage(
             final DE domainEntity,
             final String messageName) {
 
-        correlateMessage(
+        return correlateMessage(
                 domainEntity,
                 messageName,
                 null,
@@ -110,7 +111,7 @@ public class Camunda7ProcessService<DE>
     }
 
     @Override
-    public void correlateMessage(
+    public DE correlateMessage(
             final DE domainEntity,
             final String messageName,
             final String correlationId) {
@@ -120,7 +121,7 @@ public class Camunda7ProcessService<DE>
                 + "-"
                 + messageName;
 
-        correlateMessage(
+        return correlateMessage(
                 domainEntity,
                 messageName,
                 correlationIdLocalVariableName,
@@ -128,15 +129,19 @@ public class Camunda7ProcessService<DE>
 
     }
 
-    private void correlateMessage(
+    private DE correlateMessage(
             final DE domainEntity,
             final String messageName,
             final String correlationIdLocalVariableName,
             final String correlationId) {
 
-        workflowDomainEntityRepository.saveAndFlush(domainEntity);
+        final var originalId = getDomainEntityId.apply(domainEntity);
+        final var isNewEntity = Objects.isNull(originalId);
 
-        final var id = getDomainEntityId.apply(domainEntity);
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
+        
+        final var id = isNewEntity ? getDomainEntityId.apply(attachedEntity) : originalId;
         
         final var correlation = runtimeService
                 .createMessageCorrelation(messageName)
@@ -148,15 +153,32 @@ public class Camunda7ProcessService<DE>
                     correlationId);
         }
 
-        final var result = correlation.correlateWithResult();
+        if (isNewEntity) {
+            
+            final var result = correlation.correlateStartMessage();
+            logger.trace("Started process '{}#{}' by message-correlation '{}' (tenant: {})",
+                    bpmnProcessId,
+                    result.getProcessInstanceId(),
+                    messageName,
+                    result.getTenantId());
+            
+        } else {
         
-        logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}#{}' and execution '{}' (tenant: {})",
-                messageName,
-                correlationId,
-                bpmnProcessId, 
-                result.getExecution().getProcessInstanceId(),
-                result.getExecution().getId(),
-                result.getExecution().getTenantId());
+            final var result = correlation
+                    .correlateWithResult()
+                    .getExecution();
+            
+            logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}#{}' and execution '{}' (tenant: {})",
+                    messageName,
+                    correlationId,
+                    bpmnProcessId,
+                    result.getProcessInstanceId(),
+                    result.getId(),
+                    result.getTenantId());
+
+        }
+        
+        return attachedEntity;
 
     }
     

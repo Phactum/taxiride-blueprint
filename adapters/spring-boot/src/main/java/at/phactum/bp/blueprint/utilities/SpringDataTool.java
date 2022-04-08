@@ -57,8 +57,7 @@ public class SpringDataTool {
         }
 
         throw new IllegalStateException(
-            String.format("No Spring Data repository defined for %s", cls.getCanonicalName())
-        );
+                String.format("No Spring Data repository defined for %s", type.getName()));
 
     }
 

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
+import at.phactum.bp.blueprint.process.ProcessService;
 
 @Component
 public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camunda7ProcessService<?>> {
@@ -60,7 +61,12 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
                 .stream()
                 .filter(service -> service.getWorkflowDomainEntityClass().equals(workflowDomainEntityClass))
                 .findFirst()
-                .get();
+                .orElseThrow(() -> new RuntimeException(
+                        "You need to autowire '"
+                        + ProcessService.class.getName()
+                        + "<"
+                        + workflowDomainEntityClass.getName()
+                        + ">' in your code to be able to start workflows!"));
 
         processService.wire(workflowModuleId, bpmnProcessId);
 

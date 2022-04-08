@@ -94,10 +94,12 @@ public class Camunda8ProcessService<DE>
     }
 
     @Override
-    public void correlateMessage(
+    public DE correlateMessage(
             final DE domainEntity,
             final String messageName) {
         
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
         final var id = getDomainEntityId.apply(domainEntity);
 
         final var messageKey = client
@@ -112,14 +114,19 @@ public class Camunda8ProcessService<DE>
         logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}' as '{}'",
                 messageName, id, bpmnProcessId, messageKey);
         
+        return attachedEntity;
+        
     }
 
     @Override
-    public void correlateMessage(
+    public DE correlateMessage(
             final DE domainEntity,
             final String messageName,
             final String correlationId) {
             
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
+        
         final var messageKey = client
                 .newPublishMessageCommand()
                 .messageName(messageName)
@@ -131,6 +138,8 @@ public class Camunda8ProcessService<DE>
         
         logger.trace("Correlated message '{}' using correlation-id '{}' for process '{}' as '{}'",
                 messageName, correlationId, bpmnProcessId, messageKey);
+        
+        return attachedEntity;
         
     }
     

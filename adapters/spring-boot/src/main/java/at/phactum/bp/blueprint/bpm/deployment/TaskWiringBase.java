@@ -153,6 +153,10 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
             final PS processService,
             final T connectable) {
 
+        final var tested = new StringBuilder();
+        final var matching = new StringBuilder();
+        final var matchingMethods = new AtomicInteger(0);
+
         applicationContext
                 .getBeansWithAnnotation(WorkflowService.class)
                 .entrySet()
@@ -164,9 +168,21 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                     connectConnectableToBean(
                         processService,
                         connectable,
+                            tested, matching, matchingMethods,
                         bean.getKey(),
                             bean.getValue());
                 });
+
+        if (matchingMethods.get() > 1) {
+            throw new RuntimeException("More than one method annotated with @WorkflowTask is matching task '"
+                    + connectable.getTaskDefinition() + "' of process '" + connectable.getBpmnProcessId() + "': "
+                    + matching);
+        }
+        if (matchingMethods.get() == 0) {
+            throw new RuntimeException(
+                    "No public method annotated with @WorkflowTask is matching task '" + connectable.getTaskDefinition()
+                            + "' of process '" + connectable.getBpmnProcessId() + "'. Tested for: " + tested);
+        }
 
     }
 
@@ -199,14 +215,11 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
     private void connectConnectableToBean(
             final PS processService,
             final T connectable,
+            final StringBuilder tested, final StringBuilder matching, final AtomicInteger matchingMethods,
             final String beanName,
             final Object bean) {
         
         final Class<?> beanClass = targetClass(bean);
-        
-        final var tested = new StringBuilder();
-        final var matching = new StringBuilder();
-        final var matchingMethods = new AtomicInteger(0);
         
         Arrays
                 .stream(beanClass.getMethods())
@@ -241,25 +254,6 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         m.getKey(),
                         m.getValue()));
         
-        if (matchingMethods.get() > 1) {
-            throw new RuntimeException(
-                    "More than one method annotated with @WorkflowTask is matching task '"
-                    + connectable.getTaskDefinition()
-                    + "' of process '"
-                    + connectable.getBpmnProcessId()
-                    + "': "
-                    + matching);
-        }
-        if (matchingMethods.get() == 0) {
-            throw new RuntimeException(
-                    "No method annotated with @WorkflowTask is matching task '"
-                    + connectable.getTaskDefinition()
-                    + "' of process '"
-                    + connectable.getBpmnProcessId()
-                    + "'. Tested for: "
-                    + tested);
-        }
-
     }
     
     private Map.Entry<Method, List<MethodParameter>> validateParameters(
