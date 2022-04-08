@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
@@ -22,6 +21,7 @@ import at.phactum.bp.blueprint.service.NoResolver;
 import at.phactum.bp.blueprint.service.TaskParam;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
+import at.phactum.bp.blueprint.utilities.BeanUtils;
 
 public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessServiceImplementation<?>> {
 
@@ -51,7 +51,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
     protected Entry<Class<?>, Class<?>> determineWorkflowEntityClass(
             final Object bean) {
 
-        final var serviceClass = targetClass(bean);
+        final var serviceClass = BeanUtils.targetClass(bean);
 
         final var aggregateClassNames = new LinkedList<String>();
         
@@ -190,7 +190,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
             final String bpmnProcessId,
             final Object bean) {
         
-        final var beanClass = targetClass(bean);
+        final var beanClass = BeanUtils.targetClass(bean);
         final var workflowServiceAnnotations = beanClass.getAnnotationsByType(WorkflowService.class);
 
         return Arrays
@@ -200,13 +200,6 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         || (annotation.bpmnProcessId().equals(BpmnProcess.USE_BEAN_NAME)
                                 && bpmnProcessId.equals(beanClass.getSimpleName())));
 
-    }
-    
-    protected Class<?> targetClass(
-            final Object bean) {
-        
-        return AopUtils.getTargetClass(bean);
-        
     }
 
     protected abstract void connectToBpms(
@@ -219,7 +212,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
             final String beanName,
             final Object bean) {
         
-        final Class<?> beanClass = targetClass(bean);
+        final Class<?> beanClass = BeanUtils.targetClass(bean);
         
         Arrays
                 .stream(beanClass.getMethods())

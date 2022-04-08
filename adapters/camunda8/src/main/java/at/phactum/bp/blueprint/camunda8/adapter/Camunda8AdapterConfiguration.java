@@ -106,7 +106,7 @@ public class Camunda8AdapterConfiguration {
         
         final var result = new Camunda8ProcessService<DE>(
                 (JpaRepository<DE, String>) workflowDomainEntityRepository,
-                domainEntity -> springDataTool.getDomainEntityId(domainEntity),
+                domainEntity -> springDataTool.getDomainEntityId(domainEntity).toString(),
                 workflowDomainEntityClass);
 
         connectableServices.add(result);

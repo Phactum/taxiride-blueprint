@@ -27,6 +27,8 @@ public abstract class TaskHandlerBase {
 
     protected final Method method;
 
+    protected Class<?> idClass;
+
     public TaskHandlerBase(
             final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
@@ -37,6 +39,7 @@ public abstract class TaskHandlerBase {
         this.bean = bean;
         this.method = method;
         this.parameters = parameters;
+
 
     }
     

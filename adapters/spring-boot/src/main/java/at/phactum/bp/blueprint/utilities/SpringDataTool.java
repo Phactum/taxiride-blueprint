@@ -64,12 +64,12 @@ public class SpringDataTool {
     public String getDomainEntityId(
             final Object domainEntity) {
         
-        final Object id = containerEntityManagerFactoryBean
+        final var id = containerEntityManagerFactoryBean
                 .getNativeEntityManagerFactory()
                 .getPersistenceUnitUtil()
                 .getIdentifier(domainEntity);
         if (id == null) {
-            throw new RuntimeException("No id given for domainEntity: " + domainEntity);
+            return null;
         }
         return id.toString();
         

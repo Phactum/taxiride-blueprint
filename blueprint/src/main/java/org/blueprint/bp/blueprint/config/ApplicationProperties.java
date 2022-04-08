@@ -6,10 +6,11 @@ import org.springframework.context.annotation.Configuration;
 
 import at.phactum.bp.blueprint.bpm.deployment.BpDeploymentConfiguration;
 import at.phactum.bp.blueprint.modules.ModuleSpecificProperties;
+import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 
 @Configuration
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
-public class ApplicationProperties implements BpDeploymentConfiguration {
+public class ApplicationProperties implements BpDeploymentConfiguration, WorkflowModuleIdAwareProperties {
 
     public static final String WORKFLOW_MODULE_ID = "test1";
 
@@ -29,6 +30,11 @@ public class ApplicationProperties implements BpDeploymentConfiguration {
 
     public void setProcessesLocation(String processesLocation) {
         this.processesLocation = processesLocation;
+    }
+
+    @Override
+    public String getWorkflowModuleId() {
+        return WORKFLOW_MODULE_ID;
     }
 
 }

@@ -4,12 +4,12 @@ import at.phactum.bp.blueprint.utilities.CaseUtils;
 
 public class ModuleSpecificProperties {
 	
-	private Class<?> propertiesClass;
+    private Class<? extends WorkflowModuleIdAwareProperties> propertiesClass;
 	
     private String name;
 
     public ModuleSpecificProperties(
-    		final Class<?> propertiesClass,
+            final Class<? extends WorkflowModuleIdAwareProperties> propertiesClass,
     		final String name) {
     	
     	this.propertiesClass = propertiesClass;
@@ -18,7 +18,7 @@ public class ModuleSpecificProperties {
     }
 
     public ModuleSpecificProperties(
-    		final Class<?> propertiesClass,
+            final Class<? extends WorkflowModuleIdAwareProperties> propertiesClass,
     		final String name,
     		final boolean isCamelCase) {
     	

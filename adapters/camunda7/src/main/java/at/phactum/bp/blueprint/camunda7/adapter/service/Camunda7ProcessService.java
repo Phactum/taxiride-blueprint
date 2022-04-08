@@ -23,7 +23,7 @@ public class Camunda7ProcessService<DE>
     
     private final Class<DE> workflowDomainEntityClass;
     
-    private final Function<DE, String> getDomainEntityId;
+    private final Function<DE, Object> getDomainEntityId;
 
     private String workflowModuleId;
 
@@ -32,7 +32,7 @@ public class Camunda7ProcessService<DE>
     public Camunda7ProcessService(
             final RuntimeService runtimeService,
             final RepositoryService repositoryService,
-            final Function<DE, String> getDomainEntityId,
+            final Function<DE, Object> getDomainEntityId,
             final JpaRepository<DE, String> workflowDomainEntityRepository,
             final Class<DE> workflowDomainEntityClass) {
 
@@ -78,7 +78,9 @@ public class Camunda7ProcessService<DE>
     public DE startWorkflow(
             final DE domainEntity) throws Exception {
 
-        final var id = getDomainEntityId.apply(domainEntity);
+        final var attachedEntity = workflowDomainEntityRepository.saveAndFlush(domainEntity);
+
+        final var id = getDomainEntityId.apply(attachedEntity).toString();
         
         runtimeService
                 .createProcessInstanceByKey(bpmnProcessId)
@@ -86,13 +88,7 @@ public class Camunda7ProcessService<DE>
                 .processDefinitionTenantId(workflowModuleId)
                 .execute();
         
-        try {
-            return workflowDomainEntityRepository.saveAndFlush(domainEntity);
-        } catch (RuntimeException exception) {
-            // HibernateH2PostgresIdempotency.ignoreDuplicatesExceptionAndRethrow(exception,
-            // processEntity);
-            throw exception;
-        }
+        return workflowDomainEntityRepository.saveAndFlush(domainEntity);
 
     }
 
@@ -141,7 +137,7 @@ public class Camunda7ProcessService<DE>
         final var attachedEntity = workflowDomainEntityRepository
                 .saveAndFlush(domainEntity);
         
-        final var id = isNewEntity ? getDomainEntityId.apply(attachedEntity) : originalId;
+        final var id = (isNewEntity ? getDomainEntityId.apply(attachedEntity) : originalId).toString();
         
         final var correlation = runtimeService
                 .createMessageCorrelation(messageName)
