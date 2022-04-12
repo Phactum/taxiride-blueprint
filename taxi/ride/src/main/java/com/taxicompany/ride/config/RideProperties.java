@@ -1,5 +1,7 @@
 package com.taxicompany.ride.config;
 
+import java.time.Duration;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +31,8 @@ public class RideProperties
 
     private Client driverServiceClient;
 
+    private Duration periodForImmediatelyPickups;
+
     @Override
     public String getProcessesLocation() {
         return processesLocation;
@@ -50,6 +54,14 @@ public class RideProperties
     @Override
     public String getWorkflowModuleId() {
         return WORKFLOW_MODULE_ID;
+    }
+
+    public Duration getPeriodForImmediatelyPickups() {
+        return periodForImmediatelyPickups;
+    }
+
+    public void setPeriodForImmediatelyPickups(Duration periodForImmediatelyPickups) {
+        this.periodForImmediatelyPickups = periodForImmediatelyPickups;
     }
 
 }

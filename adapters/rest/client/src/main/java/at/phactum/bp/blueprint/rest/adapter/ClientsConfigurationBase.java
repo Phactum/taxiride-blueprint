@@ -232,7 +232,7 @@ public abstract class ClientsConfigurationBase {
                                 .replaceAll("[^a-z]", "")))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException(
-                        "There is no bean implementing interface '"
+                        "There is no autowired property implementing interface '"
                         + propertiesInterface.getName()
                         + "' in the workflow-module of class '"
                         + injectionPoint.getMember().getDeclaringClass().getName()

@@ -2,14 +2,16 @@ package com.taxicompany.ride.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.taxicompany.ride.api.v1.RideApiDelegate;
+import com.taxicompany.ride.api.v1.RideApi;
 import com.taxicompany.ride.api.v1.RideBookedParameters;
 import com.taxicompany.ride.service.TaxiRide;
 
-@Component
-public class RideApiDelegateImpl implements RideApiDelegate {
+@RestController
+@RequestMapping("/api/v1")
+public class RideApiController implements RideApi {
 
     @Autowired
     private RideApiMapper mapper;

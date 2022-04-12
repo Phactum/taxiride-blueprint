@@ -19,8 +19,6 @@ import org.springframework.util.SystemPropertyUtils;
 
 public class ClasspathScanner {
 
-    public static final String VODAFONE_BASEPACKAGE = "com.vodafone";
-
     private static Logger logger = LoggerFactory.getLogger(ClasspathScanner.class);
 
     private static final Map<String, Resource[]> cache = new HashMap<>();
@@ -103,23 +101,6 @@ public class ClasspathScanner {
         
         return result;
         
-    }
-
-    @SafeVarargs
-    public static List<Class<?>> allClasses(
-    		final Predicate<MetadataReader>... filters) throws Exception {
-
-    	return allClasses(null, VODAFONE_BASEPACKAGE, filters);
-
-    }
-
-    @SafeVarargs
-    public static List<Class<?>> allClasses(
-    		final ResourceLoader resourceLoader,
-    		final Predicate<MetadataReader>... filters) throws Exception {
-
-    	return allClasses(null, VODAFONE_BASEPACKAGE, filters);
-    
     }
 
     @SafeVarargs

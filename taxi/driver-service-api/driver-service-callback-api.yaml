@@ -1,0 +1,95 @@
+openapi: 3.0.3
+info:
+  description: Driver API
+  version: '1.0'
+  title: driver callback
+servers:
+  - url: /api/v1
+
+paths:
+  /driver-callback/{driverId}/ride/{rideId}/offer:
+    post:
+      tags:
+        - driverCallback
+      summary: handover a ride offer
+      operationId: rideOffer
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideOffer'
+      responses:
+        200:
+          description: acknowledged
+  /driver-callback/{driverId}/ride/{rideId}/done:
+    post:
+      tags:
+        - driverCallback
+      summary: confirm ride completed
+      operationId: rideDone
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideDone'
+      responses:
+        200:
+          description: acknowledged
+
+components:
+  schemas:
+    Location:
+      type: object
+      properties:
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+        hint:
+          type: string
+    RideOffer:
+      type: object
+      properties:
+        driverName:
+          type: string
+        pickupTime:
+          type: string
+          format: date-time
+        currentDriverLocation:
+          $ref: '#/components/schemas/Location'
+        passengersUntilPickup:
+          type: integer
+          format: int32
+    RideDone:
+      type: object
+      properties:
+        price:
+          type: number
+          format: float
+        charged:
+          type: number
+          format: float

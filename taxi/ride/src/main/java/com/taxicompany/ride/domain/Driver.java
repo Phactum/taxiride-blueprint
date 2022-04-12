@@ -1,10 +1,43 @@
 package com.taxicompany.ride.domain;
 
+import java.time.OffsetDateTime;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.Type;
+
+@Entity
+@Table(name = "POTENTIAL_DRIVERS")
 public class Driver {
 
+    @Id
+    @Column(name = "ID")
     private String id;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "RIDE", nullable = false, updatable = false)
+    private Ride ride;
+
+    @Column(name = "NAME")
     private String name;
+
+    @Type(type = "json")
+    @Column(name = "PICKUP_LOCATION", columnDefinition = "JSON")
+    private Location currentLocation;
+
+    @Column(name = "PICKUP_TIME", columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime pickupTime;
+
+    @Column(name = "REMAINING_PASSENGERS")
+    private int passengersUntilPickup;
+
+    @Column(name = "SCORE")
+    private Float score;
 
     public String getId() {
         return id;
@@ -22,21 +55,44 @@ public class Driver {
         this.name = name;
     }
 
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+    public Location getCurrentLocation() {
+        return currentLocation;
     }
 
-    @Override
-    public boolean equals(Object obj) {
+    public void setCurrentLocation(Location currentLocation) {
+        this.currentLocation = currentLocation;
+    }
 
-        if (!(obj instanceof Driver)) {
-            return false;
-        }
+    public OffsetDateTime getPickupTime() {
+        return pickupTime;
+    }
 
-        final var other = (Driver) obj;
-        return id.equals(other.getId());
+    public void setPickupTime(OffsetDateTime pickupTime) {
+        this.pickupTime = pickupTime;
+    }
 
+    public int getPassengersUntilPickup() {
+        return passengersUntilPickup;
+    }
+
+    public void setPassengersUntilPickup(int passengersUntilPickup) {
+        this.passengersUntilPickup = passengersUntilPickup;
+    }
+
+    public Float getScore() {
+        return score;
+    }
+
+    public void setScore(Float score) {
+        this.score = score;
+    }
+
+    public Ride getRide() {
+        return ride;
+    }
+
+    public void setRide(Ride ride) {
+        this.ride = ride;
     }
 
 }

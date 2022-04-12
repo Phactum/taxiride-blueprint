@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  at.phactum.bp.blueprint.modules.ModuleSpecificPropertiesConfiguration
+  at.phactum.bp.blueprint.modules.ModuleSpecificPropertiesConfiguration,\
+  at.phactum.bp.blueprint.async.AsyncConfiguration
