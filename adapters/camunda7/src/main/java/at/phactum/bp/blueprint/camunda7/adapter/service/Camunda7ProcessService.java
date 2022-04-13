@@ -23,7 +23,7 @@ public class Camunda7ProcessService<DE>
     
     private final Class<DE> workflowDomainEntityClass;
     
-    private final Function<DE, Object> getDomainEntityId;
+    private final Function<DE, String> getDomainEntityId;
 
     private String workflowModuleId;
 
@@ -32,7 +32,7 @@ public class Camunda7ProcessService<DE>
     public Camunda7ProcessService(
             final RuntimeService runtimeService,
             final RepositoryService repositoryService,
-            final Function<DE, Object> getDomainEntityId,
+            final Function<DE, String> getDomainEntityId,
             final JpaRepository<DE, String> workflowDomainEntityRepository,
             final Class<DE> workflowDomainEntityClass) {
 

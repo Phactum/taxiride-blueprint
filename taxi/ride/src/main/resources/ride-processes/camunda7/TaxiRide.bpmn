@@ -139,7 +139,7 @@ customer process for understanding</bpmn:text>
     <bpmn:sequenceFlow id="Flow_0ps7rna" sourceRef="Activity_15i28i4" targetRef="Gateway_0pdq6wo" />
     <bpmn:sequenceFlow id="Flow_1jjtksb" sourceRef="Activity_1y9djoc" targetRef="Activity_1h1dw1m" />
     <bpmn:sequenceFlow id="Flow_0hyeosq" name="No" sourceRef="Gateway_0pdq6wo" targetRef="Activity_1y9djoc">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${customerCharged}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${not customerCharged}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:startEvent id="Event_0jpj0lo" name="Ride&#10;booked" camunda:asyncBefore="true">
       <bpmn:outgoing>Flow_1tggrop</bpmn:outgoing>
@@ -163,6 +163,11 @@ customer process for understanding</bpmn:text>
       <bpmn:outgoing>Flow_0lk1jot</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:receiveTask id="Activity_15i28i4" name="Finish ride" messageRef="Message_16yuvne">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="TaxiRide-RideFinished">${rideId.concat("-").concat(driver.id)}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0lk1jot</bpmn:incoming>
       <bpmn:outgoing>Flow_0ps7rna</bpmn:outgoing>
     </bpmn:receiveTask>
@@ -206,7 +211,7 @@ customer process for understanding</bpmn:text>
     <bpmn:endEvent id="Event_1ugsirj" name="Ride offerings cancelled">
       <bpmn:incoming>Flow_1c2kiye</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:subProcess id="RequestRideOffer" name="Ride request and offering">
+    <bpmn:subProcess id="RequestRideOffer" name="Ride request and offering" camunda:asyncBefore="true">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="RequestRideOffer_index">${loopCounter}</camunda:inputParameter>
@@ -214,7 +219,7 @@ customer process for understanding</bpmn:text>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0xf4hqi</bpmn:incoming>
       <bpmn:outgoing>Flow_1jrkydw</bpmn:outgoing>
-      <bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:multiInstanceLoopCharacteristics camunda:asyncBefore="true">
         <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">${potentialDrivers.size()}</bpmn:loopCardinality>
       </bpmn:multiInstanceLoopCharacteristics>
       <bpmn:startEvent id="Event_085bfug">
@@ -267,7 +272,9 @@ customer process for understanding</bpmn:text>
       <bpmn:incoming>Flow_1jrkydw</bpmn:incoming>
       <bpmn:outgoing>Flow_0kvl7x1</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:sequenceFlow id="Flow_1jwfi8y" name="Yes" sourceRef="Gateway_0pdq6wo" targetRef="Activity_0fcbu5z" />
+    <bpmn:sequenceFlow id="Flow_1jwfi8y" name="Yes" sourceRef="Gateway_0pdq6wo" targetRef="Activity_0fcbu5z">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${customerCharged}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_1vbjv8l" sourceRef="Activity_0fcbu5z" targetRef="Gateway_1pd2ixx" />
     <bpmn:sequenceFlow id="Flow_010nyrk" sourceRef="Gateway_1pd2ixx" targetRef="Event_0cz03h3" />
     <bpmn:sequenceFlow id="Flow_1mj6or5" sourceRef="Activity_1h1dw1m" targetRef="Gateway_1pd2ixx" />
@@ -454,6 +461,32 @@ They lead to *financial* consequences.</bpmn:text>
       <bpmndi:BPMNShape id="Participant_1l44idk_di" bpmnElement="Participant_1pjr9o9" isHorizontal="true">
         <dc:Bounds x="160" y="610" width="3130" height="400" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0evuzug_di" bpmnElement="Flow_0evuzug">
+        <di:waypoint x="2510" y="690" />
+        <di:waypoint x="2540" y="690" />
+        <di:waypoint x="2540" y="770" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mj6or5_di" bpmnElement="Flow_1mj6or5">
+        <di:waypoint x="2590" y="810" />
+        <di:waypoint x="2655" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_010nyrk_di" bpmnElement="Flow_010nyrk">
+        <di:waypoint x="2705" y="810" />
+        <di:waypoint x="2762" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vbjv8l_di" bpmnElement="Flow_1vbjv8l">
+        <di:waypoint x="2390" y="930" />
+        <di:waypoint x="2680" y="930" />
+        <di:waypoint x="2680" y="835" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jwfi8y_di" bpmnElement="Flow_1jwfi8y">
+        <di:waypoint x="2190" y="835" />
+        <di:waypoint x="2190" y="930" />
+        <di:waypoint x="2290" y="930" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2196" y="880" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0kvl7x1_di" bpmnElement="Flow_0kvl7x1">
         <di:waypoint x="1360" y="810" />
         <di:waypoint x="1435" y="810" />
@@ -524,32 +557,6 @@ They lead to *financial* consequences.</bpmn:text>
           <dc:Bounds x="1505" y="792" width="19" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1jwfi8y_di" bpmnElement="Flow_1jwfi8y">
-        <di:waypoint x="2190" y="835" />
-        <di:waypoint x="2190" y="930" />
-        <di:waypoint x="2290" y="930" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2196" y="880" width="19" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1vbjv8l_di" bpmnElement="Flow_1vbjv8l">
-        <di:waypoint x="2390" y="930" />
-        <di:waypoint x="2680" y="930" />
-        <di:waypoint x="2680" y="835" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_010nyrk_di" bpmnElement="Flow_010nyrk">
-        <di:waypoint x="2705" y="810" />
-        <di:waypoint x="2762" y="810" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1mj6or5_di" bpmnElement="Flow_1mj6or5">
-        <di:waypoint x="2590" y="810" />
-        <di:waypoint x="2655" y="810" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0evuzug_di" bpmnElement="Flow_0evuzug">
-        <di:waypoint x="2510" y="690" />
-        <di:waypoint x="2540" y="690" />
-        <di:waypoint x="2540" y="770" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Event_0zblhpg_di" bpmnElement="Event_0jpj0lo">
         <dc:Bounds x="242" y="792" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -588,27 +595,6 @@ They lead to *financial* consequences.</bpmn:text>
         <bpmndi:BPMNLabel>
           <dc:Bounds x="2163" y="740" width="55" height="40" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1pd2ixx_di" bpmnElement="Gateway_1pd2ixx" isMarkerVisible="true">
-        <dc:Bounds x="2655" y="785" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_16qu740_di" bpmnElement="Activity_1y9djoc">
-        <dc:Bounds x="2290" y="770" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0eamjjx_di" bpmnElement="Activity_0fcbu5z">
-        <dc:Bounds x="2290" y="890" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1163vks_di" bpmnElement="Activity_126a4jc">
-        <dc:Bounds x="2410" y="650" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0cz03h3_di" bpmnElement="Event_0cz03h3">
-        <dc:Bounds x="2762" y="792" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2743" y="835" width="77" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_13izxd3_di" bpmnElement="Activity_1h1dw1m">
-        <dc:Bounds x="2490" y="770" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0zz2mjn_di" bpmnElement="Activity_0zz2mjn" isExpanded="true">
         <dc:Bounds x="2840" y="710" width="390" height="200" />
@@ -709,11 +695,38 @@ They lead to *financial* consequences.</bpmn:text>
       <bpmndi:BPMNShape id="Activity_0hs06fu_di" bpmnElement="Activity_1f23xe8">
         <dc:Bounds x="1260" y="770" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1pd2ixx_di" bpmnElement="Gateway_1pd2ixx" isMarkerVisible="true">
+        <dc:Bounds x="2655" y="785" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_16qu740_di" bpmnElement="Activity_1y9djoc">
+        <dc:Bounds x="2290" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0eamjjx_di" bpmnElement="Activity_0fcbu5z">
+        <dc:Bounds x="2290" y="890" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1163vks_di" bpmnElement="Activity_126a4jc">
+        <dc:Bounds x="2410" y="650" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0cz03h3_di" bpmnElement="Event_0cz03h3">
+        <dc:Bounds x="2762" y="792" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2743" y="835" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_13izxd3_di" bpmnElement="Activity_1h1dw1m">
+        <dc:Bounds x="2490" y="770" width="100" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_1088ver_di" bpmnElement="TextAnnotation_1088ver">
         <dc:Bounds x="240" y="871" width="152" height="55" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="TextAnnotation_0ljrr99_di" bpmnElement="TextAnnotation_0ljrr99">
         <dc:Bounds x="1920" y="632" width="380" height="96" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ig3rqw_di" bpmnElement="Event_0oz89vh">
+        <dc:Bounds x="2352" y="752" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2393" y="747" width="73" height="27" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Association_1afw009_di" bpmnElement="Association_1afw009">
         <di:waypoint x="263" y="827" />
@@ -723,12 +736,6 @@ They lead to *financial* consequences.</bpmn:text>
         <di:waypoint x="1996" y="770" />
         <di:waypoint x="1988" y="728" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Event_0ig3rqw_di" bpmnElement="Event_0oz89vh">
-        <dc:Bounds x="2352" y="752" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2393" y="747" width="73" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_0w9pe15_di" bpmnElement="Participant_0w9pe15" isHorizontal="true">
         <dc:Bounds x="600" y="1080" width="2520" height="60" />
       </bpmndi:BPMNShape>

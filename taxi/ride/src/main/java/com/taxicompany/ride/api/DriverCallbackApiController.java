@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.taxicompany.driver.service.v1.DriverCallbackApi;
-import com.taxicompany.driver.service.v1.RideDone;
+import com.taxicompany.driver.service.v1.RideFinished;
 import com.taxicompany.driver.service.v1.RideOffer;
 import com.taxicompany.ride.service.DetermineDriver;
 import com.taxicompany.ride.service.TaxiRide;
@@ -44,16 +44,16 @@ public class DriverCallbackApiController implements DriverCallbackApi {
     }
     
     @Override
-    public ResponseEntity<Void> rideDone(
+    public ResponseEntity<Void> rideFinished(
             final String driverId,
             final String rideId,
-            @Valid RideDone rideDone) {
+            @Valid RideFinished rideFinished) {
         
-        taxiRide.rideDone(
+        taxiRide.rideFinished(
                 rideId,
                 driverId,
-                rideDone.getPrice(),
-                rideDone.getCharged());
+                rideFinished.getPrice(),
+                rideFinished.getCharged());
 
         return ResponseEntity.ok().build();
         

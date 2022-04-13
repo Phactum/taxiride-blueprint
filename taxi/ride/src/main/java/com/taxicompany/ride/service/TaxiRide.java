@@ -16,12 +16,13 @@ import com.taxicompany.ride.domain.RideRepository;
 
 import at.phactum.bp.blueprint.process.ProcessService;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
+import at.phactum.bp.blueprint.service.TaskException;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
 @Service
 @WorkflowService(workflowAggregateClass = Ride.class)
-@Transactional
+@Transactional(noRollbackFor = TaskException.class)
 public class TaxiRide {
     
     @Autowired
@@ -88,7 +89,7 @@ public class TaxiRide {
         driverService.confirmRideOffer(
                 ride.getDriver().getId(),
                 ride.getRideId(),
-                null);
+                "Confirmed");
         
     }
     
@@ -120,10 +121,9 @@ public class TaxiRide {
                 ride.getRideId(),
                 outstandingAmount);
                 
-        
     }
 
-    public void rideDone(
+    public void rideFinished(
             final String rideId,
             final String driverId,
             final float price,
@@ -143,13 +143,25 @@ public class TaxiRide {
         ride.setPrice(price);
         ride.setCharged(charged);
         
-        rides.saveAndFlush(ride);
+        processService.correlateMessage(
+                ride,
+                "RideFinished",
+                ride.getRideId() + "-" + ride.getDriver().getId());
         
     }
     
     @WorkflowTask
     public void payDriverFee(
             final Ride ride) {
+        
+        final var outstandingAmount = ride.getPrice() - ride.getCharged();
+
+        /* charge from payment-service-provider */
+
+        driverService.feePayed(
+                ride.getDriver().getId(),
+                ride.getRideId(),
+                outstandingAmount);
         
     }
     
@@ -158,6 +170,8 @@ public class TaxiRide {
             final Ride ride) {
         
         /* charge from payment-service-provider */
+
+        throw new TaskException("CreditCardCannotBeCharged");
 
     }
     

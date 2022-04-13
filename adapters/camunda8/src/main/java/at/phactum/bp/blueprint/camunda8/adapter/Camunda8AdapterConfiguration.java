@@ -3,6 +3,7 @@ package at.phactum.bp.blueprint.camunda8.adapter;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.ObjectProvider;
@@ -17,6 +18,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
+import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentRepository;
@@ -32,7 +34,7 @@ import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlin
 
 @AutoConfigurationPackage(basePackageClasses = Camunda8AdapterConfiguration.class)
 @EnableZeebeClient
-public class Camunda8AdapterConfiguration {
+public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camunda8ProcessService<?>> {
 
     private List<Camunda8ProcessService<?>> connectableServices = new LinkedList<>();
     
@@ -141,4 +143,17 @@ public class Camunda8AdapterConfiguration {
         
     }
 
+    @Override
+    protected <DE> Camunda8ProcessService<?> buildProcessServiceBean(
+            final JpaRepository<DE, String> workflowDomainEntityRepository,
+            final Class<DE> workflowDomainEntityClass,
+            final Function<DE, String> getDomainEntityId) {
+        
+        return new Camunda8ProcessService<DE>(
+                (JpaRepository<DE, String>) workflowDomainEntityRepository,
+                getDomainEntityId,
+                workflowDomainEntityClass);
+
+    }
+    
 }

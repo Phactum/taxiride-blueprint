@@ -116,10 +116,10 @@ public class DriverApiController implements DriverApi {
     public ResponseEntity<Void> confirmRideOffer(
             final String driverId,
             final String rideId,
-            final @Valid Object body) {
+            final @Valid String toBeIgnored) {
         
         taskScheduler.schedule(
-                () -> offerService.rideDone(driverId, rideId),
+                () -> offerService.finishRide(driverId, rideId),
                 Date.from(LocalDateTime
                     .now()
                     .plus(random.nextInt(5), ChronoUnit.SECONDS)
@@ -134,7 +134,7 @@ public class DriverApiController implements DriverApi {
     public ResponseEntity<Void> retrievePayment(
             final String driverId,
             final String rideId,
-            final @Valid Float body) {
+            final @Valid Float amount) {
         
         /* nothing to do */
         
@@ -142,6 +142,18 @@ public class DriverApiController implements DriverApi {
         
     }
     
+    @Override
+    public ResponseEntity<Void> feePayed(
+            final String driverId,
+            final String rideId,
+            final @Valid Float amount) {
+
+        /* nothing to do */
+
+        return ResponseEntity.ok().build();
+
+    }
+
     public static Driver getDriver(
             final String driverId) {
         

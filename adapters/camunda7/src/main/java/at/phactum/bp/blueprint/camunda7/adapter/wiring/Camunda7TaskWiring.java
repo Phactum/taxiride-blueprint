@@ -1,6 +1,7 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.ApplicationContext;
@@ -17,12 +18,12 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
 
     private final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager;
 
-    private final List<Camunda7ProcessService<?>> connectableServices;
+    private final Collection<Camunda7ProcessService<?>> connectableServices;
 
     public Camunda7TaskWiring(
             final ApplicationContext applicationContext,
             final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager,
-            final List<Camunda7ProcessService<?>> connectableServices) {
+            final Collection<Camunda7ProcessService<?>> connectableServices) {
         
         super(applicationContext);
         this.processEntityAwareExpressionManager = processEntityAwareExpressionManager;

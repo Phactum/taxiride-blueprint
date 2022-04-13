@@ -1,7 +1,7 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 import org.camunda.bpm.engine.impl.javax.el.CompositeELResolver;
 import org.camunda.bpm.engine.impl.javax.el.ELResolver;
@@ -19,11 +19,11 @@ public class ProcessEntityAwareExpressionManager extends SpringExpressionManager
     
     private final HashMap<Camunda7Connectable, Camunda7TaskHandler> toBeConnected = new HashMap<>();
     
-    private final List<Camunda7ProcessService<?>> connectableServices;
+    private final Collection<Camunda7ProcessService<?>> connectableServices;
     
     public ProcessEntityAwareExpressionManager(
             final ApplicationContext applicationContext,
-            final List<Camunda7ProcessService<?>> connectableServices) {
+            final Collection<Camunda7ProcessService<?>> connectableServices) {
 
         super(applicationContext, null);
         this.connectableServices = connectableServices;

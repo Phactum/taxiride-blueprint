@@ -36,8 +36,8 @@ paths:
     post:
       tags:
         - driverCallback
-      summary: confirm ride completed
-      operationId: rideDone
+      summary: confirm ride finished
+      operationId: rideFinished
       parameters:
         - in: path
           name: driverId
@@ -53,7 +53,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RideDone'
+              $ref: '#/components/schemas/RideFinished'
       responses:
         200:
           description: acknowledged
@@ -84,7 +84,7 @@ components:
         passengersUntilPickup:
           type: integer
           format: int32
-    RideDone:
+    RideFinished:
       type: object
       properties:
         price:

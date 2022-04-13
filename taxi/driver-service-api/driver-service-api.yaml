@@ -87,15 +87,42 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              type: string
       responses:
         200:
           description: acknowledged
+  /driver/{driverId}/offer/{rideId}/retrieve-payment:
     post:
       tags:
         - driverService
-      summary: retrieve payment charged by driver
+      summary: trigger to retrieve payment charged by driver
       operationId: retrievePayment
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: number
+              format: float
+      responses:
+        200:
+          description: acknowledged
+  /driver/{driverId}/offer/{rideId}/pay-driver-fee:
+    post:
+      tags:
+        - driverService
+      summary: confirm driver fee is payed
+      operationId: feePayed
       parameters:
         - in: path
           name: driverId

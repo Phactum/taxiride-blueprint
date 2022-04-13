@@ -51,7 +51,7 @@ public class DetermineDriver {
             final Ride ride) {
         
         final var parameters = new DriversNearbyParameters();
-        parameters.setLatitude(ride.getPickupLocation().getLongitude());
+        parameters.setLongitude(ride.getPickupLocation().getLongitude());
         parameters.setLatitude(ride.getPickupLocation().getLatitude());
 
         final var potentialDrivers = driverService.determineDriversNearby(parameters);
@@ -128,8 +128,9 @@ public class DetermineDriver {
         
         final var score
                 = ((MAX_SCORE - distance) 
-                + (MAX_SCORE - driver.getPassengersUntilPickup())
-                + (MAX_SCORE - minutesLate < 0 ? 0 : minutesLate)) / 3;
+                + (MAX_SCORE - driver.getPassengersUntilPickup() * 3 /* boost */)
+                + (MAX_SCORE - minutesLate < 0 ? 0 : minutesLate))
+                / 3 /* limit to MAX_SCORE by dividing according to the number of aspects added */;
         
         logger.info("driver-scoring {}: distance {}km, passangers until pickup {}, minutes late {} -> {}",
                 driver.getName(),

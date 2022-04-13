@@ -1,5 +1,6 @@
 package at.phactum.bp.blueprint.bpm.deployment;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -85,14 +86,26 @@ public abstract class TaskHandlerBase {
                 // ignore unknown parameters, but they should be filtered as part of validation
                 .forEach(param -> { /* */ });
         
-        method.invoke(bean, args);
+        try {
 
-        if (domainEntity[0] != null) {
-            workflowDomainEntityRepository.saveAndFlush(domainEntity[0]);
-            return domainEntity[0];
+            method.invoke(bean, args);
+
+        } catch (InvocationTargetException e) {
+
+            final var targetException = e.getTargetException();
+            if (targetException instanceof Exception) {
+                throw (Exception) targetException;
+            } else {
+                throw new RuntimeException(e);
+            }
+
         }
 
-        return null;
+        if (domainEntity[0] == null) {
+            return null;
+        }
+
+        return workflowDomainEntityRepository.saveAndFlush(domainEntity[0]);
         
     }
 

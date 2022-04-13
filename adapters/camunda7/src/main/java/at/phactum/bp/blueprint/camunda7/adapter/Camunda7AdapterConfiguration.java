@@ -1,24 +1,20 @@
 package at.phactum.bp.blueprint.camunda7.adapter;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.function.Function;
 
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
-import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
-import org.springframework.core.ResolvableType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
+import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
 import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
@@ -29,15 +25,19 @@ import at.phactum.bp.blueprint.utilities.SpringDataTool;
 
 @AutoConfigurationPackage(basePackageClasses = Camunda7AdapterConfiguration.class)
 @EnableProcessApplication
-public class Camunda7AdapterConfiguration {
-
-    private List<Camunda7ProcessService<?>> connectableServices = new LinkedList<>();
+public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camunda7ProcessService<?>> {
 
     @Value("${workerId}")
     private String workerId;
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private RuntimeService runtimeService;
+
+    @Autowired
+    private RepositoryService repositoryService;
 
     @Bean
     public SpringDataTool springDataTool(
@@ -62,7 +62,7 @@ public class Camunda7AdapterConfiguration {
         return new Camunda7TaskWiring(
                 applicationContext,
                 processEntityAwareExpressionManager,
-                connectableServices);
+                getConnectableServices());
         
     }
     
@@ -79,7 +79,7 @@ public class Camunda7AdapterConfiguration {
 
         return new ProcessEntityAwareExpressionManager(
                 applicationContext,
-                connectableServices);
+                getConnectableServices());
 
     }
 
@@ -94,35 +94,18 @@ public class Camunda7AdapterConfiguration {
         
     }
 
-    @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public <DE> Camunda7ProcessService<DE> camunda7ProcessService(
-            final RuntimeService runtimeService,
-            final RepositoryService repositoryService,
-            final SpringDataTool springDataTool,
-            final InjectionPoint injectionPoint) throws Exception {
+    @Override
+    protected <DE> Camunda7ProcessService<?> buildProcessServiceBean(
+            final JpaRepository<DE, String> workflowDomainEntityRepository,
+            final Class<DE> workflowDomainEntityClass,
+            final Function<DE, String> getDomainEntityId) {
 
-        final var resolvableType = ResolvableType.forField(injectionPoint.getField());
-
-        @SuppressWarnings("unchecked")
-        final var workflowDomainEntityClass = (Class<DE>) resolvableType
-                .getGeneric(0)
-                .resolve();
-
-        final var workflowDomainEntityRepository = springDataTool
-                .getJpaRepository(workflowDomainEntityClass);
-
-        final var result = new Camunda7ProcessService<DE>(
+        return new Camunda7ProcessService<DE>(
                 runtimeService,
                 repositoryService,
-                domainEntity -> springDataTool.getDomainEntityId(domainEntity),
-                (JpaRepository<DE, String>) workflowDomainEntityRepository,
+                getDomainEntityId,
+                workflowDomainEntityRepository,
                 workflowDomainEntityClass);
 
-        connectableServices.add(result);
-
-        return result;
-
     }
-
 }

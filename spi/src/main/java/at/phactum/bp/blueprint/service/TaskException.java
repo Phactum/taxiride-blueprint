@@ -22,6 +22,7 @@ public class TaskException extends RuntimeException {
     public TaskException(
             final String errorCode) {
 
+        super(errorCode);
         this.errorName = null;
         this.errorCode = errorCode;
 
@@ -31,6 +32,7 @@ public class TaskException extends RuntimeException {
             final String errorName,
             final String errorCode) {
 
+        super(errorName + " (" + errorCode + ")");
         this.errorName = errorName;
         this.errorCode = errorCode;
 

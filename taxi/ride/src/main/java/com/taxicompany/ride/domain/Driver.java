@@ -20,7 +20,7 @@ public class Driver {
     private String id;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "RIDE", nullable = false, updatable = false)
+    @JoinColumn(name = "RIDE", nullable = false)
     private Ride ride;
 
     @Column(name = "NAME")

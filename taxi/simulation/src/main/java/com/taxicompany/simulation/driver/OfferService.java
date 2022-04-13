@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.taxicompany.driver.callback.client.v1.DriverCallbackServiceClientAwareProperties;
 import com.taxicompany.driver.callback.v1.DriverCallbackApi;
 import com.taxicompany.driver.callback.v1.Location;
-import com.taxicompany.driver.callback.v1.RideDone;
+import com.taxicompany.driver.callback.v1.RideFinished;
 import com.taxicompany.driver.callback.v1.RideOffer;
 import com.taxicompany.driver.service.v1.RequestRideOfferParameters;
 
@@ -28,16 +28,16 @@ public class OfferService {
     private DriverCallbackServiceClientAwareProperties properties;
 
     @Async
-    public void rideDone(
+    public void finishRide(
             final String driverId,
             final String rideId) {
         
-        final var payment = new RideDone();
+        final var payment = new RideFinished();
         payment.setPrice(random.nextFloat() * 40);
         payment.setCharged(random.nextBoolean() ? payment.getPrice() : 0);
         
         driverCallbackApi
-                .rideDone(driverId, rideId, payment);
+                .rideFinished(driverId, rideId, payment);
         
     }
     

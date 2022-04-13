@@ -1,9 +1,9 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
 import java.beans.FeatureDescriptor;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -30,7 +30,8 @@ public class ProcessEntityELResolver extends ELResolver {
 
     private final Map<String, Camunda7ProcessService<?>> processServices;
 
-    public ProcessEntityELResolver(final List<Camunda7ProcessService<?>> connectableServices) {
+    public ProcessEntityELResolver(
+            final Collection<Camunda7ProcessService<?>> connectableServices) {
 
         super();
         processServices = connectableServices

@@ -16,6 +16,7 @@ import org.camunda.bpm.model.bpmn.instance.MultiInstanceLoopCharacteristics;
 import org.camunda.bpm.model.xml.ModelInstance;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
 import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
@@ -44,12 +45,14 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
     }
 
     @Override
+    @Transactional(noRollbackFor = BpmnError.class)
     public void execute(
             final DelegateExecution execution) throws Exception {
         
         final var multiInstanceCache = new Map[] { null };
 
         try {
+
             super.execute(
                     execution.getBusinessKey(),
                     multiInstanceActivity -> {
@@ -59,8 +62,14 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
                         return multiInstanceCache[0].get(multiInstanceActivity);
                     },
                     taskParameter -> execution.getVariableLocal(taskParameter));
+
         } catch (TaskException e) {
-            throw new BpmnError(e.getErrorCode(), e.getErrorName(), e);
+
+            if (e.getErrorName() != null) {
+                throw new BpmnError(e.getErrorCode(), e.getErrorName(), e);
+            }
+            throw new BpmnError(e.getErrorCode(), e);
+
         }
 
     }
