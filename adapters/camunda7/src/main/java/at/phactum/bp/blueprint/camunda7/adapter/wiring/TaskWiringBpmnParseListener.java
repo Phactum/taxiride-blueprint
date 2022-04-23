@@ -5,7 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.camunda.bpm.engine.impl.bpmn.listener.DelegateExpressionExecutionListener;
+import org.camunda.bpm.engine.impl.bpmn.listener.ExpressionExecutionListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParse;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
@@ -13,6 +16,7 @@ import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
 import org.camunda.bpm.engine.impl.util.StringUtil;
 import org.camunda.bpm.engine.impl.util.xml.Element;
+import org.springframework.util.StringUtils;
 
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
 
@@ -82,7 +86,76 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        connectEvent(intermediateEventElement, scope, activity);
+        final var connected = connectEvent(intermediateEventElement, scope, activity);
+        if (connected) {
+            return;
+        }
+
+        final var unsupportedListeners = activity
+                .getListeners()
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .filter(l -> {
+                    if (l instanceof ExpressionExecutionListener) {
+                        final var expression = unwrapExpression(
+                                activity,
+                                ((ExpressionExecutionListener) l).getExpressionText());
+                        connectListener(
+                                intermediateEventElement,
+                                scope,
+                                activity,
+                                Type.EXPRESSION,
+                                expression);
+                        return false;
+                    }
+                    return true;
+                })
+                .filter(l -> {
+                    if (l instanceof DelegateExpressionExecutionListener) {
+                        final var expression = unwrapExpression(
+                                activity,
+                                ((DelegateExpressionExecutionListener) l).getExpressionText());
+                        connectListener(
+                                intermediateEventElement,
+                                scope,
+                                activity,
+                                Type.DELEGATE_EXPRESSION,
+                                expression);
+                        return false;
+                    }
+                    return true;
+                })
+                .map(l -> l.toString())
+                .collect(Collectors.joining(", "));
+        
+        if (StringUtils.hasText(unsupportedListeners)) {
+            throw new RuntimeException(
+                    "Unsupported listeners at '"
+                    + activity.getId()
+                    + "': "
+                    + unsupportedListeners);
+        }
+        
+    }
+    
+
+    private void connectListener(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity,
+            final Type type,
+            final String expression) {
+        
+        final var bpmnProcessId = ((ProcessDefinitionEntity) activity.getProcessDefinition()).getKey();
+        
+        final var connectable = new Camunda7Connectable(
+                bpmnProcessId,
+                activity.getId(),
+                expression,
+                type);
+        
+        connectables.add(connectable);
         
     }
     
@@ -92,7 +165,7 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        connect(businessRuleTaskElement, scope, activity);
+        connectTask(businessRuleTaskElement, scope, activity);
         
     }
     
@@ -102,7 +175,7 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        connect(sendTaskElement, scope, activity);
+        connectTask(sendTaskElement, scope, activity);
         
     }
 
@@ -112,11 +185,11 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        connect(serviceTaskElement, scope, activity);
+        connectTask(serviceTaskElement, scope, activity);
         
     }
 
-    private void connect(
+    private void connectTask(
             final Element element,
             final ScopeImpl scope,
             final ActivityImpl activity) {
@@ -181,21 +254,23 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         
     }
 
-    private void connectEvent(final Element eventElement, final ScopeImpl scope, final ActivityImpl activity) {
+    private boolean connectEvent(final Element eventElement, final ScopeImpl scope, final ActivityImpl activity) {
 
         final var messageEventDefinition = eventElement.element(BpmnParse.MESSAGE_EVENT_DEFINITION);
         if (messageEventDefinition == null) {
-            return;
+            return false;
         }
 
         final var id = messageEventDefinition.attribute("id");
         final var connectable = serviceTaskLikeElements.get(id);
         if (connectable == null) {
-            return;
+            return false;
         }
 
         connectables.add(new Camunda7Connectable(connectable.getBpmnProcessId(), activity.getId(),
                 connectable.getTaskDefinition(), connectable.getType()));
+
+        return true;
 
     }
 
@@ -207,7 +282,9 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             throw new RuntimeException(
                     "'delegate-expression' of element '"
                     + activity.getId()
-                    + "' not uses pattern ${...} or #{...}!");
+                    + "' not uses pattern ${...} or #{...}: '"
+                    + delegateExpression
+                    + "'");
         }
         
         return expressionWrapperMatcher.group(1);
