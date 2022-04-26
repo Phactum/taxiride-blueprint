@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_18wxe7z" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="1.1.0">
   <bpmn:process id="Process_Test1" isExecutable="true">
+    <bpmn:extensionElements>
+      <zeebe:userTaskForm id="userTaskForm_33g1kne">{
+  "id": "myForm"
+}</zeebe:userTaskForm>
+    </bpmn:extensionElements>
     <bpmn:startEvent id="StartEvent_1" name="test 1 wanted">
       <bpmn:outgoing>Flow_1f1fb15</bpmn:outgoing>
     </bpmn:startEvent>
@@ -42,7 +47,7 @@
       </bpmn:startEvent>
       <bpmn:sequenceFlow id="Flow_1ksymqt" sourceRef="Event_1dhi2lt" targetRef="MiTask" />
       <bpmn:sequenceFlow id="Flow_1azjieh" sourceRef="MiTask" targetRef="Event_0dtync5" />
-      <bpmn:sequenceFlow id="Flow_1cqfoep" sourceRef="Event_0dtync5" targetRef="Event_0owqm1q" />
+      <bpmn:sequenceFlow id="Flow_1cqfoep" sourceRef="Event_0dtync5" targetRef="MyUserTask" />
       <bpmn:intermediateThrowEvent id="Event_0dtync5" name="test 5">
         <bpmn:extensionElements>
           <zeebe:taskDefinition type="TEST5" />
@@ -55,7 +60,7 @@
         <bpmn:extensionElements>
           <zeebe:taskDefinition type="TEST4" />
         </bpmn:extensionElements>
-        <bpmn:incoming>Flow_1cqfoep</bpmn:incoming>
+        <bpmn:incoming>Flow_1p7qj9e</bpmn:incoming>
         <bpmn:messageEventDefinition id="MessageEventDefinition_1llv076" />
       </bpmn:endEvent>
       <bpmn:serviceTask id="MiTask" name="do test 3">
@@ -74,14 +79,22 @@
           </bpmn:extensionElements>
         </bpmn:multiInstanceLoopCharacteristics>
       </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="Flow_1p7qj9e" sourceRef="MyUserTask" targetRef="Event_0owqm1q" />
+      <bpmn:userTask id="MyUserTask" name="user task">
+        <bpmn:extensionElements>
+          <zeebe:formDefinition formKey="camunda-forms:bpmn:userTaskForm_33g1kne" />
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1cqfoep</bpmn:incoming>
+        <bpmn:outgoing>Flow_1p7qj9e</bpmn:outgoing>
+      </bpmn:userTask>
     </bpmn:subProcess>
     <bpmn:sequenceFlow id="Flow_0ehwfzv" sourceRef="EmbeddedSubprocess" targetRef="Event_1ed01sx" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_Test1">
       <bpmndi:BPMNEdge id="Flow_0ehwfzv_di" bpmnElement="Flow_0ehwfzv">
-        <di:waypoint x="850" y="177" />
-        <di:waypoint x="912" y="177" />
+        <di:waypoint x="990" y="177" />
+        <di:waypoint x="1052" y="177" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_04wkfko_di" bpmnElement="Flow_04wkfko">
         <di:waypoint x="370" y="177" />
@@ -101,17 +114,21 @@
         <dc:Bounds x="270" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_033x6vt_di" bpmnElement="Event_1ed01sx">
-        <dc:Bounds x="912" y="159" width="36" height="36" />
+        <dc:Bounds x="1052" y="159" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="903" y="202" width="55" height="14" />
+          <dc:Bounds x="1043" y="202" width="55" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0szunq3_di" bpmnElement="EmbeddedSubprocess" isExpanded="true">
-        <dc:Bounds x="430" y="77" width="420" height="200" />
+        <dc:Bounds x="430" y="77" width="560" height="200" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1p7qj9e_di" bpmnElement="Flow_1p7qj9e">
+        <di:waypoint x="870" y="177" />
+        <di:waypoint x="912" y="177" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1cqfoep_di" bpmnElement="Flow_1cqfoep">
         <di:waypoint x="728" y="177" />
-        <di:waypoint x="772" y="177" />
+        <di:waypoint x="770" y="177" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1azjieh_di" bpmnElement="Flow_1azjieh">
         <di:waypoint x="650" y="177" />
@@ -131,13 +148,16 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1yovc6x_di" bpmnElement="Event_0owqm1q">
-        <dc:Bounds x="772" y="159" width="36" height="36" />
+        <dc:Bounds x="912" y="159" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="763" y="202" width="55" height="14" />
+          <dc:Bounds x="903" y="202" width="55" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1cbkbb8_di" bpmnElement="MiTask">
         <dc:Bounds x="550" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17p7wy5_di" bpmnElement="MyUserTask">
+        <dc:Bounds x="770" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

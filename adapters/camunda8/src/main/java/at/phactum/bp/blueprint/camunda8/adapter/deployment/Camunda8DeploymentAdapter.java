@@ -26,6 +26,7 @@ import io.camunda.zeebe.model.bpmn.instance.IntermediateThrowEvent;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.SendTask;
 import io.camunda.zeebe.model.bpmn.instance.ServiceTask;
+import io.camunda.zeebe.model.bpmn.instance.UserTask;
 import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 
 public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
@@ -67,6 +68,8 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
         this.client = client;
 
         deployAllWorkflowModules();
+
+        taskWiring.openWorkers();
 
     }
 
@@ -142,6 +145,7 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                         taskWiring.connectablesForType(process, model, ServiceTask.class),
                         taskWiring.connectablesForType(process, model, BusinessRuleTask.class),
                         taskWiring.connectablesForType(process, model, SendTask.class),
+                        taskWiring.connectablesForType(process, model, UserTask.class),
                         taskWiring.connectablesForType(process, model, IntermediateThrowEvent.class),
                         taskWiring.connectablesForType(process, model, EndEvent.class)))
                 .forEach(connectable -> taskWiring.wireTask(processService[0], connectable));

@@ -2,13 +2,17 @@ package org.blueprint.bp.blueprint.test1;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import at.phactum.bp.blueprint.process.ProcessService;
 import at.phactum.bp.blueprint.service.BpmnProcess;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.TaskParam;
+import at.phactum.bp.blueprint.service.UserTaskEvent;
+import at.phactum.bp.blueprint.service.UserTaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
@@ -21,6 +25,9 @@ import at.phactum.bp.blueprint.service.WorkflowTask;
             }
     )
 public class Test1WorkflowService {
+
+    @Autowired
+    private ProcessService<Test1DomainEntity> processService;
 
     @WorkflowTask(taskDefinition = "TEST1")
     public void doTest1Task(
@@ -64,6 +71,18 @@ public class Test1WorkflowService {
             final @MultiInstanceElement(resolverBean = KebapItemIdResolver.class) String kebapItemId) {
 
         System.err.println("YEAH 5: " + kebapItemId);
+        
+    }
+    
+    @WorkflowTask(id = "MyUserTask")
+    public void myUserTask(
+            final Test1DomainEntity rootEntity,
+            final @UserTaskId String taskId,
+            final @UserTaskEvent UserTaskEvent.TaskEvent event) {
+        
+        System.err.println("UserTask: " + taskId + " -> " + event);
+        
+        processService.completeUserTask(rootEntity, taskId);
         
     }
     

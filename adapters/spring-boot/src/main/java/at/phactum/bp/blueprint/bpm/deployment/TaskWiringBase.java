@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.util.StringUtils;
 
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameterFactory;
@@ -19,6 +20,8 @@ import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.NoResolver;
 import at.phactum.bp.blueprint.service.TaskParam;
+import at.phactum.bp.blueprint.service.UserTaskEvent;
+import at.phactum.bp.blueprint.service.UserTaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 import at.phactum.bp.blueprint.utilities.BeanUtils;
@@ -156,7 +159,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
         final var tested = new StringBuilder();
         final var matching = new StringBuilder();
         final var matchingMethods = new AtomicInteger(0);
-
+        
         applicationContext
                 .getBeansWithAnnotation(WorkflowService.class)
                 .entrySet()
@@ -166,22 +169,36 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                         bean.getValue()))
                 .forEach(bean -> {
                     connectConnectableToBean(
-                        processService,
-                        connectable,
-                            tested, matching, matchingMethods,
-                        bean.getKey(),
+                            processService,
+                            connectable,
+                            tested,
+                            matching,
+                            matchingMethods,
+                            bean.getKey(),
                             bean.getValue());
                 });
 
         if (matchingMethods.get() > 1) {
-            throw new RuntimeException("More than one method annotated with @WorkflowTask is matching task '"
-                    + connectable.getTaskDefinition() + "' of process '" + connectable.getBpmnProcessId() + "': "
+            throw new RuntimeException(
+                    "More than one method annotated with @WorkflowTask is matching task having "
+                    + (StringUtils.hasText(connectable.getTaskDefinition())
+                            ? "task-definition '" + connectable.getTaskDefinition()
+                            : "element-id '" + connectable.getElementId())
+                    + "' of process '"
+                    + connectable.getBpmnProcessId()
+                    + "': "
                     + matching);
         }
         if (matchingMethods.get() == 0) {
             throw new RuntimeException(
-                    "No public method annotated with @WorkflowTask is matching task '" + connectable.getTaskDefinition()
-                            + "' of process '" + connectable.getBpmnProcessId() + "'. Tested for: " + tested);
+                    "No public method annotated with @WorkflowTask is matching task having "
+                    + (StringUtils.hasText(connectable.getTaskDefinition())
+                            ? "task-definition '" + connectable.getTaskDefinition()
+                            : "no task-definition but element-id '" + connectable.getElementId())
+                    + "' of process '"
+                    + connectable.getBpmnProcessId()
+                    + "'. Tested for: "
+                    + tested);
         }
 
     }
@@ -208,7 +225,9 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
     private void connectConnectableToBean(
             final PS processService,
             final T connectable,
-            final StringBuilder tested, final StringBuilder matching, final AtomicInteger matchingMethods,
+            final StringBuilder tested,
+            final StringBuilder matching,
+            final AtomicInteger matchingMethods,
             final String beanName,
             final Object bean) {
         
@@ -227,9 +246,10 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                     tested.append('#');
                     tested.append(m.getKey().toString());
                 })
-                .filter(m -> connectable.getElementId().equals(m.getValue().id())
-                        || connectable.getTaskDefinition().equals(m.getValue().taskDefinition())
-                        || connectable.getTaskDefinition().equals(m.getKey().getName()))
+                .filter(m -> (StringUtils.hasText(connectable.getTaskDefinition())
+                        && (m.getKey().getName().equals(connectable.getTaskDefinition())
+                                || m.getValue().taskDefinition().equals(connectable.getTaskDefinition())))
+                        || connectable.getElementId().equals(m.getValue().id()))
                 .peek(m -> {
                     if (matching.length() > 0) {
                         matching.append(", ");
@@ -288,6 +308,23 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
 
                     parameters.add(methodParameterFactory
                             .getTaskParameter(taskParamAnnotation.value()));
+                    return false;
+                }).filter(param -> {
+                    final var userTaskIdAnnotation = param.getAnnotation(UserTaskId.class);
+                    if (userTaskIdAnnotation == null) {
+                        return true;
+                    }
+
+                    parameters.add(methodParameterFactory.getUserTaskIdParameter());
+                    return false;
+                }).filter(param -> {
+                    final var userTaskEventAnnotation = param.getAnnotation(UserTaskEvent.class);
+                    if (userTaskEventAnnotation == null) {
+                        return true;
+                    }
+
+                    parameters.add(methodParameterFactory
+                            .getUserTaskEventParameter(userTaskEventAnnotation.value()));
                     return false;
                 }).filter(param -> {
                     final var miTotalAnnotation = param.getAnnotation(MultiInstanceTotal.class);

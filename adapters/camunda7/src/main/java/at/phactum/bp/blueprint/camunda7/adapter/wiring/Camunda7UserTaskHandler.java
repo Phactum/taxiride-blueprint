@@ -1,0 +1,140 @@
+package at.phactum.bp.blueprint.camunda7.adapter.wiring;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+
+import org.camunda.bpm.engine.delegate.DelegateTask;
+import org.camunda.bpm.engine.delegate.TaskListener;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
+import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.UserTaskEventMethodParameter;
+import at.phactum.bp.blueprint.service.UserTaskEvent;
+import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
+
+public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskListener {
+
+    public Camunda7UserTaskHandler(
+            final JpaRepository<Object, String> workflowDomainEntityRepository,
+            final Object bean,
+            final Method method,
+            final List<MethodParameter> parameters) {
+        
+        super(workflowDomainEntityRepository, bean, method, parameters);
+        
+    }
+
+    @Override
+    public void notify(final DelegateTask delegateTask) {
+        
+        final var multiInstanceCache = new Map[] { null };
+
+        try {
+
+            final var execution = delegateTask.getExecution();
+
+            super.execute(
+                    execution.getBusinessKey(),
+                    multiInstanceActivity -> {
+                        if (multiInstanceCache[0] == null) {
+                            multiInstanceCache[0] = Camunda7TaskHandler.getMultiInstanceContext(execution);
+                        }
+                        return multiInstanceCache[0].get(multiInstanceActivity);
+                    },
+                    taskParameter -> execution.getVariableLocal(taskParameter),
+                    () -> delegateTask.getId(),
+                    () -> getTaskEvent(delegateTask.getEventName()));
+
+        } catch (RuntimeException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(e);
+
+        }
+
+    }
+    
+    public boolean eventApplies(
+            final String eventName) {
+        
+        final var event = getTaskEvent(eventName);
+        if (event == null) {
+            return false;
+        }
+        
+        final var events = this.parameters
+                .stream()
+                .filter(parameter -> parameter instanceof UserTaskEventMethodParameter)
+                .map(parameter -> ((UserTaskEventMethodParameter) parameter).getEvents())
+                .findFirst()
+                .orElse(Set.of());
+        
+        return events.contains(event);
+        
+    }
+    
+    protected UserTaskEvent.TaskEvent getTaskEvent(
+            final String eventName) {
+        
+        switch (eventName) {
+        case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_COMPLETE:
+            return TaskEvent.COMPLETED;
+        case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_DELETE:
+            return TaskEvent.CANCELED;
+        case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_CREATE:
+            return TaskEvent.CREATED;
+        default:
+            return null;
+        }
+        
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    protected MultiInstance<Object> getMultiInstance(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return (MultiInstance<Object>) multiInstanceSupplier.apply(name);
+        
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Object getMultiInstanceElement(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getElement();
+        
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Integer getMultiInstanceTotal(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getTotal();
+        
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Integer getMultiInstanceIndex(
+            final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+        
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getIndex();
+        
+    }
+
+}

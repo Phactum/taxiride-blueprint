@@ -296,7 +296,7 @@ customer process for understanding</bpmn:text>
       <bpmn:incoming>Flow_1jwfi8y</bpmn:incoming>
       <bpmn:outgoing>Flow_1vbjv8l</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:userTask id="Activity_126a4jc" name="Retrieve payment" camunda:formRef="RetrievePayment" camunda:formRefBinding="latest">
+    <bpmn:userTask id="Activity_126a4jc" name="Retrieve payment" camunda:formKey="retrievePayment">
       <bpmn:incoming>Flow_0yru6nl</bpmn:incoming>
       <bpmn:outgoing>Flow_0evuzug</bpmn:outgoing>
     </bpmn:userTask>

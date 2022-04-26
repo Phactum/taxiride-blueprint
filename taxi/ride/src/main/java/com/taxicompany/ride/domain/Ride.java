@@ -57,6 +57,9 @@ public class Ride {
     @Column(name = "CHARGED")
     private Float charged;
 
+    @Column(name = "RETRIEVEPAYMENT_TASKID")
+    private String retrievePaymentTaskId;
+
     public boolean isCustomerCharged() {
 
         return price == charged;
@@ -158,6 +161,14 @@ public class Ride {
 
     public Float getPrice() {
         return price;
+    }
+
+    public String getRetrievePaymentTaskId() {
+        return retrievePaymentTaskId;
+    }
+
+    public void setRetrievePaymentTaskId(String retrievePaymentTaskId) {
+        this.retrievePaymentTaskId = retrievePaymentTaskId;
     }
 
 }

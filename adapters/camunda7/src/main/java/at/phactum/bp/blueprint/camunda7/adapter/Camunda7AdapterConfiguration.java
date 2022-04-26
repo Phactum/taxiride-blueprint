@@ -5,6 +5,7 @@ import java.util.function.Function;
 import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAda
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiringPlugin;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7UserTaskEventHandler;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.ProcessEntityAwareExpressionManager;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
 import at.phactum.bp.blueprint.utilities.SpringDataTool;
@@ -35,6 +37,9 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
 
     @Autowired
     private RuntimeService runtimeService;
+
+    @Autowired
+    private TaskService taskService;
 
     @Autowired
     private RepositoryService repositoryService;
@@ -56,21 +61,33 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     }
     
     @Bean
+    public Camunda7UserTaskEventHandler userTaskEventHandler() {
+        
+        return new Camunda7UserTaskEventHandler();
+        
+    }
+    
+    @Bean
     public Camunda7TaskWiring taskWiring(
-            final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager) {
+            final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager,
+            final Camunda7UserTaskEventHandler userTaskEventHandler) {
         
         return new Camunda7TaskWiring(
                 applicationContext,
                 processEntityAwareExpressionManager,
+                userTaskEventHandler,
                 getConnectableServices());
         
     }
     
     @Bean
     public TaskWiringBpmnParseListener taskWiringBpmnParseListener(
-            final Camunda7TaskWiring taskWiring) {
+            final Camunda7TaskWiring taskWiring,
+            final Camunda7UserTaskEventHandler userTaskEventHandler) {
         
-        return new TaskWiringBpmnParseListener(taskWiring);
+        return new TaskWiringBpmnParseListener(
+                taskWiring,
+                userTaskEventHandler);
         
     }
     
@@ -102,6 +119,7 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
 
         return new Camunda7ProcessService<DE>(
                 runtimeService,
+                taskService,
                 repositoryService,
                 getDomainEntityId,
                 workflowDomainEntityRepository,

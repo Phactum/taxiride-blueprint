@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
 import at.phactum.bp.blueprint.process.ProcessService;
 
 @Component
@@ -19,19 +20,24 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
     private final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager;
 
     private final Collection<Camunda7ProcessService<?>> connectableServices;
+    
+    private final Camunda7UserTaskEventHandler userTaskEventHandler;
 
     public Camunda7TaskWiring(
             final ApplicationContext applicationContext,
             final ProcessEntityAwareExpressionManager processEntityAwareExpressionManager,
+            final Camunda7UserTaskEventHandler userTaskEventHandler,
             final Collection<Camunda7ProcessService<?>> connectableServices) {
         
         super(applicationContext);
         this.processEntityAwareExpressionManager = processEntityAwareExpressionManager;
+        this.userTaskEventHandler = userTaskEventHandler;
         this.connectableServices = connectableServices;
         
     }
     
     @Override
+    @SuppressWarnings("unchecked")
     protected void connectToBpms(
             final Camunda7ProcessService<?> processService,
             final Object bean,
@@ -40,8 +46,19 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
             final List<MethodParameter> parameters) {
         
         final var repository = processService.getWorkflowDomainEntityRepository();
+
+        if (connectable.getType() == Type.USERTASK) {
+            
+            final var taskHandler = new Camunda7UserTaskHandler(
+                    (JpaRepository<Object, String>) repository,
+                    bean,
+                    method,
+                    parameters);
+            userTaskEventHandler.addTaskHandler(connectable, taskHandler);
+            return;
+            
+        }
         
-        @SuppressWarnings("unchecked")
         final var taskHandler = new Camunda7TaskHandler(
                 (JpaRepository<Object, String>) repository,
                 bean,

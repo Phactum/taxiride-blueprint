@@ -57,11 +57,13 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
                     execution.getBusinessKey(),
                     multiInstanceActivity -> {
                         if (multiInstanceCache[0] == null) {
-                            multiInstanceCache[0] = getMultiInstanceContext(execution);
+                            multiInstanceCache[0] = Camunda7TaskHandler.getMultiInstanceContext(execution);
                         }
                         return multiInstanceCache[0].get(multiInstanceActivity);
                     },
-                    taskParameter -> execution.getVariableLocal(taskParameter));
+                    taskParameter -> execution.getVariableLocal(taskParameter),
+                    null,
+                    null);
 
         } catch (TaskException e) {
 
@@ -120,7 +122,7 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
         
     }
 
-    protected Map<String, MultiInstanceElementResolver.MultiInstance<Object>> getMultiInstanceContext(
+    static Map<String, MultiInstanceElementResolver.MultiInstance<Object>> getMultiInstanceContext(
             final DelegateExecution execution) {
 
         final var result = new LinkedHashMap<String, MultiInstanceElementResolver.MultiInstance<Object>>();
@@ -173,7 +175,7 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
 
     }
 
-    private ModelElementInstance getCurrentElement(final ModelInstance model, DelegateExecution miExecution) {
+    private static ModelElementInstance getCurrentElement(final ModelInstance model, DelegateExecution miExecution) {
 
         // if current element is known then simply use it
         if (miExecution.getBpmnModelElementInstance() != null) {

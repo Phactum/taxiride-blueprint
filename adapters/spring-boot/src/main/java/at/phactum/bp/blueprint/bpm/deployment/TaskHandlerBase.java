@@ -16,7 +16,10 @@ import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceIndexMetho
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.ResolverBasedMultiInstanceMethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.TaskParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.UserTaskEventMethodParameter;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.UserTaskIdMethodParameter;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
+import at.phactum.bp.blueprint.service.UserTaskEvent;
 
 public abstract class TaskHandlerBase {
 
@@ -47,7 +50,9 @@ public abstract class TaskHandlerBase {
     protected Object execute(
             final String workflowDomainEntityId,
             final Function<String, Object> multiInstanceSupplier,
-            final Function<String, Object> taskParameterSupplier)
+            final Function<String, Object> taskParameterSupplier,
+            final Supplier<String> userTaskIdSupplier,
+            final Supplier<UserTaskEvent.TaskEvent> userTaskEventSupplier)
             throws Exception {
         
         final var domainEntity = new Object[] { null };
@@ -69,6 +74,10 @@ public abstract class TaskHandlerBase {
                 .peek(param -> ++index[0])
                 .filter(param -> processTaskParameter(args, index[0], param,
                         taskParameterSupplier))
+                .filter(param -> processUserTaskIdParameter(args, index[0], param,
+                        userTaskIdSupplier))
+                .filter(param -> processUserTaskEventParameter(args, index[0], param,
+                        userTaskEventSupplier))
                 .filter(param -> processMultiInstanceTotalParameter(args, index[0], param,
                         multiInstanceSupplier))
                 .filter(param -> processMultiInstanceIndexParameter(args, index[0], param,
@@ -126,6 +135,38 @@ public abstract class TaskHandlerBase {
         args[index] = getMultiInstanceTotal(
                 ((MultiInstanceTotalMethodParameter) param).getName(),
                 multiInstanceSupplier);
+        
+        return false;
+        
+    }
+
+    private boolean processUserTaskEventParameter(
+            final Object[] args,
+            final int index,
+            final MethodParameter param,
+            final Supplier<UserTaskEvent.TaskEvent> userTaskEventSupplier) {
+
+        if (!(param instanceof UserTaskEventMethodParameter)) {
+            return true;
+        }
+
+        args[index] = userTaskEventSupplier.get();
+        
+        return false;
+        
+    }
+
+    private boolean processUserTaskIdParameter(
+            final Object[] args,
+            final int index,
+            final MethodParameter param,
+            final Supplier<String> userTaskIdSupplier) {
+
+        if (!(param instanceof UserTaskIdMethodParameter)) {
+            return true;
+        }
+
+        args[index] = userTaskIdSupplier.get();
         
         return false;
         

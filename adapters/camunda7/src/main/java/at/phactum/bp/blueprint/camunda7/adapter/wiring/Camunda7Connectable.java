@@ -5,7 +5,7 @@ import at.phactum.bp.blueprint.bpm.deployment.Connectable;
 public class Camunda7Connectable implements Connectable {
 
     public static enum Type {
-        EXPRESSION, DELEGATE_EXPRESSION, EXTERNAL_TASK
+        EXPRESSION, DELEGATE_EXPRESSION, EXTERNAL_TASK, USERTASK
     };
     
     private final Type type;

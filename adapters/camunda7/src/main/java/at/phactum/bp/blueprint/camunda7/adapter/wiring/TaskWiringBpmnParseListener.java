@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.camunda.bpm.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
 import org.camunda.bpm.engine.impl.bpmn.listener.DelegateExpressionExecutionListener;
 import org.camunda.bpm.engine.impl.bpmn.listener.ExpressionExecutionListener;
 import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
@@ -14,6 +15,7 @@ import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParse;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
+import org.camunda.bpm.engine.impl.task.TaskDefinition;
 import org.camunda.bpm.engine.impl.util.StringUtil;
 import org.camunda.bpm.engine.impl.util.xml.Element;
 import org.springframework.util.StringUtils;
@@ -28,15 +30,19 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
     
     private final Camunda7TaskWiring taskWiring;
 
+    private final Camunda7UserTaskEventHandler userTaskEventHandler;
+    
     private List<Camunda7Connectable> connectables = new LinkedList<>();
 
     private Map<String, Camunda7Connectable> serviceTaskLikeElements = new HashMap<>();
     
     public TaskWiringBpmnParseListener(
-            final Camunda7TaskWiring taskWiring) {
+            final Camunda7TaskWiring taskWiring,
+            final Camunda7UserTaskEventHandler userTaskEventHandler) {
 
         super();
         this.taskWiring = taskWiring;
+        this.userTaskEventHandler = userTaskEventHandler;
 
     }
     
@@ -139,6 +145,32 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         
     }
     
+    @Override
+    public void parseUserTask(
+            final Element userTaskElement,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        final var taskDefinition = getTaskDefinition(activity);
+
+        taskDefinition.addBuiltInTaskListener(
+                org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_CREATE,
+                userTaskEventHandler);
+//        taskDefinition.addBuiltInTaskListener(
+//                org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_DELETE,
+//                null);
+
+        final var bpmnProcessId = ((ProcessDefinitionEntity) activity.getProcessDefinition()).getKey();
+
+        final var connectable = new Camunda7Connectable(
+                bpmnProcessId,
+                activity.getId(),
+                taskDefinition.getFormKey() != null ? taskDefinition.getFormKey().getExpressionText() : null,
+                Type.USERTASK);
+        
+        connectables.add(connectable);
+
+    }
 
     private void connectListener(
             final Element element,
@@ -267,8 +299,12 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             return false;
         }
 
-        connectables.add(new Camunda7Connectable(connectable.getBpmnProcessId(), activity.getId(),
-                connectable.getTaskDefinition(), connectable.getType()));
+        connectables.add(
+                new Camunda7Connectable(
+                        connectable.getBpmnProcessId(),
+                        activity.getId(),
+                        connectable.getTaskDefinition(),
+                        connectable.getType()));
 
         return true;
 
@@ -291,4 +327,18 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         
     }
 
+    /**
+     * Retrieves task definition.
+     *
+     * @param activity the taskActivity
+     * @return taskDefinition for activity
+     */
+    private TaskDefinition getTaskDefinition(
+            final ActivityImpl activity) {
+        
+        final UserTaskActivityBehavior activityBehavior = (UserTaskActivityBehavior) activity.getActivityBehavior();
+        return activityBehavior.getTaskDefinition();
+        
+    }
+    
 }

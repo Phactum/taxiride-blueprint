@@ -32,7 +32,7 @@ public abstract class AdapterConfigurationBase<P extends ProcessServiceImplement
     @SuppressWarnings("unchecked")
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public <DE> P camunda7ProcessService(
+    public <DE> P camundaProcessService(
             final SpringDataTool springDataTool,
             final InjectionPoint injectionPoint) throws Exception {
 

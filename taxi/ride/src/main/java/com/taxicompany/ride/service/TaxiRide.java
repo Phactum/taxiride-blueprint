@@ -17,6 +17,9 @@ import com.taxicompany.ride.domain.RideRepository;
 import at.phactum.bp.blueprint.process.ProcessService;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.TaskException;
+import at.phactum.bp.blueprint.service.UserTaskEvent;
+import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
+import at.phactum.bp.blueprint.service.UserTaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
@@ -173,6 +176,20 @@ public class TaxiRide {
 
         throw new TaskException("CreditCardCannotBeCharged");
 
+    }
+    
+    @WorkflowTask
+    public void retrievePayment(
+            final Ride ride,
+            final @UserTaskId String taskId,
+            final @UserTaskEvent TaskEvent taskEvent) {
+        
+        if (taskEvent == TaskEvent.CREATED) {
+            ride.setRetrievePaymentTaskId(taskId);
+        } else {
+            ride.setRetrievePaymentTaskId(null);
+        }
+        
     }
     
 }

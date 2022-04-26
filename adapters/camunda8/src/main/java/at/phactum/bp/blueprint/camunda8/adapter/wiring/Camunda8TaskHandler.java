@@ -20,6 +20,7 @@ import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiI
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
 import at.phactum.bp.blueprint.service.TaskException;
+import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
 import io.camunda.zeebe.client.api.command.FinalCommandStep;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -65,7 +66,9 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
             final var domainEntity = super.execute(
                     businessKey,
                     multiInstanceVariable -> getVariable(job, multiInstanceVariable),
-                    taskParameter -> getVariable(job, taskParameter));
+                    taskParameter -> getVariable(job, taskParameter),
+                    () -> Long.toHexString(job.getKey()),
+                    () -> TaskEvent.CREATED);
 
             command = createCompleteCommand(client, job, domainEntity);
         } catch (TaskException bpmnError) {
@@ -131,6 +134,10 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
         
     }
 
+    /**
+     * @deprecated Attempt to calculate variables but it's not possible
+     */
+    @Deprecated
     protected Map<String, MultiInstanceElementResolver.MultiInstance<Object>> getMultiInstanceContext(
             final ActivatedJob job,
             final String workflowDomainEntityId) {

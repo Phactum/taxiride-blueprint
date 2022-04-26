@@ -1,6 +1,7 @@
 package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,12 +15,15 @@ import at.phactum.bp.blueprint.bpm.deployment.TaskWiringBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8Connectable.Type;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MethodParameterFactory;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.ParameterVariables;
 import io.camunda.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1.JobWorkerBuilderStep3;
 import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
 import io.camunda.zeebe.model.bpmn.instance.BaseElement;
 import io.camunda.zeebe.model.bpmn.instance.Process;
+import io.camunda.zeebe.model.bpmn.instance.UserTask;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
@@ -30,19 +34,25 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
     
     private final ObjectProvider<Camunda8TaskHandler> taskHandlers;
 
-    private final List<Camunda8ProcessService<?>> connectableServices;
+    private final Collection<Camunda8ProcessService<?>> connectableServices;
+    
+    private final Camunda8UserTaskHandler userTaskHandler;
 
     private ZeebeClient client;
+    
+    private List<JobWorkerBuilderStep3> workers = new LinkedList<>();
 
     public Camunda8TaskWiring(
             final ApplicationContext applicationContext,
             final String workerId,
+            final Camunda8UserTaskHandler userTaskHandler,
             final ObjectProvider<Camunda8TaskHandler> taskHandlers,
-            final List<Camunda8ProcessService<?>> connectableServices) {
+            final Collection<Camunda8ProcessService<?>> connectableServices) {
         
         super(applicationContext, new Camunda8MethodParameterFactory());
         this.workerId = workerId;
         this.taskHandlers = taskHandlers;
+        this.userTaskHandler = userTaskHandler;
         this.connectableServices = connectableServices;
         
     }
@@ -58,6 +68,22 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
         
         this.client = client;
         
+        // fetch all usertasks spawned
+        workers.add(
+                client
+                        .newWorker()
+                        .jobType("io.camunda.zeebe:userTask")
+                        .handler(userTaskHandler)
+                        .name(workerId));
+        
+    }
+    
+    public void openWorkers() {
+        
+        workers
+                .stream()
+                .forEach(JobWorkerBuilderStep3::open);
+        
     }
 
     public Stream<Camunda8Connectable> connectablesForType(
@@ -65,15 +91,25 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
             final BpmnModelInstanceImpl model,
             final Class<? extends BaseElement> type) {
         
-        return model
+        final var kind = UserTask.class.isAssignableFrom(type) ? Type.USERTASK : Type.TASK;
+        
+        final var stream = model
                 .getModelElementsByType(type)
                 .stream()
                 .filter(element -> getOwningProcess(element).equals(process))
-                .map(element -> new Camunda8Connectable(process, element.getId(),
+                .map(element -> new Camunda8Connectable(
+                        process,
+                        element.getId(),
+                        kind,
                         element.getSingleExtensionElement(ZeebeTaskDefinition.class),
                         element.getSingleExtensionElement(ZeebeLoopCharacteristics.class)))
-                .filter(connectable -> connectable.isExecutableProcess())
-                .filter(connectable -> connectable.getTaskDefinition() != null);
+                .filter(connectable -> connectable.isExecutableProcess());
+        
+        if (kind == Type.USERTASK) {
+            return stream;
+        }
+        
+        return stream.filter(connectable -> connectable.getTaskDefinition() != null);
         
     }
     
@@ -128,15 +164,25 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
                 method,
                 parameters);
 
+        if (connectable.getType() == Type.USERTASK) {
+            
+            userTaskHandler.addTaskHandler(
+                    connectable.getBpmnProcessId(),
+                    connectable.getElementId(),
+                    taskHandler);
+            return;
+            
+        }
+        
         final var variablesToFetch = getVariablesToFetch(parameters);
 
-        client
-                .newWorker()
-                .jobType(connectable.getTaskDefinition())
-                .handler(taskHandler)
-                .name(workerId)
-                .fetchVariables(variablesToFetch)
-                .open();
+        workers.add(
+                client
+                        .newWorker()
+                        .jobType(connectable.getTaskDefinition())
+                        .handler(taskHandler)
+                        .name(workerId)
+                        .fetchVariables(variablesToFetch));
 
               // using defaults from config if null, 0 or negative
 //              if (zeebeWorkerValue.getName() != null && zeebeWorkerValue.getName().length() > 0) {

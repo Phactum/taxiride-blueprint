@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,8 @@ public class Camunda7ProcessService<DE>
     
     private final RuntimeService runtimeService;
     
+    private final TaskService taskService;
+    
     private final JpaRepository<DE, String> workflowDomainEntityRepository;
     
     private final Class<DE> workflowDomainEntityClass;
@@ -31,6 +34,7 @@ public class Camunda7ProcessService<DE>
 
     public Camunda7ProcessService(
             final RuntimeService runtimeService,
+            final TaskService taskService,
             final RepositoryService repositoryService,
             final Function<DE, String> getDomainEntityId,
             final JpaRepository<DE, String> workflowDomainEntityRepository,
@@ -38,6 +42,7 @@ public class Camunda7ProcessService<DE>
 
         super();
         this.runtimeService = runtimeService;
+        this.taskService = taskService;
         this.workflowDomainEntityRepository = workflowDomainEntityRepository;
         this.workflowDomainEntityClass = workflowDomainEntityClass;
         this.getDomainEntityId = getDomainEntityId;
@@ -176,6 +181,35 @@ public class Camunda7ProcessService<DE>
         
         return attachedEntity;
 
+    }
+
+    @Override
+    public DE completeUserTask(
+            final DE domainEntity,
+            final String taskId) {
+
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
+        
+        taskService.complete(taskId);
+        
+        return attachedEntity;
+        
+    }
+    
+    @Override
+    public DE completeUserTaskByError(
+            final DE domainEntity,
+            final String taskId,
+            final String errorCode) {
+        
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
+
+        taskService.handleBpmnError(taskId, errorCode);
+
+        return attachedEntity;
+        
     }
     
 }

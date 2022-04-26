@@ -142,5 +142,48 @@ public class Camunda8ProcessService<DE>
         return attachedEntity;
         
     }
+
+    @Override
+    public DE completeUserTask(
+            final DE domainEntity,
+            final String taskId) {
+        
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
+        
+        client
+                .newCompleteCommand(Long.parseLong(taskId, 16))
+                .variables(domainEntity)
+                .send()
+                .join();
+
+        logger.trace("Complete usertask '{}' for process '{}'",
+                taskId, bpmnProcessId);
+        
+        return attachedEntity;
+        
+    }
+    
+    @Override
+    public DE completeUserTaskByError(
+            final DE domainEntity,
+            final String taskId,
+            final String errorCode) {
+        
+        final var attachedEntity = workflowDomainEntityRepository
+                .saveAndFlush(domainEntity);
+        
+        client
+                .newThrowErrorCommand(Long.parseLong(taskId))
+                .errorCode(errorCode)
+                .send()
+                .join();
+
+        logger.trace("Complete usertask '{}' for process '{}'",
+                taskId, bpmnProcessId);
+        
+        return attachedEntity;
+        
+    }
     
 }

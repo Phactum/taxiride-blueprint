@@ -1,5 +1,7 @@
 package at.phactum.bp.blueprint.process;
 
+import at.phactum.bp.blueprint.service.UserTaskId;
+
 /**
  * @param <DE> The workflow-aggregate domain-entity-class
  */
@@ -22,8 +24,8 @@ public interface ProcessService<DE> {
      * Correlate a message for the domain-entity's workflow or it's sub-workflows
      * (call-activities).
      *
-     * @param processEntity The domain-entity
-     * @param messageName   The message name to be correlated
+     * @param domainEntity The domain-entity
+     * @param messageName  The message name to be correlated
      * @return The domain-entity attached to JPA
      */
     DE correlateMessage(DE domainEntity, String messageName);
@@ -32,11 +34,31 @@ public interface ProcessService<DE> {
      * Correlate a message for the domain-entity's workflow or it's sub-workflows
      * (call-activities).
      *
-     * @param processEntity The domain-entity
+     * @param domainEntity  The domain-entity
      * @param messageName   The message name to be correlated
      * @param correlationId The correlation-id
      * @return The domain-entity attached to JPA
      */
     DE correlateMessage(DE domainEntity, String messageName, String correlationId);
+
+    /**
+     * Complete a user-task
+     * 
+     * @param domainEntity The domain-entity
+     * @param taskId       The task-id reported previously
+     * @return The domain-entity attached to JPA
+     * @see UserTaskId
+     */
+    DE completeUserTask(DE domainEntity, String taskId);
+
+    /**
+     * Complete a user-task by sendung a BPMN error
+     * 
+     * @param domainEntity The domain-entity
+     * @param taskId       The task-id reported previously
+     * @return The domain-entity attached to JPA
+     * @see UserTaskId
+     */
+    DE completeUserTaskByError(DE domainEntity, String taskId, String errorCode);
 
 }

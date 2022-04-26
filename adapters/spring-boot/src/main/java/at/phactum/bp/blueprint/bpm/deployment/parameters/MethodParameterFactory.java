@@ -1,6 +1,7 @@
 package at.phactum.bp.blueprint.bpm.deployment.parameters;
 
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
+import at.phactum.bp.blueprint.service.UserTaskEvent;
 
 public class MethodParameterFactory {
 
@@ -44,5 +45,18 @@ public class MethodParameterFactory {
         return new TaskParameter(name);
 
     }
+    
+    public UserTaskIdMethodParameter getUserTaskIdParameter() {
+        
+        return new UserTaskIdMethodParameter();
+        
+    }
 
+    public UserTaskEventMethodParameter getUserTaskEventParameter(
+            final UserTaskEvent.TaskEvent[] events) {
+        
+        return new UserTaskEventMethodParameter(events);
+        
+    }
+    
 }
