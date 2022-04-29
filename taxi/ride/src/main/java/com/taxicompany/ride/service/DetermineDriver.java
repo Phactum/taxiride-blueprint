@@ -50,9 +50,9 @@ public class DetermineDriver {
     public void determinePotentialDrivers(
             final Ride ride) {
         
-        final var parameters = new DriversNearbyParameters();
-        parameters.setLongitude(ride.getPickupLocation().getLongitude());
-        parameters.setLatitude(ride.getPickupLocation().getLatitude());
+        final var parameters = new DriversNearbyParameters()
+                .longitude(ride.getPickupLocation().getLongitude())
+                .latitude(ride.getPickupLocation().getLatitude());
 
         final var potentialDrivers = driverService.determineDriversNearby(parameters);
 
@@ -177,7 +177,9 @@ public class DetermineDriver {
                 .findFirst()
                 .orElseThrow();
         
-        driverService.cancelRideOffer(driver.getId(), ride.getRideId());
+        driverService.cancelRideOffer(
+                driver.getId(),
+                ride.getRideId());
 
     }
 

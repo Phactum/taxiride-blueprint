@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>at.phactum.bp.blueprint</groupId>
+    <groupId>at.phactum.bp.blueprint.taxiride</groupId>
 		<artifactId>blueprint-taxi</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>

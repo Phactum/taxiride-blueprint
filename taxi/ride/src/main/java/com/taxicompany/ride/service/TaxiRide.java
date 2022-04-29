@@ -109,7 +109,9 @@ public class TaxiRide {
                 .findFirst()
                 .orElseThrow();
         
-        driverService.cancelRideOffer(driver.getId(), ride.getRideId());
+        driverService.cancelRideOffer(
+                driver.getId(),
+                ride.getRideId());
         
     }
     
@@ -174,7 +176,7 @@ public class TaxiRide {
         
         /* charge from payment-service-provider */
 
-        throw new TaskException("CreditCardCannotBeCharged");
+        throw new TaskException("CreditCardCannotCharged");
 
     }
     

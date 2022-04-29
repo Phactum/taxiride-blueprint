@@ -1,45 +1,93 @@
-# Blueprint for Business-Processing Services
+# Blueprint for Business-Processing (Micro)Services
 
-This project is about building Java-based business-processing (micro)services.
+Each Business Processing Management System (BPMS) has its own rules of how to be used and its own paradigms implemented. Using a BPMS requires a developer to be aware of these rules and also use its APIs which typically reflect the technology used by the implementation of the BPMS.
 
-It incorporates best-practices collected as part of business-processing services developed since 2014.
+All these rules and technologies *bleed* into the business code and lead to:
 
-## Paradigms
+- The BPMS' technology is interwoven with the business code.
+- All developers need to know about those rules and APIs mentioned.
+- The business code is less readable and therefore harder to maintain.
+- Moving to other technology stacks requires to reimplement the business logic.
 
-### Loose-coupling
+To deal with ths we decided to define **a SPI (service programming interface) for BPMS as a Java developer would expect it to be**. This SPI incorporates best-practices collected as part of developing business-processing services since 2014 using various BPMSs. We also used a lot of domain-driven design paradigms since they are a good fit to build a simple SPI.
 
-On one hand for designing a business-process one needs to understand what the business is about and what kind of tasks and values are used to fulfill the need of the process. On the other hand one should not need to know about the details of the underlying implementing software.
+As evidence we provide adapters for some BPMS as well as support for workflow modules in a microservice environment. The implementation is based on [Spring boot](https://spring.io/projects/spring-boot) but can be adopted to JEE as well.
 
-Using loose-coupling in varios ways helps you to understand and express the contract between the business-people and the development. This means that there is no reference from BPMN to the implementation besides that contract.
+All parts together form a **blueprint** which should help you **building** maintainable business processing (micro)**services with minimal afford**.
 
-As a side-effect of doing loose-coupling the outcoming software is much easier to understand und to maintain over the time.
+## Content
 
-### Domain-Drive-Design
+1. An extremly simplified and pure Java [SPI](./spi/README.md) to hide BPMS characteristics. 
+1. Several adapters which bind the SPI to BPMSs like:
+   1. [Camunda Platform 7](./adapters/camunda7/README.md)
+   1. [Camunda Platform 8](./adapters/camunda8/README.md)
+1. Additional support for building microservices:
+   1. [Spring Boot multi workflow module support](./adapters/spring-boot/README.md)
+   1. [REST client support](./adapters/rest/README.md).
+1. A [sample](./blueprint/README.md) used to test all features with various BPMSs
+1. A full fledged example ["Taxi Ride"](./taxi/README.md) to show how this blueprint looks like applied to a real-world scenario.
 
-To support the entire lifecycle of a software in a good way, it turned out that loose-coupling the business-processing engine itself should be preferred. A good fit for this is to use a domain-driven-design approach.
+## Example
 
-Check out [this module](./spi/README.md) to learn about how this looks like.
+These example, which is a section of a taxi ride worfklow, should give you an idea of how this SPI is used:
 
-### Runtime environment
+![Section of a taxi ride workflow](./readme/example.png)
 
-The blueprint is based on Spring Boot, but it can be easily adopted to Java Enterprise as well.
+```java
+@Service
+@WorkflowService(workflowAggregateClass = Ride.class)
+@Transactional(noRollbackFor = TaskException.class)
+public class TaxiRide {
+    
+    @Autowired
+    private ProcessService<Ride> processService;
+    
+    public String rideBooked(
+            final Location pickupLocation,
+            final OffsetDateTime pickupTime,
+            final Location targetLocation) {
+        
+        final var ride = new Ride();
+        ...
+        // start the workflow by correlation of the message start event
+        return processService
+                .correlateMessage(ride, "RideBooked")
+                .getRideId();
+    }
+    
+    @WorkflowTask
+    public void determinePotentialDrivers(
+            final Ride ride) {
+        
+        final var parameters = new DriversNearbyParameters()
+                .longitude(ride.getPickupLocation().getLongitude())
+                .latitude(ride.getPickupLocation().getLatitude());
 
-## Nomenclature
+        final var potentialDrivers = driverService
+                .determineDriversNearby(parameters);
 
-Designing software isn't just about coding in the form of a programming language or writing configuration files. It's also a lot about communication - both with other developers and with business people. A few wording conventions can help to simplify things.
+        ride.setPotentialDrivers(
+                mapper.toDomain(potentialDrivers, ride));
+    }
 
-### Processes versus Workflows
+    @WorkflowTask
+    public void requestRideOfferFromDriver(
+            final Ride ride,
+            @MultiInstanceIndex("RequestRideOffer")
+            final int potentialDriverIndex) {
+        
+        final var driver = ride.getPotentialDrivers().get(potentialDriverIndex);
+        
+        driverService.requestRideOffer(
+                driver.getId(),
+                new RequestRideOfferParameters()
+                        .rideId(ride.getRideId())
+                        .pickupLocation(mapper.toApi(ride.getPickupLocation()))
+                        .pickupTime(ride.getPickupTime())
+                        .targetLocation(mapper.toApi(ride.getTargetLocation())));
+        
+    }
+    ...
+```
 
-On developing business-processing based software a lot of communication to business people is necessary. This kind of close communication is one of the big advantages when using BPMN as a common language. It is used to define the process and can be reused for execution.
-
-On running business-processing based software operational tasks will not be about the process (it's definition) but about a certain instance of that process which caused that task. In human conversation, the term "process" is often used misleadingly to refer to the instance of the process instance what makes things complicated.
-
-As a solution for this confusion the term "workflow" is introduced replace "process instance". So, whenever one is talking about a "process" then the process definition (e.g. the BPMN) is meant and if one is talking about a "workflow" a certain process instance is meant.
-
-### The "blueprint-framework"
-
-A couple of aspect-oriented designs are used. The implementation of them is called the "blueprint-framework".
-
-### Examples
-
-All examples refered in the README files are about a process which is about approval of vacation requests.
+For more details read each module's description link in the [content](#content) section.

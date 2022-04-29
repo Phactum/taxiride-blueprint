@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>at.phactum.bp.blueprint</groupId>
+    <groupId>at.phactum.bp.blueprint.taxiride</groupId>
 		<artifactId>blueprint-taxi</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
@@ -77,18 +77,8 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>blueprint-spring-boot-adapter</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>blueprint-camunda7-adapter</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>at.phactum.bp.blueprint</groupId>
-			<artifactId>blueprint-rest-adapter-service</artifactId>
+			<artifactId>blueprint-camunda7-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

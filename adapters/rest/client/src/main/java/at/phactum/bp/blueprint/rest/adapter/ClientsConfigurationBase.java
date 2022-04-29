@@ -213,6 +213,18 @@ public abstract class ClientsConfigurationBase {
 
     }
 
+    /**
+     * Filter the given list of properties beans to find the one implementing the
+     * given interfaces within the same workflow module as the class of the given
+     * injection point.
+     * 
+     * @param <T>                 The type of the desired properties bean
+     * @param injectionPoint      The injection point to identify the workflow
+     *                            module
+     * @param propertiesInterface The interface the properties bean has to implement
+     * @param properties          All properties found at runtime
+     * @return The desired properties bean
+     */
     protected <T extends WorkflowModuleIdAwareProperties> T getProperties(
             final InjectionPoint injectionPoint,
             final Class<T> propertiesInterface,
@@ -230,9 +242,10 @@ public abstract class ClientsConfigurationBase {
                                 .getWorkflowModuleId()
                                 .toLowerCase()
                                 .replaceAll("[^a-z]", "")))
+                .filter(props -> propertiesInterface.isAssignableFrom(props.getClass()))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException(
-                        "There is no autowired property implementing interface '"
+                        "There is no @ConfigurationProperties implementing '"
                         + propertiesInterface.getName()
                         + "' in the workflow-module of class '"
                         + injectionPoint.getMember().getDeclaringClass().getName()

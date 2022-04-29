@@ -211,7 +211,7 @@ customer process for understanding</bpmn:text>
     <bpmn:endEvent id="Event_1ugsirj" name="Ride offerings cancelled">
       <bpmn:incoming>Flow_1c2kiye</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:subProcess id="RequestRideOffer" name="Ride request and offering" camunda:asyncBefore="true">
+    <bpmn:subProcess id="RequestRideOffer" name="Ride request and offering from each driver" camunda:asyncBefore="true">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="RequestRideOffer_index">${loopCounter}</camunda:inputParameter>

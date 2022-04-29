@@ -1,6 +1,43 @@
 # SPI
 
-This module is about the Blueprint SPI using DDD patterns to simplify business-process applications. Additionally, a lot of loose-coupling techniques are used to minimize the weaving between the BPMN and the software.
+This module is about the Blueprint SPI **which is a service programming interface for BPMS as a Java developer would expect it to be**.
+
+It incorporates various state-of-the-art techniques and concepts to simplify business-process applications. This includes Domain-Driven design aspects, loose-coupling and aspect-orientated programming. All this helps to minimize the weaving between the BPMN and the business software.
+
+## Paradigms and business requirements
+
+Due to the nature that this SPI is an abstraction of BPMS-APIs it does not expose all features of a particular BPMS provides. But we think that this is more an advantage than a disadvantage since:
+
+From a developer and product owner perspective:
+
+- The BPMS' technology is *NOT* interwoven with the business code.
+- Developers do *NOT* need to know about details of the BPMS.
+- Any Java developer can write business processing software with no training required.
+- The business code is readable and therefore easier to maintain.
+- The business code is only about the implementation of the business requirements.
+- Moving to other technology stacks (either for the BPMNs as well as for the business processing software itself) does not effect the business code.
+
+From a business/operational/architectural perspective a BPMS should:
+
+- Implement a runtime concept fitting to the business software requirements:
+   - embedded/remote engine
+   - db-based/cloud-storage based
+   - limited scalability/horizontal scaling
+   - etc.
+- Keep the expenses for operation within the limits of the particular use case:
+   - from small internal application
+   - to big scale international selling platform.
+- Keep the complexity for operation with the limits of the particular use case:
+   - How many components are required to run and maintain the BPMS?
+   - How many technologies are introduced by the BPMS which are new to the operations/DevOps team?
+   - Can the BPMS be run on top of technology already known by the operations/DevOps team?
+
+From a designer perspective:
+
+- Designing the BPMN should not require knowledge of implementation.
+- The BPMN should not include any details of implementation (e.g. data structure).
+- The requirements of the BPMN to the underlying business software implementation ("contract") should be able to be formulated by business people without support of developers.
+- Evolving the BPMN has to be possible without development knowledge.
 
 ## Concept
 
