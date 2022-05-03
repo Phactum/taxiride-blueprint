@@ -14,7 +14,7 @@ import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 import at.phactum.bp.blueprint.rest.adapter.Client;
 
 @Configuration
-@ConfigurationProperties(prefix = "ride")
+@ConfigurationProperties(prefix = RideProperties.WORKFLOW_MODULE_ID)
 public class RideProperties
         implements BpDeploymentConfiguration, DriverServiceClientAwareProperties, WorkflowModuleIdAwareProperties {
 

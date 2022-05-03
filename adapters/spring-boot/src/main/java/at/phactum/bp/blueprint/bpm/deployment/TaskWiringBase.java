@@ -214,7 +214,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                 .stream(workflowServiceAnnotations)
                 .flatMap(workflowServiceAnnotation -> Arrays.stream(workflowServiceAnnotation.bpmnProcess()))
                 .anyMatch(annotation -> annotation.bpmnProcessId().equals(bpmnProcessId)
-                        || (annotation.bpmnProcessId().equals(BpmnProcess.USE_BEAN_NAME)
+                        || (annotation.bpmnProcessId().equals(BpmnProcess.USE_CLASS_NAME)
                                 && bpmnProcessId.equals(beanClass.getSimpleName())));
 
     }

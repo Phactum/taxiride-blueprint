@@ -2,9 +2,19 @@
 
 This module is about the Blueprint SPI **which is a service programming interface for BPMS as a Java developer would expect it to be**.
 
-It incorporates various state-of-the-art techniques and concepts to simplify business-process applications. This includes Domain-Driven design aspects, loose-coupling and aspect-orientated programming. All this helps to minimize the weaving between the BPMN and the business software.
+It incorporates various state-of-the-art techniques and concepts to simplify business-process applications. This includes Domain-Driven design aspects, loose-coupling, aspect-orientated programming and "convention over configuration". All this helps to minimize the weaving between the BPMN and the business software.
 
-## Paradigms and business requirements
+## Content
+
+1. [Paradigms](#paradigms)
+1. [Concept](#concept)
+1. [Usage](#usage)
+   1. [Process-specific domain-aggregate](#process-specific-domain-aggregate)
+   1. [Wire up a process](#wire-up-a-process)
+   1. [Wire up a task](#wire-up-a-task)
+   1. [Wire up an expression](#wire-up-an-expression)
+   
+## Paradigms
 
 Due to the nature that this SPI is an abstraction of BPMS-APIs it does not expose all features of a particular BPMS provides. But we think that this is more an advantage than a disadvantage since:
 
@@ -17,60 +27,86 @@ From a developer and product owner perspective:
 - The business code is only about the implementation of the business requirements.
 - Moving to other technology stacks (either for the BPMNs as well as for the business processing software itself) does not effect the business code.
 
-From a business/operational/architectural perspective a BPMS should:
+From a product owner's perspective a BPMS should:
 
-- Implement a runtime concept fitting to the business software requirements:
+- Architecture: Implement a runtime concept fitting to the business software requirements:
    - embedded/remote engine
    - db-based/cloud-storage based
    - limited scalability/horizontal scaling
    - etc.
-- Keep the expenses for operation within the limits of the particular use case:
+- Business: Keep the expenses for operation within the limits of the particular use case:
    - from small internal application
    - to big scale international selling platform.
-- Keep the complexity for operation with the limits of the particular use case:
+- Operational: The complexity for operation should match the complexity of the particular use case:
    - How many components are required to run and maintain the BPMS?
    - How many technologies are introduced by the BPMS which are new to the operations/DevOps team?
    - Can the BPMS be run on top of technology already known by the operations/DevOps team?
+   - Will this use-case bring me money to sanctify the BPMS' technology stack?
 
 From a designer perspective:
 
-- Designing the BPMN should not require knowledge of implementation.
+- Designing the BPMN should not require any developer skills.
+- Designing the BPMN should not require knowledge about the underlying implementation.
 - The BPMN should not include any details of implementation (e.g. data structure).
 - The requirements of the BPMN to the underlying business software implementation ("contract") should be able to be formulated by business people without support of developers.
 - Evolving the BPMN has to be possible without development knowledge.
 
 ## Concept
 
-The base idea is to have a group of service-beans which are responsible for all needs of a business-process. In best case only one service-bean is sufficient. If several services or external-components are required then this single service is a frontend for all of them.
+Imagine you have to implement the business processing software of a taxi ride.
 
-In terms of BPMN there are tasks (e.g. service-task, send-task, etc.) which are wired to methods of that service by name and there are expressions (e.g. conditional-flows) which are evaluated agains a process-specific [domain-aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html).
+*How will the code be structured?*
 
-This aggregate uses a natural id as a primary key, so for one specific natural key a particular process started twice is identified as a duplicate and rejected.
+The base idea is to implement a small group of service beans which are responsible to implement all requirements of a particular business process.
+
+If external services or components are required then those service beans act as a frontend for all of them to not bind third-party dependencies close to the BPMN. This will ensure that changes in those external dependencies will be highlighted by the compiler and not only at runtime.
+
+*How many services do you need to implement?*
+
+In the best case only one service bean is sufficient. One workflow implemented by one service bean!
+
+In case of more complex processes typically sections of fulfillment can be identified (determine a driver, do the ride, handle payment, etc.) which can be used as semantical buckets mapped to separate service beans.
+
+*How are those services beans wired to the BPMN?*
+
+In terms of BPMN there are tasks (e.g. service-task, send-task, etc.) which are wired to methods of that service by name and there are expressions (e.g. conditional-flows) which are evaluated against a process-specific [domain-aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html) (see *How is data handled?*).
+
+All those names used to wire tasks or expressions should be in a natural language camel-case style and therefore defined by the BPMN designer (BPMN-first approach) or upfront by the developer (software-first approach). This should on one hand force the BPMN designer to name the expected data/behavior and on the other hand help developers to understand what they have to implement. 
+
+The sum of those names forms the contract between the BPMN and the underlying implementation. As an example these are typical names used as part of a taxi ride workflow:
+
+- RideBooked (message name)
+- determinePotentialDrivers (service task)
+- requestRideOfferFromDriver (send task)
+- noRideAvailable (aggregate property)
+- customerCharged (aggregate property)
+
+*How is data handled?*
+
+A domain aggregate is used as a persistent entity to store data either required by the process to execute (e.g. as part of expressions) or by the underlying implementation to fulfill tasks. This aggregate does not keep all the data ever needed by the workflow but stores at least references to retrieve required values on demand.
+
+If particular attributes are required often (e.g. nearly every task) then this aggregate can be used as a *cache* of the original source of data. Depending on the use-case one might has to implement a proper update strategy.
 
 ## Usage
 
-### Natural ids
-
-A natural id is a primary key which uniqly identifies a single business-case. That might be an order-id, a trouble-ticket-id or - as in the case of vacation-requests - an artificial identifier (auto-increment/UUID).
-
-This natural id has to be choosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system.
-
 ### Process-specific domain-aggregate
 
-A process-engine might give you the ability to use process-variables to store information the workflow needs to fulfill decisions like sequence-flow conditions. This blueprint does not use process-variables but introduces a seperate JPA entity as a DDD aggregate for each process:
+A process-engine might give you the ability to use process-variables to store information the workflow needs to fulfill decisions like at sequence-flow conditions. This blueprint does not use process-variables but introduces a separate JPA entity as a DDD aggregate for each process:
 
 ```java
 @Entity
-@Table(name = "APPROVALS_OF_VACATION")
+@Table(name = "TAXI_RIDE")
 @Getter
 @Setter
-public class ApprovalOfVacation extends WorkflowDomainEntity {
-  private int numberOfDays;
-  private String 
+public class Ride {
+  private OffsetDateTime pickupTime;
+  private String pickupLocation;
+  private String targetLocation;
+  private boolean customerCharged;
 }
 ```
 
-This JPA-entity is used to store all the values used by this one particular business-process. This entity might be split up into a couple of entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that tree is the record connected with a workflow.
+This JPA-entity stores all values used by one particular business process instance. This entity might be split up into a couple of entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that tree is the record connected to the workflow.
 
 Instead of using process-variables the entity's properties can be used in the process e.g. for conditional sequence-flows:
 
@@ -79,97 +115,76 @@ Instead of using process-variables the entity's properties can be used in the pr
 Reasons for not using process-variables:
 
 1. BPMN
-   1. Process-variables have no schema and therefore it can be documented and tested for
-   1. Using a domain-entity gives you a schema which can be used as a contract between business people and developers
-   1. Type-safety of the information needed by the process
-1. Operation of workflows
-   1. Historic process-variables needs to be cleaned up which might exhauste your database
-   1. Process-variables polute the execution-context because typically they are not cleaned up by the developers
-   1. As a default *all* process-variables are copied in the case of call-activities
-   1. Schema evolution: The variables may be of complex types which may evolve over the time. Migrating those values is a hard job. 
+   1. Process variables have no schema and therefore they cannot be documented and tested easily
+   2. Using process variables, the "contract" between your BPMN model and your code can become quite intransparent
+   3. No type-safety with regards to the information needed by the process
+   4. Tight-coupling of the code and the business process definition
+2. Operation of workflows
+   1. Historic process-variables need to be cleaned up in order not to exhaust your database (even for cleaning-up itself!)
+   2. Process-variables tend to pollute the execution context because typically they are not cleaned up by developers. The longer the process is running the more unused variables are stored.
+   3. For call-activities, *all* process-variables are copied as a default, even including the temporary and unused variables mentioned above.
+   4. Schema evolution: Process variables may have complex types and evolve over time. Migrating such values is a hard job.
 
-There are some base-requirements for domain-aggregates used for workflows:
+#### Natural ids
 
-1. It has to use a natural id as primary key
-1. It has to store the exact version of process the workflow is started with
+This aggregate uses a natural id as a primary key, so for one specific natural key a particular process started twice is identified as a duplicate and rejected.
 
-The blueprint-framework simplifies a couple of things in conjunction with this workflow-aggregate-entity by providing a base-class `at.phactum.bp.blueprint.domain.WorkflowDomainEntity` (see example above).
+A natural id is a primary key which uniquely identifies a single business-case. That might be an order-id, a trouble-ticket-id or - as in the case of the taxi ride - an artificial identifier (auto-increment/UUID).
+
+This natural id has to be chosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system.
 
 ### Wire up a process
 
-Acording to the [concept](#concept) and in order to have no reference from BPMN to the implemenation an aspect-oriented approach is used for the binding.
-
-There are two primary use-case for this:
-1. Whenever a value needs to be calculated (e.g. x business-days as a timer-event definition)
-1. Whenever a task needs to fulfill its functionality (e.g. service-task)
-
-In both cases a method needs to be called (1. to calculate a value; 2. to complete a task). Those methods will be looked up in the service-bean which is bound to a particular process and its workflow-aggregate-entity.
+According to the [concept](#concept) and in order to have no reference from BPMN to the implementation a name based approach is used for the binding in an aspect-oriented style.
 
 As a basis for this binding the BPMN process-id is used:
+
 ![Camunda Modeller](./readme/process_propertiespanel.png)
-
-#### Binding a service to a workflow-aggregate-entity
-
-This is simply done by implementing a generic interface ` at.phactum.bp.blueprint.adapter.BusinessProcessingEngineAdapter`. Besides the binding of the workflow-aggregate-entity by using the generic-parameter it defines methods used by to start a workflow.
-
-Check the code-sample of the next sessions for examples.
 
 #### Software-first approach
 
-One may have already a component designed in situations in which not business-people define processes but they are used to execute flows in order to improve readability or maintainablity of the software. In those situations using the component's bean-name as a process-id helps to minimize the wiring-configuration according to the paradigm "convention over configuration":
+Developers might want to use a BPMS to improve readability or maintainability of the software since this takes a lot of coding away. In this situation the service bean might be created upfront.
 
-In Spring Boot the class-name of a component is turned into the bean-name by lower-casing the first character:
-
-* class: *ApprovalOfVacationRequests*
-* bean-name: *approvalOfVacationRequests*
-
-If you use the bean-name as the process BPMN's process-id then you can wire up the component to the process by simply adding the `@WorkflowService` annotation: 
+Use the service's class-name as the process BPMN's process-id to wire up the component to the process by simply adding the `@WorkflowService` annotation:
 
 ```java
 @Component
-@WorkflowService
-public class ApprovalOfVacationRequests
-    implements BusinessProcessEngineAdapter<ApprovalOfVacation> {
+@WorkflowService(workflowAggregateClass = Ride.class)
+public class TaxiRide {
   ...
 }
 ```
+
+The mandatory annotation attribute `workflowAggregateClass` references the class used as domain-aggregate of this workflow.
 
 #### BPMN-first approach
 
-In case of a given BPMN-business-process the component needs to be mapped by setting the `bpmnProcessId` attribute:
+In case of a given BPMN file the component needs to be mapped by setting the `bpmnProcess` attribute if it is not the same string as the class-name:
 
 ```java
 @Component
-@WorkflowService(bpmnProcessId = "Process_ApprovalOfVacation")
-public class ApprovalOfVacationRequests
-    implements BusinessProcessingEngineAdapter<ApprovalOfVacation> {
+@WorkflowService(
+        workflowAggregateClass = Ride.class,
+        bpmProcess = @BpmnProcess(bpmnProcessId = "Process_TaxiRide")
+    )
+public class TaxiRide {
   ...
 }
 ```
 
-It is also allowed to apply multiple annotations if the process-id given by business-people changes over the time:
-
-```java
-@Component
-@WorkflowService(bpmnProcessId = "Process_ApprovalOfVacation")
-@WorkflowService(bpmnProcessId = "Process_NewApprovalOfVacation")
-public class ApprovalOfVacationRequests
-    implements BusinessProcessingEngineAdapter<ApprovalOfVacation> {
-  ...
-}
-```
-
-If the service-bean becomes huge due to the number of tasks of the workflow then multiple service-beans can be annotated with the same `@WorkflowService` annotation. The precondition for this is to avoid duplicate task wiring. However, if there is a method wired twice this will be detected on startup and reported by throwing an Expection.
+If the service-bean becomes huge due to the number of tasks of the workflow then multiple service-beans can be annotated with the same `@WorkflowService` annotation. The only precondition for this is to avoid duplicate task wiring. However, if there is a method wired twice this will be detected on startup and reported by throwing an exception.
 
 #### Versioning of BPMN business-processes
 
-In case of doing breaking changes in BPMN over the time you can specify for which versions of BPMN this component can be used for:
+In case of doing breaking changes in BPMN over the time you can specify for which versions of BPMN this component is developed for:
 
 ```java
 @Component
-@WorkflowService(version = "<10")
-public class ApprovalOfOldVacationRequests
-    implements BusinessProcessingEngineAdapter<ApprovalOfVacation> {
+@WorkflowService(
+        workflowAggregateClass = Ride.class,
+        version = "<10"
+    )
+public class TaxiRide {
   ...
 }
 ```
@@ -184,90 +199,83 @@ Valid formats:
 * '>3': only versions higher then "3"
 * '>=3': only versions higher then or equal to "3"
 
-### Call-activities
+#### Call-activities
 
 There are two different ways to treat call-activities:
 
-#### 1. A call-activity is used to hide complexity
+##### 1. Decomposition - a call-activity is used to hide complexity
 
-In this situtation the same workflow-aggregate-entity as created for the root-workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities process into to parent process (e.g. as an embedded subprocess).
+In this situation the workflow-aggregate entity created for the root workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities process into to parent process (e.g. as an embedded subprocess).
 
-So, to follow the "one service-bean per process" pattern you should introduce another service bean bound to the same workflow-aggregate domain-entity:
+As each call-activity's process is a section of fulfillment one should introduce a separate service bean bound to the same workflow-aggregate domain-entity:
 
 ```java
 @Component
-@WorkflowService(bpmnProcessId = "Process_GetClearanceByAuthority")
-public class GetClearanceByAuthority
-    implements BusinessProcessingEngineAdapter<ApprovalOfVacation> {
+@WorkflowService(
+        workflowAggregateClass = Ride.class,
+        bpmnProcess = @BpmnProcess(bpmnProcessId = "DetermineDriver"))
+public class DetermineDriver {
   ...
 }
 ```
 
-But one can also decide to reuse the existing service-bean for the call-activity's process by simply adding another annotation:
+*Hint:* In this example the attribute bpmnProcess could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
+
+But one can also decide to reuse the existing service-bean for the call-activity's process by simply adding another `@BpmnProcess` annotation:
 
 ```java
 @Component
-@WorkflowService(bpmnProcessId = "Process_ApprovalOfVacation")
-@WorkflowService(bpmnProcessId = "Process_GetClearanceByAuthority")
-public class ApprovalOfVacationRequests
-    implements BusinessProcessingEngineAdapter<ApprovalOfVacation> {
+@WorkflowService(
+        workflowAggregateClass = Ride.class,
+        bpmProcess = {
+            @BpmnProcess(bpmnProcessId = "TaxiRide"),
+            @BpmnProcess(bpmnProcessId = "DetermineDriver")
+        })
+public class TaxiRide {
   ...
 }
 ```
 
-#### 1. A call-activity is used to reuse a section of a process by other processes
+*Hint:* In this example the attribute bpmnProcess of the first @BpmnProcess annotation could be removed since the BPMN process-id is the same as the service's class-name ("convention over configuration").
 
-In this situation the call-activity's process is used in different contexts of different parent-processes. Therefore also a separate workflow-aggregate domain-entity has to be defined and used:
+##### 1. Reuse - a call-activity is used to reuse a section of a process by other processes, too
+
+In this situation the call-activity's process is used in different contexts of different parent-processes. Therefore also a separate workflow-aggregate domain-entity has to be defined and used.
+
+In order to support this notion the target process is not modeled as a call-activity but as a collapsed pool. Instead of a call-activity a service task is used in the BPMN.
 
 ```java
 @Component
-@WorkflowService(bpmnProcessId = "Process_GetClearanceByAuthority")
-public class GetClearanceByAuthority
-    implements BusinessProcessingEngineAdapter<ClearanceRequest> {
+@WorkflowService(workflowAggregateClass = Payment.class)
+public class ChargeCreditCard {
   ...
 }
 ```
 
-In this situation the call-activity's workflow-aggregate domain-entity is created by a method in the parent's service-bean wired 
+![Reuse instead of decomposition](./readme/call-activity.png)
 
-```java
-@Component
-@WorkflowService(bpmnProcessId = "Process_ApprovalOfVacation")
-public class ApprovalOfVacationRequests
-    implements BusinessProcessingEngineAdapter<ApprovalOfVacation> {
-  ...
-  @WorkflowTask(id = "Activity_GetClearanceByAuthority")
-  public ClearanceRequest getClearanceForVacation(
-      ApprovalOfVacation entity) {
-    ...
-  }
-  ...
-}
-```
+### Wire up a task
 
-*Hint:* Read next section for details about task wiring.
+According to the [concept](#concept) and in order to have no reference from BPMN to the implementation an aspect-oriented approach is used for the binding. This kind of wiring is used for service tasks, send tasks, business rule tasks and user tasks.
 
-### Wire a task or a expression
+![Camunda Modeller](./readme/task_propertiespanel.png)
 
-Acording to the [concept](#concept) and in order to have no reference from BPMN to the implemenation an aspect-oriented approach is used for the binding.
-
-There are two primary use-case for this:
-1. Whenever a value needs to be calculated (e.g. x business-days as a timer-event definition) ![Camunda Modeller](./readme/timer_propertiespanel.png)
-1. Whenever a task needs to fulfill its functionality (e.g. service-task) ![Camunda Modeller](./readme/task_propertiespanel.png)
-
-In both cases a method of the wired service needs to be called (1. to calculate a value; 2. to complete a task). The method has to be annotated to mark it as mapped.
-
-#### Domain-entity argument
-
-As mentioned in section [Process-specific domain-aggregate](#process-specific-domain-aggregate) for each workflow a JPA entity-record is used as a domain-aggregate. So, whenever a service-method is called there is one parameter accepted: The domain-aggergate-entity which holds the object for the current workflow.
-
-#### Software-first approach
-
-In this situation for the name of the BPMN expression the name of the method has to be used (e.g. `sendAcceptedMail`):
+The `@WorkflowTask` annotation is used to mark a method responsible for certain BPMN task:
 
 ```java
 @WorkflowTask
-public void sendAcceptedMail(ApprovalOfVacation entity) {
+public void selectDriverAccordingToScore(Ride ride) {
+  ...
+}
+```
+
+#### Software-first approach
+
+In this situation for the name of the BPMN task definition the name of the method has to be used (e.g. `selectDriverAccordingToScore`) as shown in the screenshot above:
+
+```java
+@WorkflowTask
+public void selectDriverAccordingToScore(Ride ride) {
   ...
 }
 ```
@@ -277,8 +285,8 @@ public void sendAcceptedMail(ApprovalOfVacation entity) {
 If the BPMN is given, then the name used in the BPMN can be mapped by the annotation attribute `taskDefinition` if it does not match the method's name:
 
 ```java
-@WorkflowTask(taskDefinition = "SEND_ACCEPTED")
-public void sendAcceptedMail(ApprovalOfVacation entity) {
+@WorkflowTask(taskDefinition = "SELECT_DRIVER")
+public void selectDriverAccordingToScore(Ride ride) {
   ...
 }
 ```
@@ -286,48 +294,58 @@ public void sendAcceptedMail(ApprovalOfVacation entity) {
 as an alternative the task can be wired by the task's BPMN id:
 
 ```java
-@WorkflowTask(id = "Activity_SendAcceptedMail")
-public void sendAcceptedMail(ApprovalOfVacation entity) {
+@WorkflowTask(id = "Activity_SelectDriver")
+public void selectDriverAccordingToScore(Ride ride) {
   ...
 }
 ```
 
+#### Domain-entity argument
+
+```java
+@WorkflowTask
+public void selectDriverAccordingToScore(Ride ride) {
+  ...
+}
+```
+
+As mentioned in section [Process-specific domain-aggregate](#process-specific-domain-aggregate) for each workflow a JPA entity-record is used as a domain-aggregate. So, whenever a service-method is called there is one parameter accepted: The domain-aggregate providing values of the current workflow.
+
+Therefore these workflow task methods do not return any value since they operate on the given data from the domain-aggregate and also store new data in the domain-aggregate if necessary.
+
 #### Multi-instance
 
-For multi-instance executions a lot of process variables are created automatically:
-1. The current element or the collection
-1. The number of the element of the collection
-1. The number of elements already processed
+For multi-instance executions typically a lot of process variables are created automatically:
 
-*Warning:* In case of using an expression to define the collection to iterate the collection's size is fetched for each iteration. Additionally, elements might be complex objects which brings [a lot of problems](../README.md) as well.
+1. The current element of the collection
+1. The number of index of the current element
+1. The total number of elements
 
-To overcome this troublesome situation this is recommended:
-1. Don't use collection values for multi-instance activities
-1. Use attribute `loop-cardinality` instead to simply define the number of iterations
-1. In case of dynamically changing collections use attribute `completionCondition`
-1. Fetch the current element on your own based on the current iteration's number
+To avoid problems on serializing and deserializing elements:
 
-Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current element it might be that this is not done in the most efficient way, since the process engine cannot know about the details of the underlying data (typically the workflow-aggregate). Therefore it is better to fetch the element as part of the method the iteration is used for (spoiler: there is a shortcut available).
+1. Don't use collection values for multi-instance activities.
+1. Use attribute `loop-cardinality` instead to simply define the number of iterations.
+1. In case of dynamically changing collections use attribute `completionCondition`.
+1. Fetch the current element on your own based on the current iteration's index.
+
+Especially the last item is important: If you ask the process engine to handle the collection to retrieve the current element it might be that this is not done in the most efficient way, since the process engine does not know about the details of the underlying data (typically the workflow-aggregate). Therefore it is better to fetch the element as part of the method the iteration is used for.
 
 ##### Tasks
 
 In case of multi-instance the current element (for collection-based tasks), the current iteration's number and the total number of elements (for cardinality-based tasks) can be passed to any method called.
 
-To announce which value you are interessed in is done by adding further method-parameters annotated using one of these annotations:
+To announce which values you are interested in, add further method-parameters annotated by one of these annotations:
 * `@MultiInstanceElement` to pass the current element
 * `@MultiInstanceIndex` to pass the current iterations index
 * `@MultiInstanceTotal` to pass the total number of iterations
 
-In case of using collection-based iterations all annotations can be used. For cardinatilty-based iterations `@MultiInstanceElement` is not allowed.
-
-*Cardinatilty-based:*
+*Cardinality-based:*
 
 ```java
 @WorkflowTask
-public void sendAcceptedMail(
-    ApprovalOfVacation entity,
+public void requestRideOfferFromDriver(Ride ride,
     @MultiInstanceIndex int index) {
-  final var participant = entity.getParticipants().get(index);
+  final var driver = ride.getDrivers().get(index);
   ...
 }
 ```
@@ -336,16 +354,15 @@ public void sendAcceptedMail(
 
 ```java
 @WorkflowTask
-public void sendAcceptedMail(
-    ApprovalOfVacation entity,
-    @MultiInstanceElement String participant) {
+public void requestRideOfferFromDriver(Ride ride,
+    @MultiInstanceElement String driverId) {
   ...
 }
 ```
 
 ##### Embedded subprocesses
 
-For multi-instance embedded-subprocesses the iteration is used at tasks within that embedded-subprocess. For given annotations `@MultiInstanceIndex`, `@MultiInstanceTotal` or  `@MultiInstance` the values of the first mulit-instance parent-activity are passed to the business method.
+For multi-instance embedded-subprocesses the iteration is used at tasks within that embedded-subprocess. For method parameters annotated by `@MultiInstanceIndex`, `@MultiInstanceTotal` or  `@MultiInstance` the values of the first multi-instance parent activity are passed to the business method.
 
 *Nested multi-instance activities*:
 
@@ -355,36 +372,46 @@ One can design processes having more than one multi-instance context active:
 * Task within a multi-instance call-activity within a multi-instance embedded-subprocess
 * etc.
 
-To handle this complex situations a `MultiInstanceElementResolver` bean can be specified as part of the annotation `@MultiInstanceElement`:
+To handle these complex situations a `MultiInstanceElementResolver` bean can be specified as part of the annotation `@MultiInstanceElement`:
 
 ```java
 @WorkflowTask
-public void registerOrderItemProductLicense(
-    Order order,
-    @MultiInstanceElement(resolver = OrderItemProductLicenseResolver.class)
-    ProductLicense license) {
+public void cancelRideOfferOfDriver(Ride ride,
+    @MultiInstanceElement(resolver = DriverResolver.class) Driver driver) {
   ...
 }
 ```
 
-A Spring-bean implementing the resolver class is used to convert the current multi-instance execution-context into an object used by the business-method. Using this technique hides the complexity and make it reusable for different activities within the same BPMN-context. A resolver has to implement the interface `MultiInstanceElementResolver`.
+A Spring-bean implementing the resolver class is used to convert the current multi-instance execution-context into an object used by the business-method. Using this technique hides the complexity and makes it reusable for different activities within the same BPMN-context. A resolver has to implement the interface `MultiInstanceElementResolver`.
 
 Example:
 
 ```java
 @Component
-public class OrderItemProductLicenseResolver implements MultiInstanceElementResolver<Order, OrderItem> {
+public class DriverResolver implements MultiInstanceElementResolver<Ride, Driver> {
     @Autowired
-    private ProductLicenseService productLicenseService;
+    private DriversService drivers;
     
-    public ProductLicense resolve(Order order,
+    public ProductLicense resolve(Ride ride,
             Map<String, MultiInstance<Object>> nestedMultiInstanceContext) {
-        String orderItemId = nestedMultiInstanceContext
-                .get("OrderItemsEmbeddedSubprocess").getElement();
-        String index = nestedMultiInstanceContext.get("ProcessItem").getIndex();
+            
+        String driverId = nestedMultiInstanceContext
+                .get("RequestRideOffer").getElement();
+        String index = nestedMultiInstanceContext
+                .get("CancelNotRequiredRide").getIndex();
         
-        return productLicenseService.getLicense(order.getId(), orderItemId, index);
+        return drivers.getDriverByIdAndIndex(driverId, index);
     }
 }
 ```
-In this example for each order-item a given number of product licenses are fetched based on the quantity of products for a single item.
+
+In this example the element of the collection based 'RequestRideOffer' multi-instance embedded subprocess is used next to the index of the nested multi-instance 'CancelNotRequiredRide'. Both values are passed to the internal 'DriverService' to determine the required driver entity.
+
+### Wire up an expression
+
+There are two major situations in which expressions are used:
+
+1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows)
+1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![Camunda Modeller](./readme/timer_propertiespanel.png)
+
+In both cases a getter method of the domain-aggregate is used to retrieve the value.

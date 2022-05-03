@@ -27,6 +27,6 @@ public @interface WorkflowService {
      *         annotated service is responsible for. Defaults to the bean name of
      *         the service.
      */
-    BpmnProcess[] bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_BEAN_NAME);
+    BpmnProcess[] bpmnProcess() default @BpmnProcess(bpmnProcessId = BpmnProcess.USE_CLASS_NAME);
 
 }

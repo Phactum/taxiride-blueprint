@@ -19,13 +19,13 @@ public @interface BpmnProcess {
 
     static String ALL_VERSIONS = "*";
 
-    static String USE_BEAN_NAME = "";
+    static String USE_CLASS_NAME = "";
 
     /**
      * @return The process-id as defined in the BPMN for which the annotated service
      *         is responsible for. Defaults to the bean name of the service.
      */
-    String bpmnProcessId();
+    String bpmnProcessId() default BpmnProcess.USE_CLASS_NAME;
 
     /**
      * Can be used to define certain versions or ranges of versions of a process for
