@@ -2,7 +2,7 @@
 
 # Blueprint for Business-Processing (Micro)Services
 
-Each Business Processing Management System (BPMS) has its own rules of how to be used and its own paradigms implemented. Using a BPMS requires a developer to be aware of these rules and also use its APIs which typically reflect the technology used by the implementation of the BPMS.
+Each Business Processing Management System (BPMS) has its own rules of how to be used and its own paradigms implemented. Using a BPMS requires a developer to be aware of those rules and also to use its APIs which typically reflect the technology used by the implementation of the BPMS.
 
 All these rules and technologies *bleed* into the business code and lead to:
 
@@ -11,7 +11,7 @@ All these rules and technologies *bleed* into the business code and lead to:
 - The business code is less readable and therefore harder to maintain.
 - Moving to other technology stacks requires to reimplement the business logic.
 
-To deal with ths we decided to define **a SPI (service programming interface) for BPMS as a Java developer would expect it to be**. This SPI incorporates best-practices collected as part of developing business-processing services since 2014 using various BPMSs. We also used a lot of domain-driven design paradigms since they are a good fit to build a simple SPI.
+To deal with this we decided to define **a SPI (service programming interface) for BPMS as a Java developer would expect it to be**. This SPI incorporates best-practices collected as part of developing business-processing services since 2014 using various BPMSs. We also used a lot of domain-driven design paradigms since they are a good fit to build a simple SPI.
 
 As evidence we provide adapters for some BPMS as well as support for workflow modules in a microservice environment. The implementation is based on [Spring boot](https://spring.io/projects/spring-boot) but can be adopted to JEE as well.
 

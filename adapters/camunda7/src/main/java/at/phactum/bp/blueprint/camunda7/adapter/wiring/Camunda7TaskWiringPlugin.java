@@ -2,7 +2,10 @@ package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
 import java.util.ArrayList;
 
+import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParse;
+import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParser;
 import org.camunda.bpm.engine.impl.cfg.AbstractProcessEnginePlugin;
+import org.camunda.bpm.engine.impl.cfg.DefaultBpmnParseFactory;
 import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl;
 
 public class Camunda7TaskWiringPlugin extends AbstractProcessEnginePlugin {
@@ -31,6 +34,14 @@ public class Camunda7TaskWiringPlugin extends AbstractProcessEnginePlugin {
             configuration.setCustomPreBPMNParseListeners(preParseListeners);
         }
         preParseListeners.add(taskWiringBpmnParseListener);
+
+        // needed to pass workflow module id to bpmn parse listener
+        configuration.setBpmnParseFactory(new DefaultBpmnParseFactory() {
+            @Override
+            public BpmnParse createBpmnParse(BpmnParser bpmnParser) {
+                return new Camunda7WorkflowModuleAwareBpmnParse(bpmnParser);
+            }
+        });
 
     }
 

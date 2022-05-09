@@ -26,8 +26,6 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
 
     private static final Pattern CAMUNDA_EL_PATTERN = Pattern.compile("^[\\$\\#]\\{(.*)\\}$");
 
-    private static final ThreadLocal<String> workflowModuleId = new ThreadLocal<>();
-    
     private final Camunda7TaskWiring taskWiring;
 
     private final Camunda7UserTaskEventHandler userTaskEventHandler;
@@ -46,25 +44,12 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
 
     }
     
-    public static void setWorkflowModuleId(
-            final String workflowModuleId) {
-        
-        TaskWiringBpmnParseListener.workflowModuleId.set(workflowModuleId);
-        
-    }
-    
-    public static void clearWorkflowModuleId() {
-        
-        TaskWiringBpmnParseListener.workflowModuleId.remove();
-        
-    }
-    
     @Override
     public void parseProcess(
             final Element processElement,
             final ProcessDefinitionEntity processDefinition) {
 
-        final var workflowModuleId = TaskWiringBpmnParseListener.workflowModuleId.get();
+        final var workflowModuleId = Camunda7WorkflowModuleAwareBpmnParse.getWorkflowModuleId();
         final var bpmnProcessId = processDefinition.getKey();
 
         final var processService = taskWiring.wireService(workflowModuleId, bpmnProcessId);

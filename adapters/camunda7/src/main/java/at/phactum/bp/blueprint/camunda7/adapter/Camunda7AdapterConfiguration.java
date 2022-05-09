@@ -6,6 +6,7 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.spring.application.SpringProcessApplication;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,9 +55,10 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     
     @Bean
     public Camunda7DeploymentAdapter camunda7DeploymentAdapter(
+            final SpringProcessApplication processApplication,
             final ProcessEngine processEngine) {
 
-        return new Camunda7DeploymentAdapter(processEngine);
+        return new Camunda7DeploymentAdapter(processApplication, processEngine);
 
     }
     

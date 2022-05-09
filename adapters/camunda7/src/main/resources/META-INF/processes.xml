@@ -1,0 +1,13 @@
+<process-application xmlns="http://www.camunda.org/schema/1.0/ProcessApplication">
+
+    <process-archive>
+        <properties>
+            <property name="isDeleteUponUndeploy">false</property>
+            <property name="isScanForProcessDefinitions">false</property>
+            <property name="isResumePreviousVersions">true</property>
+            <property name="resumePreviousBy">deployment-name</property>
+            <property name="isDeployChangedOnly">true</property>
+        </properties>
+    </process-archive>
+
+</process-application>

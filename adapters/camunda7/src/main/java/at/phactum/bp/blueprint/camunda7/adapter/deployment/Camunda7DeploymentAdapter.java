@@ -3,12 +3,13 @@ package at.phactum.bp.blueprint.camunda7.adapter.deployment;
 import javax.annotation.PostConstruct;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.repository.ResumePreviousBy;
+import org.camunda.bpm.engine.spring.application.SpringProcessApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
 
 public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
@@ -16,11 +17,15 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 	
     private final ProcessEngine processEngine;
     
+    private final SpringProcessApplication processApplication;
+
     public Camunda7DeploymentAdapter(
+            final SpringProcessApplication processApplication,
             final ProcessEngine processEngine) {
         
         super();
         this.processEngine = processEngine;
+        this.processApplication = processApplication;
         
     }
 
@@ -49,7 +54,9 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
         final var deploymentBuilder = processEngine
                 .getRepositoryService()
-                .createDeployment()
+                .createDeployment(processApplication.getReference())
+                .resumePreviousVersions()
+                .resumePreviousVersionsBy(ResumePreviousBy.RESUME_BY_DEPLOYMENT_NAME)
                 .enableDuplicateFiltering(true)
                 .source(applicationName)
                 .tenantId(workflowModuleId)
@@ -73,12 +80,20 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
             }
         }
 
-        try {
-            TaskWiringBpmnParseListener.setWorkflowModuleId(workflowModuleId);
-            deploymentBuilder.deployWithResult();
-        } finally {
-            TaskWiringBpmnParseListener.clearWorkflowModuleId();
-        }
+        // BPMNs which are new will be parsed and wired as part of the deployment
+        deploymentBuilder.deploy();
+
+        // BPMNs which were deployed in the past need to be forced to be parsed for wiring 
+        processEngine
+                .getRepositoryService()
+                .createProcessDefinitionQuery()
+                .tenantIdIn(workflowModuleId)
+                .list()
+                .forEach(definition -> {
+                    // process models parsed during deployment are cached and therefore
+                    // not wired twice.
+                    processEngine.getRepositoryService().getProcessModel(definition.getId());
+                });
         
     }
     
