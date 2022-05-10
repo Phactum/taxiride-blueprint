@@ -35,7 +35,7 @@ public abstract class Deployment {
     private int packageId;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "BPMN", nullable = false, updatable = false)
+    @JoinColumn(name = "RESOURCE", nullable = false, updatable = false)
     private DeploymentResource deployedResource;
 
     @CreationTimestamp

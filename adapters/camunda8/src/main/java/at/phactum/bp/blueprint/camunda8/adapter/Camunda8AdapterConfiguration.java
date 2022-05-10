@@ -18,6 +18,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.Camunda8DeploymentAdapter;
+import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeployedBpmnRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentResourceRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentService;
@@ -48,6 +49,9 @@ public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camun
 
     @Autowired
     private DeploymentRepository deploymentRepository;
+
+    @Autowired
+    private DeployedBpmnRepository deployedBpmnRepository;
 
     @Autowired
     private DeploymentResourceRepository deploymentResourceRepository;
@@ -91,7 +95,10 @@ public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camun
     @Bean
     public DeploymentService deploymentService() {
 
-        return new DeploymentService(deploymentRepository, deploymentResourceRepository);
+        return new DeploymentService(
+                deploymentRepository,
+                deploymentResourceRepository,
+                deployedBpmnRepository);
 
     }
 

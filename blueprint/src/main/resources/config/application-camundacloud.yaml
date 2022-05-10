@@ -1,8 +1,9 @@
 zeebe:
    client:
       cloud:
-          cluster-id: bae5bfa3-3e93-4de7-b7af-05cb4d65b377
-          client-id: POV2A0sWGNkFIF6r2PM.ObGNG4GnoEXj
+          cluster-id: to-be-defined-by-system-property
+          client-id: to-be-defined-by-system-property
+          client-secret: to-be-defined-by-system-property
           region: bru-2
 
 application:

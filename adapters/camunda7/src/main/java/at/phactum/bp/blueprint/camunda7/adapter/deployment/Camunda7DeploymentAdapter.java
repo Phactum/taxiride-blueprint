@@ -8,9 +8,11 @@ import org.camunda.bpm.engine.spring.application.SpringProcessApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.transaction.annotation.Transactional;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
 
+@Transactional
 public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
 
 	private static final Logger logger = LoggerFactory.getLogger(Camunda7DeploymentAdapter.class);

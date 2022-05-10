@@ -1,15 +1,19 @@
 package at.phactum.bp.blueprint.camunda8.adapter.deployment;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
 
 import com.google.common.collect.Streams;
 
@@ -29,6 +33,7 @@ import io.camunda.zeebe.model.bpmn.instance.ServiceTask;
 import io.camunda.zeebe.model.bpmn.instance.UserTask;
 import io.camunda.zeebe.spring.client.ZeebeClientLifecycle;
 
+@Transactional
 public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
         implements Consumer<ZeebeClient> {
 
@@ -80,12 +85,35 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
             final Resource[] dmns,
             final Resource[] cmms) throws Exception {
 
-        final var deployProcessCommand = client.newDeployCommand();
+        final var deploymentHashCode = new int[] { 0 };
 
+        final var deployResourceCommand = client.newDeployResourceCommand();
+
+        // Add all DMNs to deploy-command: on one hand to deploy them and on the
+        // other hand to consider their hash code on calculating total package hash code
+        Arrays
+                .stream(dmns)
+                .forEach(resource -> {
+                    try (var inputStream = new HashCodeInputStream(
+                            resource.getInputStream(),
+                            deploymentHashCode[0])) {
+                        
+                        final var bytes = StreamUtils.copyToByteArray(inputStream);
+                        
+                        deploymentHashCode[0] = inputStream.getTotalHashCode();
+                        
+                        deployResourceCommand.addResourceBytes(bytes, resource.getFilename());
+                        
+                    } catch (IOException e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                });
+        
         final var deployedProcesses = new HashMap<String, DeployedBpmn>();
 
-        final var deploymentHashCode = new int[] { 0 };
-        Arrays
+        // Add all BPMNs to deploy-command: on one hand to deploy them and on the
+        // other hand to wire them to the using project beans according to the SPI
+        final var deploymentCommand = Arrays
                 .stream(bpmns)
                 .map(resource -> {
                     try (var inputStream = new HashCodeInputStream(
@@ -104,22 +132,50 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                         processBpmnModel(workflowModuleId, deployedProcesses, bpmn, model);
                         deploymentHashCode[0] = inputStream.getTotalHashCode();
 
-                    	return deployProcessCommand.addProcessModel(model, resource.getFilename());
+                    	return deployResourceCommand.addProcessModel(model, resource.getFilename());
                     	
                     } catch (IOException e) {
                         throw new RuntimeException(e.getMessage());
                     }
                 })
                 .filter(Objects::nonNull)
-                .reduce((first, second) -> second)
+                .reduce((first, second) -> second);
+        
+        final var deployedResources = deploymentCommand
                 .map(command -> command.send().join())
-                .orElseThrow()
+                .orElseThrow();
+                
+        // BPMNs which are part of the current package will stored
+        deployedResources
                 .getProcesses()
-                .forEach(process -> deploymentService.addProcess(
+                .stream()
+                .map(process -> deploymentService.addProcess(
                         deploymentHashCode[0],
                         process,
-                        deployedProcesses.get(process.getBpmnProcessId())));
-                
+                        deployedProcesses.get(process.getBpmnProcessId())).getDefinitionKey())
+                .collect(Collectors.toList());
+        
+        // BPMNs which were deployed in the past need to be forced to be parsed for wiring
+        deploymentService
+                .getBpmnNotOfPackage(deploymentHashCode[0])
+                .stream()
+                .forEach(bpmn -> {
+                    
+                    try (var inputStream = new ByteArrayInputStream(
+                            bpmn.getResource())) {
+                        
+                        logger.info("About to verify old BPMN '{}' of workflow-module '{}'",
+                                bpmn.getResourceName(), workflowModuleId);
+                        final var model = bpmnParser.parseModelFromStream(inputStream);
+        
+                        processBpmnModel(workflowModuleId, deployedProcesses, bpmn, model);
+                        
+                    } catch (IOException e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                    
+                });
+        
     }
     
     private void processBpmnModel(

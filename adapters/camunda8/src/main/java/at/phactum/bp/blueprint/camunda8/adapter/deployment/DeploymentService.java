@@ -3,6 +3,7 @@ package at.phactum.bp.blueprint.camunda8.adapter.deployment;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.Hibernate;
@@ -20,6 +21,8 @@ public class DeploymentService {
 
     private final BpmnParser bpmnParser = new BpmnParser();
 
+    private final DeployedBpmnRepository deployedBpmnRepository;
+
     private final DeploymentRepository deploymentRepository;
     
     private final DeploymentResourceRepository deploymentResourceRepository;
@@ -28,10 +31,12 @@ public class DeploymentService {
 
     public DeploymentService(
             final DeploymentRepository deploymentRepository,
-            final DeploymentResourceRepository deploymentResourceRepository) {
+            final DeploymentResourceRepository deploymentResourceRepository,
+            final DeployedBpmnRepository deployedBpmnRepository) {
 
         this.deploymentRepository = deploymentRepository;
         this.deploymentResourceRepository = deploymentResourceRepository;
+        this.deployedBpmnRepository = deployedBpmnRepository;
         
     }
     
@@ -40,6 +45,11 @@ public class DeploymentService {
             final int fileId,
             final String resourceName) {
         
+        final var previous = deploymentResourceRepository.findById(fileId);
+        if (previous.isPresent()) {
+            return (DeployedBpmn) previous.get();
+        }
+
         final var outStream = new ByteArrayOutputStream();
         Bpmn.writeModelToStream(outStream, model);
         
@@ -56,10 +66,18 @@ public class DeploymentService {
             final int packageId,
             final Process camunda8DeployedProcess,
             final DeployedBpmn bpmn) {
+        
+        final var versionedId = camunda8DeployedProcess.getProcessDefinitionKey();
+        
+        final var previous = deploymentRepository.findById(versionedId);
+        if ((previous.isPresent())
+                && (previous.get().getPackageId() == packageId)) {
+            return (DeployedProcess) previous.get();
+        }
 
         final var deployedProcess = new DeployedProcess();
         
-        deployedProcess.setDefinitionKey(camunda8DeployedProcess.getProcessDefinitionKey());
+        deployedProcess.setDefinitionKey(versionedId);
         deployedProcess.setVersion(camunda8DeployedProcess.getVersion());
         deployedProcess.setPackageId(packageId);
         deployedProcess.setBpmnProcessId(camunda8DeployedProcess.getBpmnProcessId());
@@ -67,6 +85,12 @@ public class DeploymentService {
         
         return deploymentRepository.save(deployedProcess);
         
+    }
+
+    public List<DeployedBpmn> getBpmnNotOfPackage(final int packageId) {
+
+        return deployedBpmnRepository.findByPackageIdNot(packageId);
+
     }
 
     public io.camunda.zeebe.model.bpmn.instance.Process getProcess(
