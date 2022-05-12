@@ -110,6 +110,17 @@ public class Camunda7ProcessService<DE>
                 null);
 
     }
+    
+    @Override
+    public DE correlateMessage(
+            final DE domainEntity,
+            final Object message) {
+        
+        return correlateMessage(
+                domainEntity,
+                message.getClass().getSimpleName());
+        
+    }
 
     @Override
     public DE correlateMessage(
@@ -128,6 +139,19 @@ public class Camunda7ProcessService<DE>
                 correlationIdLocalVariableName,
                 correlationId);
 
+    }
+    
+    @Override
+    public DE correlateMessage(
+            final DE domainEntity,
+            final Object message,
+            final String correlationId) {
+        
+        return correlateMessage(
+                domainEntity,
+                message.getClass().getSimpleName(),
+                correlationId);
+        
     }
 
     private DE correlateMessage(

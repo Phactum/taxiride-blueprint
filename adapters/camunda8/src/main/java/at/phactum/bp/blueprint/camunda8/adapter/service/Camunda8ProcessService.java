@@ -117,6 +117,17 @@ public class Camunda8ProcessService<DE>
         return attachedEntity;
         
     }
+    
+    @Override
+    public DE correlateMessage(
+            final DE domainEntity,
+            final Object message) {
+        
+        return correlateMessage(
+                domainEntity,
+                message.getClass().getSimpleName());
+        
+    }
 
     @Override
     public DE correlateMessage(
@@ -140,6 +151,19 @@ public class Camunda8ProcessService<DE>
                 messageName, correlationId, bpmnProcessId, messageKey);
         
         return attachedEntity;
+        
+    }
+    
+    @Override
+    public DE correlateMessage(
+            final DE domainEntity,
+            final Object message,
+            final String correlationId) {
+        
+        return correlateMessage(
+                domainEntity,
+                message.getClass().getSimpleName(),
+                correlationId);
         
     }
 

@@ -21,7 +21,7 @@ public class RideProperties
     public static final String WORKFLOW_MODULE_ID = "ride";
 
     @Bean
-    public static ModuleSpecificProperties moduleProps() {
+    public static ModuleSpecificProperties rideModuleProperties() {
 
         return new ModuleSpecificProperties(RideProperties.class, WORKFLOW_MODULE_ID);
 
