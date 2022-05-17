@@ -70,7 +70,7 @@ In the best case only one service bean is sufficient. One workflow implemented b
 
 In case of more complex processes typically sections of fulfillment can be identified (determine a driver, do the ride, handle payment, etc.) which can be used as semantical buckets mapped to separate service beans.
 
-*How are those services beans wired to the BPMN?*
+*How are those service beans wired to the BPMN?*
 
 In terms of BPMN there are tasks (e.g. service-task, send-task, etc.) which are wired to methods of that service by name and there are expressions (e.g. conditional-flows) which are evaluated against a process-specific [domain-aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html) (see *How is data handled?*).
 
@@ -181,7 +181,7 @@ Additionally, if there are several receive tasks "waiting" for the same message 
 
 ### Wire up a process
 
-Starting a workflow or correlating a message are actions originated in our custom business code typically trigger by some kind of business event (e.g. user hits a button). Wiring a process, a task or an expression is about connecting BPMN elements to our software components. In these situations the action to run our business code is initiated by the business processing engine. So we have to introduce markers (Java annotations) to let the engine know where to find the right code to run e.g. for a certain BPMN service task.
+Starting a workflow or correlating a message are actions originated in our custom business code typically triggered by some kind of business event (e.g. user hits a button). Wiring a process, a task or an expression is about connecting BPMN elements to our software components. In these situations the action to run our business code is initiated by the BPMS. So, we have to introduce markers to let the engine know where to find the right code to run.
 
 According to the [concept](#concept) and in order to have no reference from BPMN to the implementation a name based approach is used for the binding in an aspect-oriented style.
 

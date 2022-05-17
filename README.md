@@ -2,7 +2,11 @@
 
 # Blueprint for Business-Processing (Micro)Services
 
-Each Business Processing Management System (BPMS) has its own rules of how to be used and its own paradigms implemented. Using a BPMS requires a developer to be aware of those rules and also to use its APIs which typically reflect the technology used by the implementation of the BPMS.
+This Blueprint is about developing Java based business process driven (micro)services using a BPMN business processing engine. BPMN is a graphical representation for specifying business processes. A BPMN engine runs those processes and acts as a state engine. This helps to dramatically reduce the amount of code since only "tasks" need to be implemented and the flow is handled by the engine.
+
+## Motivation
+
+Each engine, also called Business Processing Management System (BPMS), has its own rules beyond BPMN of how to be used and its own paradigms implemented. Using a BPMS requires a developer to be aware of those rules and also to use its APIs which typically reflect the technology used by the implementation of the BPMS.
 
 All these rules and technologies *bleed* into the business code and lead to:
 
@@ -11,11 +15,17 @@ All these rules and technologies *bleed* into the business code and lead to:
 - The business code is less readable and therefore harder to maintain.
 - Moving to other technology stacks requires to reimplement the business logic.
 
-To deal with this we decided to define **a SPI (service programming interface) for BPMS as a Java developer would expect it to be**. This SPI incorporates best-practices collected as part of developing business-processing services since 2014 using various BPMSs. We also used a lot of domain-driven design paradigms since they are a good fit to build a simple SPI.
+## Goals
+
+To deal with the disadvantages mentioned we decided to define **an SPI (service programming interface) for BPMS as a Java developer would expect it to be**. This SPI incorporates best-practices collected as part of developing business-processing services since 2014 using various BPMSs. We also used a lot of domain-driven design paradigms since they are a good fit to build a simple SPI. This lets the developer focus on the business aspects rather than technical BPMS details.
 
 As evidence we provide adapters for some BPMS as well as support for workflow modules in a microservice environment. The implementation is based on [Spring boot](https://spring.io/projects/spring-boot) but can be adopted to JEE as well.
 
 All parts together form a **Blueprint** which should help you **building** maintainable business processing (micro)**services with minimal afford**.
+
+## Prerequisites
+
+You should know about [BPMN](https://en.wikipedia.org/wiki/Business_Process_Model_and_Notation) and you should be able to create meaningful models using a [modeler tool](https://camunda.com/en/download/modeler/). You also need to be able to work with the tool-stack of the Blueprint: Java, Sprint Boot and  Maven.
 
 ## Content
 
@@ -25,13 +35,12 @@ All parts together form a **Blueprint** which should help you **building** maint
    1. [Camunda Platform 8](./adapters/camunda8/README.md)
 1. Additional support for building microservices:
    1. [Spring Boot multi workflow module support](./adapters/spring-boot/README.md)
-   1. [REST client support](./adapters/rest/README.md).
-1. A [sample](./blueprint/README.md) used to test all features with various BPMSs
+   1. [REST client support](./adapters/rest/README.md)
 1. A full fledged example ["Taxi Ride"](./taxi/README.md) to show how the Blueprint looks like applied to a real-world scenario.
 
-## Example
+## How it looks like
 
-These example, which is a section of a taxi ride worfklow, should give you an idea of how this SPI is used:
+This sample, which is a section of a taxi ride workflow, should give you an idea of how this SPI is used in your business code:
 
 ![Section of a taxi ride workflow](./readme/example.png)
 
