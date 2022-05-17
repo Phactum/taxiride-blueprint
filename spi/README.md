@@ -10,6 +10,9 @@ It incorporates various state-of-the-art techniques and concepts to simplify bus
 1. [Concept](#concept)
 1. [Usage](#usage)
    1. [Process-specific domain-aggregate](#process-specific-domain-aggregate)
+   1. [Natural ids](#natural-ids)
+   1. [Start a workflow](#start-a-workflow)
+   1. [Correlate an incoming message](#correlate-an-incoming-message)
    1. [Wire up a process](#wire-up-a-process)
    1. [Wire up a task](#wire-up-a-task)
    1. [Wire up an expression](#wire-up-an-expression)
@@ -133,7 +136,52 @@ A natural id is a primary key which uniquely identifies a single business-case. 
 
 This natural id has to be chosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system.
 
+### Start a workflow
+
+There is a ready-to-use service bean available called `ProcessService`. It is a generic bean using the workflow aggregate's class as a generic parameter and can be injected in any Spring component:
+
+```java
+    @Autowired
+    private ProcessService<Ride> rideService;
+```
+
+To start a workflow (a running instance of a process) we can use it as part of a typical bean method which my be called due to a business event (e.g. user hits a button):
+
+```java
+    public void rideBooked(RideRequest request) {
+         // use the request to initialize the aggregate
+         var ride = new Ride(request);
+         // start the process
+         rideService.startProcess(ride);
+    }
+```
+
+### Correlate an incoming message
+
+Some BPMN elements are meant to wait for external messages like receive tasks and message catch events. The content of the message is typically incorporated into the domain aggregate to be used by upcoming tasks.
+
+However, the event of the incoming message is also used to make the workflow wake up and process whatever comes after the "sleeping" receive task. This mechanism is called message correlation and is based on the message's name registered for the receive task.
+
+One can use the `ProcessService` to perform that message correlation:
+
+```java
+    @Autowired
+    private RideRepositories rides;
+    
+    public void confrmRide(RideConfirmation message) {
+         ride = rides.get(message.getRideId());
+         ride.setDriver(message.getDriverId());
+         rideService.correlateMessage(ride, message);
+    }
+```
+
+*Hint:* If the message correlates to a message start event, then a new workflow is created.
+
+Additionally, if there are several receive tasks "waiting" for the same message then you need to define a correlation-id as a third parameter of `correlateMessage`.
+
 ### Wire up a process
+
+Starting a workflow or correlating a message are actions originated in our custom business code typically trigger by some kind of business event (e.g. user hits a button). Wiring a process, a task or an expression is about connecting BPMN elements to our software components. In these situations the action to run our business code is initiated by the business processing engine. So we have to introduce markers (Java annotations) to let the engine know where to find the right code to run e.g. for a certain BPMN service task.
 
 According to the [concept](#concept) and in order to have no reference from BPMN to the implementation a name based approach is used for the binding in an aspect-oriented style.
 
