@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import at.phactum.bp.blueprint.bpm.deployment.parameters.DomainEntityMethodParameter;
@@ -32,6 +33,8 @@ public abstract class TaskHandlerBase {
     protected final Method method;
 
     protected Class<?> idClass;
+
+    protected abstract Logger getLogger();
 
     public TaskHandlerBase(
             final JpaRepository<Object, String> workflowDomainEntityRepository,

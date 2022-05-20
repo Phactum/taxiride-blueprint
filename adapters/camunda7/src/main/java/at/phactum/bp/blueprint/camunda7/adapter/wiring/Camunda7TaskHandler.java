@@ -15,6 +15,8 @@ import org.camunda.bpm.model.bpmn.instance.BaseElement;
 import org.camunda.bpm.model.bpmn.instance.MultiInstanceLoopCharacteristics;
 import org.camunda.bpm.model.xml.ModelInstance;
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,16 +28,29 @@ import at.phactum.bp.blueprint.service.TaskException;
 
 public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate {
 
+    private static final Logger logger = LoggerFactory.getLogger(Camunda7TaskHandler.class);
+
+    private final String bpmnProcessId;
+
     private Object result;
 
     public Camunda7TaskHandler(
+            final String bpmnProcessId,
             final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
             final Method method,
             final List<MethodParameter> parameters) {
         
         super(workflowDomainEntityRepository, bean, method, parameters);
+        this.bpmnProcessId = bpmnProcessId;
         
+    }
+
+    @Override
+    protected Logger getLogger() {
+
+        return logger;
+
     }
 
     public String getMethodName() {
@@ -53,6 +68,12 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
 
         try {
 
+            logger.trace("Will handle task '{}' of workflow '{}' ('{}') by execution '{}'",
+                    execution.getBpmnModelElementInstance().getId(),
+                    execution.getProcessInstanceId(),
+                    bpmnProcessId,
+                    execution.getId());
+            
             super.execute(
                     execution.getBusinessKey(),
                     multiInstanceActivity -> {

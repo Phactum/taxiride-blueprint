@@ -60,6 +60,7 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
         }
         
         final var taskHandler = new Camunda7TaskHandler(
+                connectable.getBpmnProcessId(),
                 (JpaRepository<Object, String>) repository,
                 bean,
                 method,

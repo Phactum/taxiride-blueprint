@@ -9,10 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
 import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
@@ -33,6 +35,8 @@ import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlin
 
 @AutoConfigurationPackage(basePackageClasses = Camunda8AdapterConfiguration.class)
 @EnableZeebeClient
+@EntityScan(basePackageClasses = { Camunda8AdapterConfiguration.class })
+@EnableJpaRepositories(basePackageClasses = { Camunda8AdapterConfiguration.class })
 public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camunda8ProcessService<?>> {
 
     @Value("${workerId}")

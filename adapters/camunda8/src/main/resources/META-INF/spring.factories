@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  at.phactum.bp.blueprint.camunda8.adapter.wiring.ZeebeClientConfiguration,\
   at.phactum.bp.blueprint.camunda8.adapter.Camunda8AdapterConfiguration

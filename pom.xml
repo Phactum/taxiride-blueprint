@@ -10,6 +10,10 @@
 	<packaging>pom</packaging>
 	<name>A Business Processing Blueprint</name>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<distributionManagement>
 		<repository>
 			<id>github</id>

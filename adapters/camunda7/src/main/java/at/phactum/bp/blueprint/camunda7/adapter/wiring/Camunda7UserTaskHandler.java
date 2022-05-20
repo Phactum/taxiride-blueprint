@@ -8,6 +8,8 @@ import java.util.function.Function;
 
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.TaskListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
@@ -19,6 +21,8 @@ import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
 
 public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskListener {
 
+    private static final Logger logger = LoggerFactory.getLogger(Camunda7UserTaskHandler.class);
+
     public Camunda7UserTaskHandler(
             final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
@@ -27,6 +31,13 @@ public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskList
         
         super(workflowDomainEntityRepository, bean, method, parameters);
         
+    }
+
+    @Override
+    protected Logger getLogger() {
+
+        return logger;
+
     }
 
     @Override

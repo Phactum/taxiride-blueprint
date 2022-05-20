@@ -52,6 +52,13 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
         this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
 
     }
+    
+    @Override
+    protected Logger getLogger() {
+        
+        return logger;
+        
+    }
 
     @Override
     @Transactional
@@ -61,7 +68,13 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
 
         CommandWrapper command;
         try {
-            final var businessKey = (String) job.getVariablesAsMap().get("id");
+            final var businessKey = (String) getVariable(job, "id");
+            
+            logger.trace("Will handle task '{}' of workflow '{}' ('{}') as job '{}'",
+                    job.getElementId(),
+                    job.getProcessInstanceKey(),
+                    job.getProcessDefinitionKey(),
+                    job.getKey());
             
             final var domainEntity = super.execute(
                     businessKey,
