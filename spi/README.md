@@ -94,11 +94,11 @@ If particular attributes are required often (e.g. nearly every task) then this a
 
 ### Process-specific domain-aggregate
 
-A process-engine might give you the ability to use process-variables to store information the workflow needs to fulfill decisions like at sequence-flow conditions. This blueprint does not use process-variables but introduces a separate JPA entity as a DDD aggregate for each process:
+Typically, you have data needed to fulfill the purpose of the process. This might be values like customer ID, order ID or in case of the taxi ride the pickup time, the pickup location and the target location:
 
 ```java
 @Entity
-@Table(name = "TAXI_RIDE")
+@Table(name = "RIDES")
 @Getter
 @Setter
 public class Ride {
@@ -109,9 +109,11 @@ public class Ride {
 }
 ```
 
-This JPA-entity stores all values used by one particular business process instance. This entity might be split up into a couple of entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that tree is the record connected to the workflow.
+This data has a 1:1 relationship to a particular workflow (a running instance of a process). This Blueprint uses a dedicated JPA entity per workflow for storing those values. This entity might be split up into a couple of sub-entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow. In terms of DDD this entire tree is called *an aggregate*.
 
-Instead of using process-variables the entity's properties can be used in the process e.g. for conditional sequence-flows:
+#### Process variables
+
+If you are familiar with any BPMS then you might know about process-variables you can use to store information the workflow needs to fulfill decisions like at sequence-flow conditions. This Blueprint does not use process-variables but makes the BPMS [use the domain-aggregate instead](#wire-up-an-expression):
 
 ![Camunda Modeller](./readme/expression_propertiespanel.png)
 
@@ -130,11 +132,11 @@ Reasons for not using process-variables:
 
 #### Natural ids
 
-This aggregate uses a natural id as a primary key, so for one specific natural key a particular process started twice is identified as a duplicate and rejected.
+The aggregate uses a natural id as a primary key, so for one specific natural key a particular process started twice is identified as a duplicate and rejected.
 
-A natural id is a primary key which uniquely identifies a single business-case. That might be an order-id, a trouble-ticket-id or - as in the case of the taxi ride - an artificial identifier (auto-increment/UUID).
+A natural id is a primary key which uniquely identifies a single business-case. That might be an order-id, a trouble-ticket-id or or a checksum calculated based on the use-case's attributes.
 
-This natural id has to be chosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system.
+This natural id has to be chosen wisely, because it is used to identify duplicate requests, which might occur in a distributed, fault-tolerant system. It is also fine to use an auto-increment/UUID but in this case de-duplication will not work.
 
 ### Start a workflow
 
@@ -168,7 +170,7 @@ One can use the `ProcessService` to perform that message correlation:
     @Autowired
     private RideRepositories rides;
     
-    public void confrmRide(RideConfirmation message) {
+    public void confirmRide(RideConfirmation message) {
          ride = rides.get(message.getRideId());
          ride.setDriver(message.getDriverId());
          rideService.correlateMessage(ride, message);
@@ -463,3 +465,5 @@ There are two major situations in which expressions are used:
 1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![Camunda Modeller](./readme/timer_propertiespanel.png)
 
 In both cases a getter method of the domain-aggregate is used to retrieve the value.
+
+*Hint:* Each [BPMS-specific adapter](../adapters/README.md#engine-adapters) implements this *magic* to redirect attribute references in BPMN expressions to the proper getter of your domain-aggregate.

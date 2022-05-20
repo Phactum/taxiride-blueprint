@@ -24,9 +24,9 @@ public class TaxiApplication {
 
 ## Worker ID
 
-In a decentralized environment work load is fetched rather then pushed to deal with back-pressure (e.g. Camunda 7's external tasks or Camunda 8's workers). To identify the client on fetching jobs (e.g. the application we are about to develop running in a Kubernetes pod) in a unique way the client has to pass a worker ID to the service. This worker ID is typically fetched from the environment like the host's IP address or a Kubernetes pod's name.
+In a decentralized environment workload is fetched rather then pushed to deal with back-pressure (e.g. Camunda 7's external tasks or Camunda 8's workers). In a load-balanced cluster environment, to identify each particular node fetching jobs from an external service in a unique way, the client has to pass a worker ID to that service. This worker ID is typically fetched from the environment like the host's IP address or a Kubernetes pod's name.
 
-To read this ID from the environment and pass it to the client bean is another feature of the Spring application class `ModuleAndWorkerAwareSpringApplication`. First the system environment "WORKER_ID" is read and if empty then the system property "WORKER_ID" is read.
+To read this ID from the environment and pass it to the client bean is a feature of the Spring application class `ModuleAndWorkerAwareSpringApplication`. First the system environment `WORKER_ID` is read and if empty then the Java system property `WORKER_ID` is used.
 
 So, one can start the Java process like this: 
 
@@ -66,7 +66,7 @@ For each use-case to be implemented, the BPMN and the underlying implementation 
 
 ### Configuration
 
-In a Spring boot environment one can use externalized properties to store configuration details. Typically a YAML formatted file stored in classpath `config/application.yaml` is used. In a workflow module the same mechanism is used, but the name of the YAML file is customized (e.g. `ride.yaml` for the taxi ride example). To simplify configuration the file's name as well as the configuration's top section is the name of the workflow module. Therefore the name is typically formatted in kebap case.
+In a Spring boot environment one can use [externalized properties](https://www.baeldung.com/spring-yaml) to store configuration details. Typically a YAML formatted file stored in classpath `config/application.yaml` is used. In a workflow module the same mechanism is used, but the name of the YAML file is customized (e.g. `ride.yaml` for the taxi ride example). To simplify configuration the file's name as well as the configuration's top section is the name of the workflow module. Therefore the name is typically formatted in kebap case.
 
 To mark a properties class as workflow module properties a special bean has to be produced which is picked up by all workflow module specific mechanisms (e.g. BPMN deployment). Additionally, the interface `WorkflowModuleIdAwareProperties` has to be implemented:
 
