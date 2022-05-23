@@ -1,3 +1,4 @@
+![Draft](../../readme/draft.png)
 # Spring Boot applications
 
 On using Spring Boot for building business processing applications, a couple of patterns can be identified. This module consists of implementations of those patterns.

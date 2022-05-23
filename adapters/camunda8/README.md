@@ -1,3 +1,4 @@
+![Draft](../../readme/draft.png)
 # Camunda 8 adapter
 
 This is an adapter which implements the binding of the Blueprint SPI to [Camunda 8](https://docs.camunda.io/) in order to run business processes.

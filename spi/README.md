@@ -1,3 +1,4 @@
+![Draft](../readme/draft.png)
 # SPI
 
 This module is about the Blueprint SPI **which is a service programming interface for BPMS as a Java developer would expect it to be**.
@@ -19,7 +20,7 @@ It incorporates various state-of-the-art techniques and concepts to simplify bus
    
 ## Paradigms
 
-Due to the nature that this SPI is an abstraction of BPMS-APIs it does not expose all features a particular BPMS provides. But we think that this is more an advantage than a disadvantage since:
+Due to the nature that this SPI is an abstraction of several BPMS-APIs it does not expose all features a particular BPMS provides. But we think that this is more an advantage than a disadvantage since:
 
 From a developer and product owner perspective:
 
@@ -29,7 +30,7 @@ From a developer and product owner perspective:
 - Any Java developer can write business processing software with no training required.
 - The business code is readable and therefore easier to maintain.
 - The business code is only about the implementation of the business requirements.
-- Moving to other technology stacks (either for the BPMS as well as for the business processing software itself) does not effect the business code.
+- Moving to other technology stacks (either for the BPMS as well as for the business processing software itself) does not affect the business code.
 
 From a product owner's perspective a BPMS should:
 

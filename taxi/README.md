@@ -1,3 +1,4 @@
+![Draft](../readme/draft.png)
 # Taxi ride show case
 
 This is a full fledged example showing the usage of various things implemented by the blueprint:

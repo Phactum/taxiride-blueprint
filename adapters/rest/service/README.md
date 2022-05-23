@@ -1,3 +1,4 @@
+![Draft](../../../readme/draft.png)
 # REST service
 
 To prepare a REST service, code may be generated as part of Maven's "generate sources" phase. As Spring Boot provides all tools necessary to implement REST services, this module simple bundles a couple of dependencies instead of providing Java classes. Beyond that code should be generated based on a given interface specification file.

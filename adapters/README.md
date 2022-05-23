@@ -1,3 +1,4 @@
+![Draft](../readme/draft.png)
 # Adapters
 
 There are two groups of adapters which are part of the Blueprint:

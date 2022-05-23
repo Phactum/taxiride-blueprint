@@ -1,3 +1,4 @@
+![Draft](../../readme/draft.png)
 # REST adapters
 
 Most of the APIs external systems provide are REST based APIs. In the past SOAP services dominated but that changed over the time.

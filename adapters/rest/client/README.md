@@ -1,3 +1,4 @@
+![Draft](../../../readme/draft.png)
 # REST client
 
 To prepare a REST client, code needs to be generated as part of Maven's "generate sources" phase. The REST client base classes provided by this module can be used to configure the code generated for runtime.  
