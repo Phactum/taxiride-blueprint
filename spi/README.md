@@ -19,16 +19,17 @@ It incorporates various state-of-the-art techniques and concepts to simplify bus
    
 ## Paradigms
 
-Due to the nature that this SPI is an abstraction of BPMS-APIs it does not expose all features of a particular BPMS provides. But we think that this is more an advantage than a disadvantage since:
+Due to the nature that this SPI is an abstraction of BPMS-APIs it does not expose all features a particular BPMS provides. But we think that this is more an advantage than a disadvantage since:
 
 From a developer and product owner perspective:
 
 - The BPMS' technology is *NOT* interwoven with the business code.
-- Developers do *NOT* need to know about details of the BPMS.
+- Developers do *NOT* necessarily need to know about details of the BPMS
+  (although we strongly recommend that developers learn about and understand the details of the business they have to create software for).
 - Any Java developer can write business processing software with no training required.
 - The business code is readable and therefore easier to maintain.
 - The business code is only about the implementation of the business requirements.
-- Moving to other technology stacks (either for the BPMNs as well as for the business processing software itself) does not effect the business code.
+- Moving to other technology stacks (either for the BPMS as well as for the business processing software itself) does not effect the business code.
 
 From a product owner's perspective a BPMS should:
 
@@ -50,7 +51,7 @@ From a designer perspective:
 
 - Designing the BPMN should not require any developer skills.
 - Designing the BPMN should not require knowledge about the underlying implementation.
-- The BPMN should not include any details of implementation (e.g. data structure).
+- The BPMN should not include any details of the implementation (e.g. data structure).
 - The requirements of the BPMN to the underlying business software implementation ("contract") should be able to be formulated by business people without support of developers.
 - Evolving the BPMN has to be possible without development knowledge.
 
