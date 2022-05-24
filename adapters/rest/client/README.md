@@ -134,4 +134,4 @@ public class TaxiRide {
 }
 ```
 
-*Hint:* Using a client built like this handles token based authentication transparently if configured. So, the first request having no token and upcoming request having expired tokens will be retried using a newly fetched token.
+*Hint:* Using a client built like this handles token based authentication transparently if configured. So, the any request having no token and upcoming request having expired tokens will be retried using a newly fetched token.

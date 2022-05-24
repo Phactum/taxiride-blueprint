@@ -1,9 +1,9 @@
 ![Draft](../readme/draft.png)
 # Adapters
 
-There are two groups of adapters which are part of the Blueprint:
+There are two groups of adapters which are part of the Taxi Ride Blueprint:
 
-1. Engine adapters: To bind the Blueprint SPI to a particular BPMN engine
+1. Engine adapters: To bind the Taxi Ride Blueprint SPI to a particular BPMN engine
 1. Workflow module adapters: Useful adapters for building workflow modules
 
 ## Workflow module adapters
@@ -18,11 +18,9 @@ A pattern to consume or provide REST APIs using the API first paradigm. Read [mo
 
 ## Engine adapters
 
-The Blueprint SPI is designed to hide the details and decouple from a used BPMN engine's API. Reasons for this are listed in the ["Paradigms" section](../spi/README.md#paradigms) of the [SPI's README](../spi/README.md).
-
 ### Deployment
 
-An engine adapter has to pickup the bundled BPMN and DMN files and deploy them to the bound engine. Additionally, the files are evaluated against the business code implementation to highlight unbound tasks at startup-time.
+An engine adapter has to pickup the bundled BPMN and DMN files and deploy them to the used engine. Additionally, the files are evaluated against the business code implementation to highlight unbound tasks at startup-time.
 
 ### Supported BPMS
 
