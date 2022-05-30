@@ -7,7 +7,7 @@
 	<parent>
     <groupId>at.phactum.bp.blueprint.taxiride</groupId>
 		<artifactId>driver-service-api</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>driver-service-api-simulation</artifactId>

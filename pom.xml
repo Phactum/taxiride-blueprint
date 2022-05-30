@@ -6,7 +6,7 @@
 
 	<groupId>at.phactum.bp.blueprint</groupId>
 	<artifactId>blueprint-parent</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>A Business Processing Blueprint</name>
 
@@ -16,9 +16,9 @@
 
 	<distributionManagement>
 		<repository>
-			<id>github</id>
+			<id>taxiride-blueprint</id>
 			<name>GitHub OWNER Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/phactum/taxiride-blueprint/</url>
+			<url>https://maven.pkg.github.com/Phactum/taxiride-blueprint/</url>
 		</repository>
 	</distributionManagement>
 

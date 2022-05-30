@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>at.phactum.bp.blueprint</groupId>
 		<artifactId>blueprint-adapters</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.2-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>blueprint-camunda7-adapter</artifactId>
