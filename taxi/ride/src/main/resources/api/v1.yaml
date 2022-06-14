@@ -26,17 +26,23 @@ paths:
               schema:
                 description: the ride id
                 type: string
-  /ride/offer:
+  /ride/{rideId}/charged:
     post:
       tags:
         - ride
-      summary: receive a ride offer from a driver
-      operationId: rideOffered
+      summary: charge a booked ride
+      operationId: rideCharged
+      parameters:
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RideBookedParameters'
+              $ref: '#/components/schemas/RideCharged'
       responses:
         200:
           description: the ride
@@ -69,18 +75,10 @@ components:
           format: date-time
         targetLocation:
           $ref: '#/components/schemas/Location'
-    RideOffer:
+    RideCharged:
       type: object
       properties:
-        driverId:
-          type: string
-        driverName:
-          type: string
-        pickupTime:
-          type: string
-          format: date-time
-        currentDriverLocation:
-          $ref: '#/components/schemas/Location'
-        passengersUntilPickup:
-          type: integer
-          format: int32
+        amount:
+          type: number
+          format: float
+

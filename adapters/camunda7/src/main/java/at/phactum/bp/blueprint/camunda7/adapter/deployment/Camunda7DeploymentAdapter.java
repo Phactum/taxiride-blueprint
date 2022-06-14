@@ -11,6 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
+import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 
 @Transactional
 public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
@@ -49,6 +50,7 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
     @Override
     protected void doDeployment(
     		final String workflowModuleId,
+            final WorkflowModuleIdAwareProperties properties,
             final Resource[] bpmns,
             final Resource[] dmns,
             final Resource[] cmms)

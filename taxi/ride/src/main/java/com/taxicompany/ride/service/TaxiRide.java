@@ -17,9 +17,9 @@ import com.taxicompany.ride.domain.RideRepository;
 import at.phactum.bp.blueprint.process.ProcessService;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.TaskException;
+import at.phactum.bp.blueprint.service.TaskId;
 import at.phactum.bp.blueprint.service.UserTaskEvent;
 import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
-import at.phactum.bp.blueprint.service.UserTaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
@@ -183,7 +183,7 @@ public class TaxiRide {
     @WorkflowTask
     public void retrievePayment(
             final Ride ride,
-            final @UserTaskId String taskId,
+            final @TaskId String taskId,
             final @UserTaskEvent TaskEvent taskEvent) {
         
         if (taskEvent == TaskEvent.CREATED) {
@@ -193,5 +193,21 @@ public class TaxiRide {
         }
         
     }
-    
+
+    public void paymentRetrieved(
+            final String rideId,
+            final float charged) {
+        
+        final var ride = rides
+                .findById(rideId)
+                .orElseThrow();
+        
+        ride.setCharged(charged);
+        
+        processService.completeUserTask(
+                ride,
+                ride.getRetrievePaymentTaskId());
+
+    }
+
 }

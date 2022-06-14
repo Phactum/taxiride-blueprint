@@ -3,12 +3,9 @@ package at.phactum.bp.blueprint.bpm.deployment;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import org.springframework.beans.factory.InjectionPoint;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Scope;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,11 +15,6 @@ public abstract class AdapterConfigurationBase<P extends ProcessServiceImplement
 
     private Map<Class<?>, P> connectableServices = new HashMap<>();
 
-    protected abstract <DE> P buildProcessServiceBean(
-            final JpaRepository<DE, String> workflowDomainEntityRepository,
-            final Class<DE> workflowDomainEntityClass,
-            final Function<DE, String> getDomainEntityId);
-
     protected Collection<P> getConnectableServices() {
 
         return connectableServices.values();
@@ -30,12 +22,11 @@ public abstract class AdapterConfigurationBase<P extends ProcessServiceImplement
     }
 
     @SuppressWarnings("unchecked")
-    @Bean
-    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public <DE> P camundaProcessService(
+    protected <DE> P registerProcessService(
             final SpringDataTool springDataTool,
-            final InjectionPoint injectionPoint) throws Exception {
-
+            final InjectionPoint injectionPoint,
+            final BiFunction<JpaRepository<DE, String>, Class<DE>, P> processServiceBeanSupplier) throws Exception {
+        
         final var resolvableType = ResolvableType.forField(injectionPoint.getField());
 
         final var workflowDomainEntityClass = (Class<DE>) resolvableType
@@ -50,15 +41,14 @@ public abstract class AdapterConfigurationBase<P extends ProcessServiceImplement
         final var workflowDomainEntityRepository = springDataTool
                 .getJpaRepository(workflowDomainEntityClass);
 
-        final var result = buildProcessServiceBean(
+        final var result = processServiceBeanSupplier.apply(
                 workflowDomainEntityRepository,
-                workflowDomainEntityClass,
-                domainEntity -> springDataTool.getDomainEntityId(domainEntity));
+                workflowDomainEntityClass);
 
         connectableServices.put(workflowDomainEntityClass, result);
 
         return result;
-
+        
     }
-    
+
 }

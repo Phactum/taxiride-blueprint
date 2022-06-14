@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +16,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 
-import com.google.common.collect.Streams;
-
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
+import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 import at.phactum.bp.blueprint.utilities.HashCodeInputStream;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
@@ -81,6 +81,7 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
     @Override
     protected void doDeployment(
     		final String workflowModuleId,
+            final WorkflowModuleIdAwareProperties properties,
             final Resource[] bpmns,
             final Resource[] dmns,
             final Resource[] cmms) throws Exception {
@@ -197,13 +198,17 @@ public class Camunda8DeploymentAdapter extends ModuleAwareBpmnDeployment
                     deployedProcesses.put(process.getId(), bpmn);
                 })
                 // wire task methods
-                .flatMap(process -> Streams.concat(
-                        taskWiring.connectablesForType(process, model, ServiceTask.class),
-                        taskWiring.connectablesForType(process, model, BusinessRuleTask.class),
-                        taskWiring.connectablesForType(process, model, SendTask.class),
-                        taskWiring.connectablesForType(process, model, UserTask.class),
-                        taskWiring.connectablesForType(process, model, IntermediateThrowEvent.class),
-                        taskWiring.connectablesForType(process, model, EndEvent.class)))
+                .flatMap(process ->
+                        Stream.of(
+                            taskWiring.connectablesForType(process, model, ServiceTask.class),
+                            taskWiring.connectablesForType(process, model, BusinessRuleTask.class),
+                            taskWiring.connectablesForType(process, model, SendTask.class),
+                            taskWiring.connectablesForType(process, model, UserTask.class),
+                            taskWiring.connectablesForType(process, model, IntermediateThrowEvent.class),
+                            taskWiring.connectablesForType(process, model, EndEvent.class)
+                        )
+                        .flatMap(i -> i) // map stream of streams to one stream
+                    )
                 .forEach(connectable -> taskWiring.wireTask(processService[0], connectable));
     	
     }

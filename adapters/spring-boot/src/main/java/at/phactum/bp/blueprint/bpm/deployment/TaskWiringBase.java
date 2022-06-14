@@ -21,7 +21,7 @@ import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.NoResolver;
 import at.phactum.bp.blueprint.service.TaskParam;
 import at.phactum.bp.blueprint.service.UserTaskEvent;
-import at.phactum.bp.blueprint.service.UserTaskId;
+import at.phactum.bp.blueprint.service.TaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 import at.phactum.bp.blueprint.utilities.BeanUtils;
@@ -310,7 +310,7 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                             .getTaskParameter(taskParamAnnotation.value()));
                     return false;
                 }).filter(param -> {
-                    final var userTaskIdAnnotation = param.getAnnotation(UserTaskId.class);
+                    final var userTaskIdAnnotation = param.getAnnotation(TaskId.class);
                     if (userTaskIdAnnotation == null) {
                         return true;
                     }

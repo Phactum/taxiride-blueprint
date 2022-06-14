@@ -31,7 +31,7 @@ public @interface UserTaskEvent {
         COMPLETED, // on completing a user task
         CANCELED, // on canceling a user task (e.g. due to boundary event)
         ALL, // all events: CREATED, COMPLETED, CANCELED
-        BPMS, // only events cause by the BPMS and not by the user: CREATED, CANCELED
+        BPMS, // only events caused by the BPMS and not by the user: CREATED, CANCELED
     };
 
     public TaskEvent[] value() default { TaskEvent.BPMS };
