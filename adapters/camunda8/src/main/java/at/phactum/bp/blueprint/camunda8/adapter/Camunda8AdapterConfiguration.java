@@ -23,6 +23,7 @@ import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentResourceRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentService;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8Connectable.Type;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskHandler;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8UserTaskHandler;
@@ -112,18 +113,22 @@ public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camun
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public Camunda8TaskHandler camunda8TaskHandler(
             final JpaRepository<Object, String> repository,
+            final Type taskType,
             final String taskDefinition,
             final Object bean,
             final Method method,
-            final List<MethodParameter> parameters) {
+            final List<MethodParameter> parameters,
+            final String idPropertyName) {
         
         return new Camunda8TaskHandler(
+                taskType,
                 deploymentService(),
                 commandExceptionHandlingStrategy,
                 repository,
                 bean,
                 method,
-                parameters);
+                parameters,
+                idPropertyName);
         
     }
     

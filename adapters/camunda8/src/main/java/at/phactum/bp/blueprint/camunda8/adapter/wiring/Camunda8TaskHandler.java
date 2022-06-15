@@ -16,11 +16,12 @@ import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
 import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentService;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8Connectable.Type;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiInstanceIndexMethodParameter;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.parameters.Camunda8MultiInstanceTotalMethodParameter;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
+import at.phactum.bp.blueprint.service.TaskEvent.Event;
 import at.phactum.bp.blueprint.service.TaskException;
-import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
 import io.camunda.zeebe.client.api.command.FinalCommandStep;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -37,19 +38,27 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
 
     private final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
+    private final Type taskType;
+
     private final DeploymentService deploymentService;
 
+    private final String idPropertyName;
+
     public Camunda8TaskHandler(
+            final Type taskType,
             final DeploymentService deploymentService,
             final DefaultCommandExceptionHandlingStrategy commandExceptionHandlingStrategy,
             final JpaRepository<Object, String> workflowDomainEntityRepository,
             final Object bean,
             final Method method,
-            final List<MethodParameter> parameters) {
+            final List<MethodParameter> parameters,
+            final String idPropertyName) {
 
         super(workflowDomainEntityRepository, bean, method, parameters);
         this.deploymentService = deploymentService;
+        this.taskType = taskType;
         this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
+        this.idPropertyName = idPropertyName;
 
     }
     
@@ -66,9 +75,9 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
             final JobClient client,
             final ActivatedJob job) throws Exception {
 
-        CommandWrapper command;
+        CommandWrapper command = null;
         try {
-            final var businessKey = (String) getVariable(job, "id");
+            final var businessKey = (String) getVariable(job, idPropertyName);
             
             logger.trace("Will handle task '{}' of workflow '{}' ('{}') as job '{}'",
                     job.getElementId(),
@@ -81,9 +90,11 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
                     multiInstanceVariable -> getVariable(job, multiInstanceVariable),
                     taskParameter -> getVariable(job, taskParameter),
                     () -> Long.toHexString(job.getKey()),
-                    () -> TaskEvent.CREATED);
+                    () -> Event.CREATED);
 
-            command = createCompleteCommand(client, job, domainEntity);
+            if (taskType != Type.USERTASK) {
+                command = createCompleteCommand(client, job, domainEntity);
+            }
         } catch (TaskException bpmnError) {
             command = createThrowErrorCommand(client, job, bpmnError);
         } catch (Exception e) {
@@ -91,7 +102,9 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
             command = createFailedCommand(client, job, e);
         }
 
-        command.executeAsync();
+        if (command != null) {
+            command.executeAsync();
+        }
 
     }
     

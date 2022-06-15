@@ -9,8 +9,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to define a parameter for processing a user-task
- * event.
+ * This annotation is used to define a parameter for processing a particular
+ * task event.
  * 
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
@@ -24,9 +24,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 @Inherited
 @Documented
-public @interface UserTaskEvent {
+public @interface TaskEvent {
 
-    enum TaskEvent {
+    enum Event {
         CREATED, // on creating a user task
         COMPLETED, // on completing a user task
         CANCELED, // on canceling a user task (e.g. due to boundary event)
@@ -34,6 +34,6 @@ public @interface UserTaskEvent {
         BPMS, // only events caused by the BPMS and not by the user: CREATED, CANCELED
     };
 
-    public TaskEvent[] value() default { TaskEvent.BPMS };
+    public Event[] value() default { Event.BPMS };
 
 }

@@ -20,6 +20,8 @@ import javax.persistence.Table;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+
 @Entity
 @Table(name = "RIDES")
 public class Ride {
@@ -62,6 +64,9 @@ public class Ride {
 
     public boolean isCustomerCharged() {
 
+        if ((price == null) || (charged == null)) {
+            return false;
+        }
         return price == charged;
 
     }
@@ -74,6 +79,9 @@ public class Ride {
     
     public Collection<String> getUnselectedOffers() {
         
+        if (potentialDrivers == null) {
+            return null;
+        }
         return potentialDrivers
                 .stream()
                 .map(Driver::getId)
@@ -84,6 +92,9 @@ public class Ride {
 
     public Collection<String> getAllOffers() {
         
+        if (potentialDrivers == null) {
+            return null;
+        }
         return potentialDrivers
                 .stream()
                 .map(Driver::getId)
@@ -127,6 +138,20 @@ public class Ride {
         return potentialDrivers;
     }
 
+    @JsonGetter("potentialDrivers")
+    public List<String> getPotentialDriverIds() {
+        
+        final var potentialDrivers = getPotentialDrivers();
+        if (potentialDrivers == null) {
+            return null;
+        }
+        return potentialDrivers
+                .stream()
+                .map(Driver::getId)
+                .collect(Collectors.toList());
+        
+    }
+    
     public void setPotentialDrivers(List<Driver> potentialDrivers) {
         this.potentialDrivers = potentialDrivers;
     }
@@ -141,6 +166,17 @@ public class Ride {
 
     public Driver getDriver() {
         return driver;
+    }
+
+    @JsonGetter("driver")
+    public String getDriverId() {
+
+        final var driver = getDriver();
+        if (driver == null) {
+            return null;
+        }
+        return driver.getId();
+
     }
 
     public void setDriver(Driver driver) {

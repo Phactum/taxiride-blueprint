@@ -63,7 +63,7 @@ public class Camunda8ProcessService<DE>
         return workflowDomainEntityClass;
 
     }
-
+    
     @Override
     public JpaRepository<DE, String> getWorkflowDomainEntityRepository() {
 
@@ -105,7 +105,7 @@ public class Camunda8ProcessService<DE>
         final var messageKey = client
                 .newPublishMessageCommand()
                 .messageName(messageName)
-                .correlationKey(id)
+                .correlationKey("4711")
                 .variables(domainEntity)
                 .send()
                 .join()
