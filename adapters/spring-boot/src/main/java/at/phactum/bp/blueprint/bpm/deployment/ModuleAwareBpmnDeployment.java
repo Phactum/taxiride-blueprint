@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
 import at.phactum.bp.blueprint.modules.ModuleSpecificProperties;
+import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 
 public abstract class ModuleAwareBpmnDeployment {
 
@@ -43,38 +45,55 @@ public abstract class ModuleAwareBpmnDeployment {
     private void deployWorkflowModule(
     		final ModuleSpecificProperties propertySpecification) {
     	
-    	final var basePackageName = determineBasePackageName(propertySpecification);
+        final var moduleProperties = moduleProperties(propertySpecification);
+    	final var basePackageName = determineBasePackageName(moduleProperties);
     	final var workflowModuleId = propertySpecification.getName();
     	
-    	deployWorkflowModule(workflowModuleId, basePackageName);
+        deployWorkflowModule(
+                workflowModuleId,
+                basePackageName,
+                (WorkflowModuleIdAwareProperties) moduleProperties.orElse(null));
     	
     }
     
+    private Optional<BpDeploymentConfiguration> moduleProperties(
+            final ModuleSpecificProperties propertySpecification) {
+
+        if (properties == null) {
+            return Optional.empty();
+        }
+        
+        return properties
+                .stream()
+                .filter(p -> propertySpecification.getPropertiesClass().isAssignableFrom(p.getClass()))
+                .findFirst();
+        
+    }
+    
     private String determineBasePackageName(
-    		final ModuleSpecificProperties propertySpecification) {
+            final Optional<BpDeploymentConfiguration> moduleProperties) {
     	
-    	if (properties == null) {
+    	if (moduleProperties.isEmpty()) {
     		return DEFAULT_BASE_PACKAGE_NAME;
     	}
     	
-    	return properties
-    			.stream()
-                .filter(p -> propertySpecification.getPropertiesClass().isAssignableFrom(p.getClass()))
-    			.findFirst()
-    			.map(BpDeploymentConfiguration::getProcessesLocation)
+    	return moduleProperties
+    	        .map(BpDeploymentConfiguration::getProcessesLocation)
     			.orElse(DEFAULT_BASE_PACKAGE_NAME);
     	
     }
 
     protected abstract void doDeployment(
     		String workflowModuleId,
+            WorkflowModuleIdAwareProperties properties,
     		Resource[] bpmns,
     		Resource[] dmns,
     		Resource[] cmms) throws Exception;
 
     private void deployWorkflowModule(
     		final String workflowModuleId,
-    		final String basePackageName) {
+    		final String basePackageName,
+            final WorkflowModuleIdAwareProperties moduleProperties) {
     	
         try {
 
@@ -82,7 +101,7 @@ public abstract class ModuleAwareBpmnDeployment {
             final var cmms = findResources(workflowModuleId, basePackageName, "*.cmmn");
             final var dmns = findResources(workflowModuleId, basePackageName, "*.dmn");
 
-            doDeployment(workflowModuleId, bpmns, dmns, cmms);
+            doDeployment(workflowModuleId, moduleProperties, bpmns, dmns, cmms);
 
             getLogger()
                     .info("Deployed resources for process archive <{}>", workflowModuleId);

@@ -1,11 +1,14 @@
 package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import javax.persistence.Id;
 
 import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 import org.springframework.beans.factory.ObjectProvider;
@@ -24,6 +27,7 @@ import io.camunda.zeebe.model.bpmn.impl.BpmnModelInstanceImpl;
 import io.camunda.zeebe.model.bpmn.instance.BaseElement;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.UserTask;
+import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeFormDefinition;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
@@ -41,7 +45,7 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
     private ZeebeClient client;
     
     private List<JobWorkerBuilderStep3> workers = new LinkedList<>();
-
+    
     public Camunda8TaskWiring(
             final ApplicationContext applicationContext,
             final String workerId,
@@ -101,7 +105,7 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
                         process,
                         element.getId(),
                         kind,
-                        element.getSingleExtensionElement(ZeebeTaskDefinition.class),
+                        getTaskDefinition(kind, element),
                         element.getSingleExtensionElement(ZeebeLoopCharacteristics.class)))
                 .filter(connectable -> connectable.isExecutableProcess());
         
@@ -110,6 +114,28 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
         }
         
         return stream.filter(connectable -> connectable.getTaskDefinition() != null);
+        
+    }
+    
+    private String getTaskDefinition(
+            final Type kind,
+            final BaseElement element) {
+        
+        if (kind == Type.USERTASK) {
+            
+            final var formDefinition = element.getSingleExtensionElement(ZeebeFormDefinition.class);
+            if (formDefinition == null) {
+                return null;
+            }
+            return formDefinition.getFormKey();
+            
+        }
+        
+        final var taskDefinition = element.getSingleExtensionElement(ZeebeTaskDefinition.class);
+        if (taskDefinition == null) {
+            return null;
+        }
+        return taskDefinition.getType();
         
     }
     
@@ -156,13 +182,17 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
             final List<MethodParameter> parameters) {
         
         final var repository = processService.getWorkflowDomainEntityRepository();
+        final var idPropertyName = getWorkflowDomainEntityIdPropertyName(
+                processService.getWorkflowDomainEntityClass());
 
         final var taskHandler = taskHandlers.getObject(
                 repository,
+                connectable.getType(),
                 connectable.getTaskDefinition(),
                 bean,
                 method,
-                parameters);
+                parameters,
+                idPropertyName);
 
         if (connectable.getType() == Type.USERTASK) {
             
@@ -174,7 +204,7 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
             
         }
         
-        final var variablesToFetch = getVariablesToFetch(parameters);
+        final var variablesToFetch = getVariablesToFetch(idPropertyName, parameters);
 
         workers.add(
                 client
@@ -208,13 +238,52 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
         
     }
 
+    private String getWorkflowDomainEntityIdPropertyName(
+            final Class<?> domainEntityClass) {
+        
+        if (domainEntityClass == null) {
+            return null;
+        }
+        
+        return Arrays
+                .stream(domainEntityClass.getDeclaredFields())
+                .filter(field -> field.getAnnotation(Id.class) != null)
+                .findFirst()
+                .map(field -> field.getName())
+                .orElse(Arrays
+                        .stream(domainEntityClass.getDeclaredMethods())
+                        .filter(method -> method.getAnnotation(Id.class) != null)
+                        .findFirst()
+                        .map(this::propertyName)
+                        .orElse(getWorkflowDomainEntityIdPropertyName(domainEntityClass.getSuperclass())));
+        
+    }
+    
+    private String propertyName(
+            final Method method) {
+        
+        if (!method.getName().startsWith("get")) {
+            return method.getName();
+        }
+        
+        if (method.getName().length() == 3) {
+            return method.getName();
+        }
+        
+        return
+                method.getName().substring(3, 4).toLowerCase()
+                + method.getName().substring(4);
+        
+    }
+    
     private List<String> getVariablesToFetch(
+            final String idPropertyName,
             final List<MethodParameter> parameters) {
         
         final var result = new LinkedList<String>();
         
         // the domain entity's id aka the business key
-        result.add("id");
+        result.add(idPropertyName);
         
         parameters
                 .stream()

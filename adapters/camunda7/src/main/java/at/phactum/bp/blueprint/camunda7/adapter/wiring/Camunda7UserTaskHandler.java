@@ -15,9 +15,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
 import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
-import at.phactum.bp.blueprint.bpm.deployment.parameters.UserTaskEventMethodParameter;
-import at.phactum.bp.blueprint.service.UserTaskEvent;
-import at.phactum.bp.blueprint.service.UserTaskEvent.TaskEvent;
+import at.phactum.bp.blueprint.bpm.deployment.parameters.TaskEventMethodParameter;
+import at.phactum.bp.blueprint.service.TaskEvent;
+import at.phactum.bp.blueprint.service.TaskEvent.Event;
 
 public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskListener {
 
@@ -83,8 +83,8 @@ public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskList
         
         final var events = this.parameters
                 .stream()
-                .filter(parameter -> parameter instanceof UserTaskEventMethodParameter)
-                .map(parameter -> ((UserTaskEventMethodParameter) parameter).getEvents())
+                .filter(parameter -> parameter instanceof TaskEventMethodParameter)
+                .map(parameter -> ((TaskEventMethodParameter) parameter).getEvents())
                 .findFirst()
                 .orElse(Set.of());
         
@@ -92,16 +92,16 @@ public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskList
         
     }
     
-    protected UserTaskEvent.TaskEvent getTaskEvent(
+    protected TaskEvent.Event getTaskEvent(
             final String eventName) {
         
         switch (eventName) {
         case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_COMPLETE:
-            return TaskEvent.COMPLETED;
+            return Event.COMPLETED;
         case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_DELETE:
-            return TaskEvent.CANCELED;
+            return Event.CANCELED;
         case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_CREATE:
-            return TaskEvent.CREATED;
+            return Event.CREATED;
         default:
             return null;
         }

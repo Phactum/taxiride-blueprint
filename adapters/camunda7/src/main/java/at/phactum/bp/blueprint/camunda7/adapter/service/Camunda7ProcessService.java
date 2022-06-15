@@ -220,9 +220,28 @@ public class Camunda7ProcessService<DE>
         return attachedEntity;
         
     }
+
+    @Override
+    public DE completeTask(
+            final DE domainEntity,
+            final String taskId) {
+        
+        throw new UnsupportedOperationException();
+        
+    }
     
     @Override
-    public DE completeUserTaskByError(
+    public DE cancelTask(
+            final DE domainEntity,
+            final String taskId,
+            final String bpmnErrorCode) {
+        
+        throw new UnsupportedOperationException();
+        
+    }
+    
+    @Override
+    public DE cancelUserTask(
             final DE domainEntity,
             final String taskId,
             final String errorCode) {

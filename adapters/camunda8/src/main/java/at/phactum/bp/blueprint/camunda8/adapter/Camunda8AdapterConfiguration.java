@@ -2,19 +2,17 @@ package at.phactum.bp.blueprint.camunda8.adapter;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.function.Function;
 
+import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
 import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
@@ -25,6 +23,7 @@ import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentResourceRepository;
 import at.phactum.bp.blueprint.camunda8.adapter.deployment.DeploymentService;
 import at.phactum.bp.blueprint.camunda8.adapter.service.Camunda8ProcessService;
+import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8Connectable.Type;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskHandler;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8TaskWiring;
 import at.phactum.bp.blueprint.camunda8.adapter.wiring.Camunda8UserTaskHandler;
@@ -35,8 +34,6 @@ import io.camunda.zeebe.spring.client.jobhandling.DefaultCommandExceptionHandlin
 
 @AutoConfigurationPackage(basePackageClasses = Camunda8AdapterConfiguration.class)
 @EnableZeebeClient
-@EntityScan(basePackageClasses = { Camunda8AdapterConfiguration.class })
-@EnableJpaRepositories(basePackageClasses = { Camunda8AdapterConfiguration.class })
 public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camunda8ProcessService<?>> {
 
     @Value("${workerId}")
@@ -116,31 +113,41 @@ public class Camunda8AdapterConfiguration extends AdapterConfigurationBase<Camun
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public Camunda8TaskHandler camunda8TaskHandler(
             final JpaRepository<Object, String> repository,
+            final Type taskType,
             final String taskDefinition,
             final Object bean,
             final Method method,
-            final List<MethodParameter> parameters) {
+            final List<MethodParameter> parameters,
+            final String idPropertyName) {
         
         return new Camunda8TaskHandler(
+                taskType,
                 deploymentService(),
                 commandExceptionHandlingStrategy,
                 repository,
                 bean,
                 method,
-                parameters);
+                parameters,
+                idPropertyName);
         
     }
+    
+    @SuppressWarnings("unchecked")
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    public <DE> Camunda8ProcessService<?> camundaProcessService(
+            final SpringDataTool springDataTool,
+            final InjectionPoint injectionPoint) throws Exception {
 
-    @Override
-    protected <DE> Camunda8ProcessService<?> buildProcessServiceBean(
-            final JpaRepository<DE, String> workflowDomainEntityRepository,
-            final Class<DE> workflowDomainEntityClass,
-            final Function<DE, String> getDomainEntityId) {
-        
-        return new Camunda8ProcessService<DE>(
-                (JpaRepository<DE, String>) workflowDomainEntityRepository,
-                getDomainEntityId,
-                workflowDomainEntityClass);
+        return registerProcessService(
+                springDataTool,
+                injectionPoint,
+                (workflowDomainEntityRepository, workflowDomainEntityClass) ->
+                new Camunda8ProcessService<DE>(
+                        (JpaRepository<DE, String>) workflowDomainEntityRepository,
+                        domainEntity -> springDataTool.getDomainEntityId(domainEntity),
+                        (Class<DE>) workflowDomainEntityClass)
+            );
 
     }
     

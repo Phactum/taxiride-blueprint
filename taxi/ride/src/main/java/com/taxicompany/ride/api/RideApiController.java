@@ -1,5 +1,7 @@
 package com.taxicompany.ride.api;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -7,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.taxicompany.ride.api.v1.RideApi;
 import com.taxicompany.ride.api.v1.RideBookedParameters;
+import com.taxicompany.ride.api.v1.RideCharged;
 import com.taxicompany.ride.service.TaxiRide;
 
 @RestController
@@ -30,6 +33,17 @@ public class RideApiController implements RideApi {
         
         return ResponseEntity.ok(rideId);
         
+    }
+    
+    @Override
+    public ResponseEntity<String> rideCharged(
+            final String rideId,
+            final @Valid RideCharged rideCharged) {
+        
+        taxiRide.paymentRetrieved(rideId, rideCharged.getAmount());
+        
+        return ResponseEntity.ok(rideId);
+
     }
     
 }

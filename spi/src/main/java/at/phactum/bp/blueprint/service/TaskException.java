@@ -23,7 +23,7 @@ public class TaskException extends RuntimeException {
             final String errorCode) {
 
         super(errorCode);
-        this.errorName = null;
+        this.errorName = errorCode;
         this.errorCode = errorCode;
 
     }

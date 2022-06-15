@@ -63,7 +63,7 @@ public class Camunda8ProcessService<DE>
         return workflowDomainEntityClass;
 
     }
-
+    
     @Override
     public JpaRepository<DE, String> getWorkflowDomainEntityRepository() {
 
@@ -105,7 +105,7 @@ public class Camunda8ProcessService<DE>
         final var messageKey = client
                 .newPublishMessageCommand()
                 .messageName(messageName)
-                .correlationKey(id)
+                .correlationKey("4711")
                 .variables(domainEntity)
                 .send()
                 .join()
@@ -168,7 +168,7 @@ public class Camunda8ProcessService<DE>
     }
 
     @Override
-    public DE completeUserTask(
+    public DE completeTask(
             final DE domainEntity,
             final String taskId) {
         
@@ -189,11 +189,18 @@ public class Camunda8ProcessService<DE>
     }
     
     @Override
-    public DE completeUserTaskByError(
+    public DE completeUserTask(
             final DE domainEntity,
-            final String taskId,
-            final String errorCode) {
+            final String taskId) {
+
+        return completeTask(domainEntity, taskId);
         
+    }
+    
+    
+    @Override
+    public DE cancelTask(final DE domainEntity, final String taskId, final String errorCode) {
+
         final var attachedEntity = workflowDomainEntityRepository
                 .saveAndFlush(domainEntity);
         
@@ -210,4 +217,11 @@ public class Camunda8ProcessService<DE>
         
     }
     
+    @Override
+    public DE cancelUserTask(final DE domainEntity, final String taskId, final String errorCode) {
+
+        return cancelTask(domainEntity, taskId, errorCode);
+
+    }
+
 }

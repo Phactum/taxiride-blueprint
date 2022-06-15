@@ -10,20 +10,30 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * This annotation is used to define a method for processing a certain
- * process-task (e.g. service-task, send-task, etc.):
+ * This annotation is used to define a method for processing the cancellation of
+ * a certain asynchronous process-task (e.g. due to boundary events):
  * 
  * <pre>
- * &#64;WorkflowTask(taskDefinition = "doSomeWorkload")
- * public void doSomeWorkload(final MyDomainEntity entity) throws {@link TaskException} {
+ * &#64;WorkflowTaskCancelled(taskDefinition = "doSomeWorkload")
+ * public void cancelWorkload(
+ *         final MyDomainEntity entity,
+ *         final &#64;TaskId String id) throws {@link TaskException} {
+ *     ...
  * </pre>
+ * 
+ * <i>Hint:</i> This method is only called for workflow tasks which are marked
+ * for asynchronous processing by having a method parameter annotated by
+ * {@link TaskId}. Additionally the workflow system has to support notifying
+ * about cancellations.
+ * 
+ * @see TaskId
  */
 @Retention(RUNTIME)
 @Target(METHOD)
 @Inherited
 @Documented
-@Repeatable(WorkflowTasks.class)
-public @interface WorkflowTask {
+@Repeatable(WorkflowTasksCancelled.class)
+public @interface WorkflowTaskCancelled {
 
     static String USE_METHOD_NAME = "";
 

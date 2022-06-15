@@ -19,9 +19,9 @@ import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
 import at.phactum.bp.blueprint.service.NoResolver;
+import at.phactum.bp.blueprint.service.TaskEvent;
+import at.phactum.bp.blueprint.service.TaskId;
 import at.phactum.bp.blueprint.service.TaskParam;
-import at.phactum.bp.blueprint.service.UserTaskEvent;
-import at.phactum.bp.blueprint.service.UserTaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 import at.phactum.bp.blueprint.utilities.BeanUtils;
@@ -242,20 +242,14 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                     if (tested.length() > 0) {
                         tested.append(", ");
                     }
-                    tested.append(beanName);
-                    tested.append('#');
                     tested.append(m.getKey().toString());
                 })
-                .filter(m -> (StringUtils.hasText(connectable.getTaskDefinition())
-                        && (m.getKey().getName().equals(connectable.getTaskDefinition())
-                                || m.getValue().taskDefinition().equals(connectable.getTaskDefinition())))
-                        || connectable.getElementId().equals(m.getValue().id()))
+                .filter(m -> methodMatchesTaskDefinition(connectable, m.getKey(), m.getValue())
+                        || methodMatchesElementId(connectable, m.getKey(), m.getValue()))
                 .peek(m -> {
                     if (matching.length() > 0) {
                         matching.append(", ");
                     }
-                    matching.append(beanName);
-                    matching.append('#');
                     matching.append(m.getKey().toString());
                 })
                 .filter(m -> matchingMethods.getAndIncrement() == 0)
@@ -269,6 +263,44 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
         
     }
     
+    private boolean methodMatchesTaskDefinition(
+            final T connectable,
+            final Method method,
+            final WorkflowTask annotation) {
+        
+        if (!StringUtils.hasText(connectable.getTaskDefinition())) {
+            return false;
+        }
+
+        if (method.getName().equals(connectable.getTaskDefinition())) {
+            return true;
+        }
+
+        if (annotation.taskDefinition().equals(connectable.getTaskDefinition())) {
+            return true;
+        }
+
+        return false;
+        
+    }
+    
+    private boolean methodMatchesElementId(
+            final T connectable,
+            final Method method,
+            final WorkflowTask annotation) {
+        
+        if (method.getName().equals(connectable.getElementId())) {
+            return true;
+        }
+
+        if (annotation.id().equals(connectable.getElementId())) {
+            return true;
+        }
+
+        return false;
+        
+    }
+
     private Map.Entry<Method, List<MethodParameter>> validateParameters(
             final PS processService,
             final Method method) {
@@ -310,15 +342,15 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
                             .getTaskParameter(taskParamAnnotation.value()));
                     return false;
                 }).filter(param -> {
-                    final var userTaskIdAnnotation = param.getAnnotation(UserTaskId.class);
+                    final var userTaskIdAnnotation = param.getAnnotation(TaskId.class);
                     if (userTaskIdAnnotation == null) {
                         return true;
                     }
 
-                    parameters.add(methodParameterFactory.getUserTaskIdParameter());
+                    parameters.add(methodParameterFactory.getTaskIdParameter());
                     return false;
                 }).filter(param -> {
-                    final var userTaskEventAnnotation = param.getAnnotation(UserTaskEvent.class);
+                    final var userTaskEventAnnotation = param.getAnnotation(TaskEvent.class);
                     if (userTaskEventAnnotation == null) {
                         return true;
                     }

@@ -7,7 +7,7 @@
 	<parent>
     <groupId>at.phactum.bp.blueprint.taxiride</groupId>
 		<artifactId>blueprint-taxi</artifactId>
-		<version>0.0.2-SNAPSHOT</version>
+		<version>0.0.3-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>taxi-container</artifactId>
@@ -20,7 +20,7 @@
 		</dependency>
 		<dependency>
 			<groupId>at.phactum.bp.blueprint</groupId>
-			<artifactId>blueprint-camunda7-adapter</artifactId>
+			<artifactId>blueprint-camunda8-adapter</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

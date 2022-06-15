@@ -10,9 +10,9 @@ import at.phactum.bp.blueprint.service.BpmnProcess;
 import at.phactum.bp.blueprint.service.MultiInstanceElement;
 import at.phactum.bp.blueprint.service.MultiInstanceIndex;
 import at.phactum.bp.blueprint.service.MultiInstanceTotal;
+import at.phactum.bp.blueprint.service.TaskEvent;
+import at.phactum.bp.blueprint.service.TaskId;
 import at.phactum.bp.blueprint.service.TaskParam;
-import at.phactum.bp.blueprint.service.UserTaskEvent;
-import at.phactum.bp.blueprint.service.UserTaskId;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 
@@ -77,8 +77,8 @@ public class Test1WorkflowService {
     @WorkflowTask(id = "MyUserTask")
     public void myUserTask(
             final Test1DomainEntity rootEntity,
-            final @UserTaskId String taskId,
-            final @UserTaskEvent UserTaskEvent.TaskEvent event) {
+            final @TaskId String taskId,
+            final @TaskEvent TaskEvent.Event event) {
         
         System.err.println("UserTask: " + taskId + " -> " + event);
         

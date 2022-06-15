@@ -1,6 +1,6 @@
 package at.phactum.bp.blueprint.process;
 
-import at.phactum.bp.blueprint.service.UserTaskId;
+import at.phactum.bp.blueprint.service.TaskId;
 
 /**
  * @param <DE> The workflow-aggregate domain-entity-class
@@ -70,18 +70,42 @@ public interface ProcessService<DE> {
      * @param domainEntity The domain-entity
      * @param taskId       The task-id reported previously
      * @return The domain-entity attached to JPA
-     * @see UserTaskId
+     * @see TaskId
      */
     DE completeUserTask(DE domainEntity, String taskId);
 
     /**
-     * Complete a user-task by sendung a BPMN error
+     * Complete a user-task by sending a BPMN error
+     * 
+     * @param domainEntity  The domain-entity
+     * @param taskId        The task-id reported previously
+     * @param bpmnErrorCode The error code which can be caught in BPMN by error
+     *                      boundary events
+     * @return The domain-entity attached to JPA
+     * @see TaskId
+     */
+    DE cancelUserTask(DE domainEntity, String taskId, String bpmnErrorCode);
+
+    /**
+     * Complete an asynchronous task
      * 
      * @param domainEntity The domain-entity
      * @param taskId       The task-id reported previously
      * @return The domain-entity attached to JPA
-     * @see UserTaskId
+     * @see TaskId
      */
-    DE completeUserTaskByError(DE domainEntity, String taskId, String errorCode);
+    DE completeTask(DE domainEntity, String taskId);
+
+    /**
+     * Complete an asynchronous task by sending a BPMN error
+     * 
+     * @param domainEntity  The domain-entity
+     * @param taskId        The task-id reported previously
+     * @param bpmnErrorCode The error code which can be caught in BPMN by error
+     *                      boundary events
+     * @return The domain-entity attached to JPA
+     * @see TaskId
+     */
+    DE cancelTask(DE domainEntity, String taskId, String bpmnErrorCode);
 
 }

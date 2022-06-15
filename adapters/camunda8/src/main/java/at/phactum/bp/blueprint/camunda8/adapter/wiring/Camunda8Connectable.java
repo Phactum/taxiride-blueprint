@@ -3,7 +3,6 @@ package at.phactum.bp.blueprint.camunda8.adapter.wiring;
 import at.phactum.bp.blueprint.bpm.deployment.Connectable;
 import io.camunda.zeebe.model.bpmn.instance.Process;
 import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeLoopCharacteristics;
-import io.camunda.zeebe.model.bpmn.instance.zeebe.ZeebeTaskDefinition;
 
 public class Camunda8Connectable implements Connectable {
     
@@ -17,13 +16,13 @@ public class Camunda8Connectable implements Connectable {
     
     private Type type;
 
-    private ZeebeTaskDefinition taskDefinition;
+    private String taskDefinition;
     
     public Camunda8Connectable(
             final Process process,
             final String elementId,
             final Type type,
-            final ZeebeTaskDefinition taskDefinition,
+            final String taskDefinition,
             final ZeebeLoopCharacteristics loopCharacteristics) {
 
         this.process = process;
@@ -63,10 +62,7 @@ public class Camunda8Connectable implements Connectable {
     @Override
     public String getTaskDefinition() {
 
-        if (taskDefinition == null) {
-            return null;
-        }
-        return taskDefinition.getType();
+        return taskDefinition;
 
     }
     
