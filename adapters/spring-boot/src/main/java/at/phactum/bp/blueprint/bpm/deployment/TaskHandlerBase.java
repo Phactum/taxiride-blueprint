@@ -84,7 +84,7 @@ public abstract class TaskHandlerBase {
                         multiInstanceSupplier))
                 .filter(param -> processMultiInstanceElementParameter(args, index[0], param,
                         multiInstanceSupplier))
-                .filter(param -> processMultiInstanceResolverParameter(args, index[0], param,
+                .filter(param -> processMultiInstanceResolverParameter(method, args, index[0], param,
                         () -> {
                             if (domainEntity[0] == null) {
                                 domainEntity[0] = workflowDomainEntityRepository
@@ -117,10 +117,6 @@ public abstract class TaskHandlerBase {
         return workflowDomainEntityRepository.saveAndFlush(domainEntity[0]);
         
     }
-
-    protected abstract Integer getMultiInstanceTotal(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier); 
     
     private boolean processMultiInstanceTotalParameter(
             final Object[] args,
@@ -172,10 +168,6 @@ public abstract class TaskHandlerBase {
         
     }
 
-    protected abstract Integer getMultiInstanceIndex(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier); 
-
     private boolean processMultiInstanceIndexParameter(
             final Object[] args,
             final int index,
@@ -193,10 +185,6 @@ public abstract class TaskHandlerBase {
         return false;
         
     }
-
-    protected abstract Object getMultiInstanceElement(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier); 
 
     private boolean processMultiInstanceElementParameter(
             final Object[] args,
@@ -216,11 +204,39 @@ public abstract class TaskHandlerBase {
         
     }
     
-    protected abstract MultiInstance<Object> getMultiInstance(
+    @SuppressWarnings("unchecked")
+    protected MultiInstance<Object> getMultiInstance(final String name,
+            final Function<String, Object> multiInstanceSupplier) {
+
+        return (MultiInstance<Object>) multiInstanceSupplier.apply(name);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Object getMultiInstanceElement(final String name, final Function<String, Object> multiInstanceSupplier) {
+
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getElement();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Integer getMultiInstanceTotal(final String name, final Function<String, Object> multiInstanceSupplier) {
+
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getTotal();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Integer getMultiInstanceIndex(
             final String name,
-            final Function<String, Object> multiInstanceSupplier); 
-            
+            final Function<String, Object> multiInstanceSupplier) {
+
+        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getIndex();
+
+    }
+
     private boolean processMultiInstanceResolverParameter(
+            final Method method,
             final Object[] args,
             final int index,
             final MethodParameter param,
@@ -242,7 +258,16 @@ public abstract class TaskHandlerBase {
                 .getNames()
                 .forEach(name -> multiInstances.put(name, getMultiInstance(name, multiInstanceSupplier)));
 
-        args[index] = resolver.resolve(workflowDomainEntity.get(), multiInstances);
+        try {
+            args[index] = resolver.resolve(workflowDomainEntity.get(), multiInstances);
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed processing MultiInstanceElementResolver for parameter '"
+                    + index
+                    + "' of method '"
+                    + method
+                    + "'", e);
+        }
         
         return false;
         

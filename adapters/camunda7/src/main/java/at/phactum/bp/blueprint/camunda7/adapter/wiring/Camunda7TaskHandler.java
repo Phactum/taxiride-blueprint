@@ -4,7 +4,6 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import org.camunda.bpm.engine.delegate.BpmnError;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -101,46 +100,6 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
 
         return result;
 
-    }
-    
-    @SuppressWarnings("unchecked")
-    @Override
-    protected MultiInstance<Object> getMultiInstance(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier) {
-        
-        return (MultiInstance<Object>) multiInstanceSupplier.apply(name);
-        
-    }
-    
-    @SuppressWarnings("unchecked")
-    @Override
-    protected Object getMultiInstanceElement(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier) {
-        
-        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getElement();
-        
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected Integer getMultiInstanceTotal(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier) {
-        
-        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getTotal();
-        
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected Integer getMultiInstanceIndex(
-            final String name,
-            final Function<String, Object> multiInstanceSupplier) {
-        
-        return ((MultiInstance<Object>) multiInstanceSupplier.apply(name)).getIndex();
-        
     }
 
     static Map<String, MultiInstanceElementResolver.MultiInstance<Object>> getMultiInstanceContext(
