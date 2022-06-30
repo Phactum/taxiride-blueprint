@@ -5,20 +5,20 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-    <groupId>at.phactum.bp.blueprint.taxiride</groupId>
+		<groupId>at.phactum.bp.blueprint.taxiride</groupId>
 		<artifactId>driver-service-api</artifactId>
 		<version>0.0.3-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>driver-service-api-client</artifactId>
 	<name>Driver Service API Client</name>
-
+	
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>5.4.0</version>
+				<version>${openapi-generator.version}</version>
 				<executions>
 					<execution>
 						<id>generate-api-client</id>
@@ -27,7 +27,7 @@
 						</goals>
 						<configuration>
 							<inputSpec>${project.basedir}/../driver-service-api.yaml</inputSpec>
-              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+							<skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
 							<generatorName>java</generatorName>
 							<apiPackage>com.taxicompany.driver.client.v1</apiPackage>
 							<modelPackage>com.taxicompany.driver.client.v1</modelPackage>
@@ -45,31 +45,31 @@
 							<supportingFilesToGenerate>RFC3339DateFormat.java,StringUtil.java,ApiResponse.java,ApiClient.java,EncodingUtils.java,HttpBasicAuth.java,ApiResponseDecoder.java,ApiKeyAuth.java,HttpBearerAuth.java</supportingFilesToGenerate>
 						</configuration>
 					</execution>
-          <execution>
-            <id>generate-api-service</id>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-            <configuration>
-              <inputSpec>${project.basedir}/../driver-service-callback-api.yaml</inputSpec>
-              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
-              <generatorName>spring</generatorName>
-              <apiPackage>com.taxicompany.driver.service.v1</apiPackage>
-              <modelPackage>com.taxicompany.driver.service.v1</modelPackage>
-              <generateSupportingFiles>true</generateSupportingFiles>
-              <configOptions>
-                <interfaceOnly>true</interfaceOnly>
-                <useSpringController>true</useSpringController>
-                <java8>true</java8> <!-- avoid build interface default implementations -->
-                <dateLibrary>java8</dateLibrary> <!-- use OffsetDateTime -->
-                <enablePostProcessFile>true</enablePostProcessFile>
-              </configOptions>
-              <addCompileSourceRoot>true</addCompileSourceRoot>
-              <generateApiTests>false</generateApiTests>
-              <generateModelTests>false</generateModelTests>
-              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
-            </configuration>
-          </execution>
+					<execution>
+						<id>generate-api-service</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/../driver-service-callback-api.yaml</inputSpec>
+							<skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+							<generatorName>spring</generatorName>
+							<apiPackage>com.taxicompany.driver.service.v1</apiPackage>
+							<modelPackage>com.taxicompany.driver.service.v1</modelPackage>
+							<generateSupportingFiles>true</generateSupportingFiles>
+							<configOptions>
+								<interfaceOnly>true</interfaceOnly>
+								<useSpringController>true</useSpringController>
+								<java8>true</java8> <!-- avoid build interface default implementations -->
+								<dateLibrary>java8</dateLibrary> <!-- use OffsetDateTime -->
+								<enablePostProcessFile>true</enablePostProcessFile>
+							</configOptions>
+							<addCompileSourceRoot>true</addCompileSourceRoot>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
@@ -81,20 +81,20 @@
 			<artifactId>blueprint-rest-adapter-client</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-    <dependency>
-      <groupId>at.phactum.bp.blueprint</groupId>
-      <artifactId>blueprint-rest-adapter-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>at.phactum.bp.blueprint</groupId>
-      <artifactId>blueprint-spring-boot-adapter</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 		<dependency>
-		  <groupId>org.springframework.boot</groupId>
-		  <artifactId>spring-boot-starter</artifactId>
-		  <scope>provided</scope>
+			<groupId>at.phactum.bp.blueprint</groupId>
+			<artifactId>blueprint-rest-adapter-service</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>at.phactum.bp.blueprint</groupId>
+			<artifactId>blueprint-spring-boot-adapter</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

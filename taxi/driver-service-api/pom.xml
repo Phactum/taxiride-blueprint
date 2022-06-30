@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>driver-service-api</artifactId>
-  <name>Driver Service API</name>
+	<name>Driver Service API</name>
 	<packaging>pom</packaging>
 
 	<parent>
-    <groupId>at.phactum.bp.blueprint.taxiride</groupId>
+		<groupId>at.phactum.bp.blueprint.taxiride</groupId>
 		<artifactId>blueprint-taxi</artifactId>
 		<version>0.0.3-SNAPSHOT</version>
 	</parent>

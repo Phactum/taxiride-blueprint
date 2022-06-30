@@ -13,9 +13,9 @@
 	<artifactId>blueprint-rest-adapter-client</artifactId>
 	<name>REST Adapter Client</name>
 
-  <properties>
-    <feign.version>10.7.4</feign.version>
-  </properties>
+	<properties>
+		<feign.version>10.7.4</feign.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
