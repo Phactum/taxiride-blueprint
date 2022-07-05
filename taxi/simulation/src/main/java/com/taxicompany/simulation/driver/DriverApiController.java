@@ -122,7 +122,7 @@ public class DriverApiController implements DriverApi {
                 () -> offerService.finishRide(driverId, rideId),
                 Date.from(LocalDateTime
                     .now()
-                    .plus(random.nextInt(5), ChronoUnit.SECONDS)
+                    .plus(random.nextInt(5) + 5, ChronoUnit.SECONDS)
                     .atZone(ZoneId.systemDefault())
                     .toInstant()));
         

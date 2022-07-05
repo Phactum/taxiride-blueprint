@@ -165,7 +165,7 @@ customer process for understanding</bpmn:text>
     <bpmn:receiveTask id="Activity_15i28i4" name="Finish ride" messageRef="Message_16yuvne">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="TaxiRide-RideFinished">${rideId.concat("-").concat(driver.id)}</camunda:inputParameter>
+          <camunda:inputParameter name="TaxiRide-RideFinished">${rideId}</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0lk1jot</bpmn:incoming>
