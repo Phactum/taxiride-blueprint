@@ -11,6 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.phactum.bp.blueprint.bpm.deployment.ModuleAwareBpmnDeployment;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
 import at.phactum.bp.blueprint.modules.WorkflowModuleIdAwareProperties;
 
 @Transactional
@@ -22,13 +23,17 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
     
     private final SpringProcessApplication processApplication;
 
+    private final Camunda7TaskWiring taskWiring;
+
     public Camunda7DeploymentAdapter(
             final SpringProcessApplication processApplication,
+            final Camunda7TaskWiring taskWiring,
             final ProcessEngine processEngine) {
         
         super();
         this.processEngine = processEngine;
         this.processApplication = processApplication;
+        this.taskWiring = taskWiring;
         
     }
 
@@ -44,6 +49,8 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
     public void deployAllWorkflowModules() {
 
         super.deployAllWorkflowModules();
+
+        taskWiring.validateWiring();
 
     }
 
@@ -98,7 +105,7 @@ public class Camunda7DeploymentAdapter extends ModuleAwareBpmnDeployment {
                     // not wired twice.
                     processEngine.getRepositoryService().getProcessModel(definition.getId());
                 });
-        
+
     }
     
 }

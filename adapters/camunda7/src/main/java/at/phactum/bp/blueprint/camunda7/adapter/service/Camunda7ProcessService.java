@@ -57,6 +57,20 @@ public class Camunda7ProcessService<DE>
         this.bpmnProcessId = bpmnProcessId;
         
     }
+    
+    public boolean testForNotYetWired() {
+        
+        if (bpmnProcessId == null) {
+            logger.error(
+                    "The bean ProcessService<{}> was not wired to a BPMN process! "
+                            + "It is likely that the BPMN is not part of the classpath.",
+                    workflowDomainEntityClass.getName());
+            return true;
+        }
+        
+        return false;
+
+    }
 
     @Override
     public String getBpmnProcessId() {

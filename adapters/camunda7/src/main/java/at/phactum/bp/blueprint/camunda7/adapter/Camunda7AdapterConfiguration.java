@@ -57,9 +57,13 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     @Bean
     public Camunda7DeploymentAdapter camunda7DeploymentAdapter(
             final SpringProcessApplication processApplication,
-            final ProcessEngine processEngine) {
+            final ProcessEngine processEngine,
+            final Camunda7TaskWiring taskWiring) {
 
-        return new Camunda7DeploymentAdapter(processApplication, processEngine);
+        return new Camunda7DeploymentAdapter(
+                processApplication,
+                taskWiring,
+                processEngine);
 
     }
     

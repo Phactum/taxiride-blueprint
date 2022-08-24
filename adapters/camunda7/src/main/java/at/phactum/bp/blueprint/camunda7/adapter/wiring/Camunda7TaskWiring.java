@@ -92,5 +92,20 @@ public class Camunda7TaskWiring extends TaskWiringBase<Camunda7Connectable, Camu
         return processService;
         
     }
+    
+    public void validateWiring() {
+        
+        if (connectableServices
+                .stream()
+                .filter(Camunda7ProcessService::testForNotYetWired)
+                .count() > 0) { 
+
+            throw new RuntimeException(
+                    "At least one ProcessService bean was not wired!"
+                    + " See previous ERROR logs for details.");
+
+        }
+        
+    }
 
 }
