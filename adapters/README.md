@@ -26,3 +26,7 @@ An engine adapter has to pickup the bundled BPMN and DMN files and deploy them t
 
 1. [Camunda 7](./camunda7/README.md)
 1. [Camunda 8](./camunda8/README.md)
+
+### Spring-Boot compatiblity
+
+There a circular dependencies in the Camunda adapters. These are prohibited by default since Spring Boot 2.7.0. Until this is solved use `spring.main.allow-circular-references=true` to make Spring accept this for now (see [issue-2](https://github.com/Phactum/taxiride-blueprint/issues/2)).
