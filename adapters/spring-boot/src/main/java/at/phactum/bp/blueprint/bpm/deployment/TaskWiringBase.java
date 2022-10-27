@@ -1,17 +1,5 @@
 package at.phactum.bp.blueprint.bpm.deployment;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.StringUtils;
-
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameterFactory;
 import at.phactum.bp.blueprint.service.BpmnProcess;
@@ -25,6 +13,17 @@ import at.phactum.bp.blueprint.service.TaskParam;
 import at.phactum.bp.blueprint.service.WorkflowService;
 import at.phactum.bp.blueprint.service.WorkflowTask;
 import at.phactum.bp.blueprint.utilities.BeanUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessServiceImplementation<?>> {
 
@@ -272,7 +271,8 @@ public abstract class TaskWiringBase<T extends Connectable, PS extends ProcessSe
             return false;
         }
 
-        if (method.getName().equals(connectable.getTaskDefinition())) {
+        if (annotation.taskDefinition().equals(WorkflowTask.USE_METHOD_NAME)
+                && method.getName().equals(connectable.getTaskDefinition())) {
             return true;
         }
 
