@@ -1,26 +1,24 @@
 package at.phactum.bp.blueprint.camunda7.adapter.service;
 
-import java.util.Objects;
-import java.util.function.Function;
-
-import org.camunda.bpm.engine.RepositoryService;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.TaskService;
+import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
+import org.camunda.bpm.engine.ProcessEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import at.phactum.bp.blueprint.bpm.deployment.ProcessServiceImplementation;
+import java.util.Objects;
+import java.util.function.Function;
 
 public class Camunda7ProcessService<DE>
         implements ProcessServiceImplementation<DE> {
 
     private static final Logger logger = LoggerFactory.getLogger(Camunda7ProcessService.class);
     
-    private final RuntimeService runtimeService;
+    private final ApplicationEventPublisher applicationEventPublisher;
     
-    private final TaskService taskService;
+    private final ProcessEngine processEngine;
     
     private final JpaRepository<DE, String> workflowDomainEntityRepository;
     
@@ -33,16 +31,15 @@ public class Camunda7ProcessService<DE>
     private String bpmnProcessId;
 
     public Camunda7ProcessService(
-            final RuntimeService runtimeService,
-            final TaskService taskService,
-            final RepositoryService repositoryService,
+            final ApplicationEventPublisher applicationEventPublisher,
+            final ProcessEngine processEngine,
             final Function<DE, String> getDomainEntityId,
             final JpaRepository<DE, String> workflowDomainEntityRepository,
             final Class<DE> workflowDomainEntityClass) {
 
         super();
-        this.runtimeService = runtimeService;
-        this.taskService = taskService;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.processEngine = processEngine;
         this.workflowDomainEntityRepository = workflowDomainEntityRepository;
         this.workflowDomainEntityClass = workflowDomainEntityClass;
         this.getDomainEntityId = getDomainEntityId;
@@ -101,7 +98,10 @@ public class Camunda7ProcessService<DE>
 
         final var id = getDomainEntityId.apply(attachedEntity).toString();
         
-        runtimeService
+        wakeupJobExecutorOnActivity();
+        
+        processEngine
+                .getRuntimeService()
                 .createProcessInstanceByKey(bpmnProcessId)
                 .businessKey(id)
                 .processDefinitionTenantId(workflowModuleId)
@@ -182,7 +182,8 @@ public class Camunda7ProcessService<DE>
         
         final var id = (isNewEntity ? getDomainEntityId.apply(attachedEntity) : originalId).toString();
         
-        final var correlation = runtimeService
+        final var correlation = processEngine
+                .getRuntimeService()
                 .createMessageCorrelation(messageName)
                 .processInstanceBusinessKey(id);
 
@@ -191,6 +192,8 @@ public class Camunda7ProcessService<DE>
                     correlationIdLocalVariableName,
                     correlationId);
         }
+
+        wakeupJobExecutorOnActivity();
 
         if (isNewEntity) {
             
@@ -229,7 +232,11 @@ public class Camunda7ProcessService<DE>
         final var attachedEntity = workflowDomainEntityRepository
                 .saveAndFlush(domainEntity);
         
-        taskService.complete(taskId);
+        wakeupJobExecutorOnActivity();
+        
+        processEngine
+                .getTaskService()
+                .complete(taskId);
         
         return attachedEntity;
         
@@ -263,9 +270,22 @@ public class Camunda7ProcessService<DE>
         final var attachedEntity = workflowDomainEntityRepository
                 .saveAndFlush(domainEntity);
 
-        taskService.handleBpmnError(taskId, errorCode);
+        wakeupJobExecutorOnActivity();
+        
+        processEngine
+                .getTaskService()
+                .handleBpmnError(taskId, errorCode);
 
         return attachedEntity;
+        
+    }
+    
+    private void wakeupJobExecutorOnActivity() {
+        
+        logger.debug("Wanna wake up job-executor");
+        applicationEventPublisher.publishEvent(
+                new WakupJobExecutorNotification(
+                        this.getClass().getName()));
         
     }
     

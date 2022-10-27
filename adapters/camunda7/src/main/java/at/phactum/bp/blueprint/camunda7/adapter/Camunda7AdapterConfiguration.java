@@ -1,9 +1,16 @@
 package at.phactum.bp.blueprint.camunda7.adapter;
 
+import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
+import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAdapter;
+import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
+import at.phactum.bp.blueprint.camunda7.adapter.service.WakupJobExecutorService;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiringPlugin;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7UserTaskEventHandler;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.ProcessEntityAwareExpressionManager;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
+import at.phactum.bp.blueprint.utilities.SpringDataTool;
 import org.camunda.bpm.engine.ProcessEngine;
-import org.camunda.bpm.engine.RepositoryService;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.spring.application.SpringProcessApplication;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
 import org.springframework.beans.factory.InjectionPoint;
@@ -12,20 +19,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-
-import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
-import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAdapter;
-import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiringPlugin;
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7UserTaskEventHandler;
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.ProcessEntityAwareExpressionManager;
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
-import at.phactum.bp.blueprint.utilities.SpringDataTool;
 
 @AutoConfigurationPackage(basePackageClasses = Camunda7AdapterConfiguration.class)
 @EnableProcessApplication("org.camunda.bpm.spring.boot.starter.SpringBootProcessApplication")
@@ -36,15 +34,6 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
 
     @Autowired
     private ApplicationContext applicationContext;
-
-    @Autowired
-    private RuntimeService runtimeService;
-
-    @Autowired
-    private TaskService taskService;
-
-    @Autowired
-    private RepositoryService repositoryService;
 
     @Bean
     public SpringDataTool springDataTool(
@@ -122,6 +111,8 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
     public <DE> Camunda7ProcessService<?> camundaProcessService(
+            final ApplicationEventPublisher applicationEventPublisher,
+            final ProcessEngine processEngine,
             final SpringDataTool springDataTool,
             final InjectionPoint injectionPoint) throws Exception {
 
@@ -130,14 +121,21 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
                 injectionPoint,
                 (workflowDomainEntityRepository, workflowDomainEntityClass) ->
                 new Camunda7ProcessService<DE>(
-                        runtimeService,
-                        taskService,
-                        repositoryService,
+                        applicationEventPublisher,
+                        processEngine,
                         domainEntity -> springDataTool.getDomainEntityId(domainEntity),
                         (JpaRepository<DE, String>) workflowDomainEntityRepository,
                         (Class<DE>) workflowDomainEntityClass)
             );
 
+    }
+    
+    @Bean
+    public WakupJobExecutorService wakupJobExecutorService(
+            final ProcessEngine processEngine) {
+        
+        return new WakupJobExecutorService(processEngine);
+        
     }
 
 }
