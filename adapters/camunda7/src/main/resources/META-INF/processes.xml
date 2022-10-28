@@ -8,6 +8,8 @@
             <property name="isResumePreviousVersions">true</property>
             <property name="resumePreviousBy">deployment-name</property>
             <property name="isDeployChangedOnly">true</property>
+            <property name="jobExecutorPreferTimerJobs">true</property>
+            <property name="jobExecutorAcquireByDueDate">true</property>
         </properties>
     </process-archive>
 

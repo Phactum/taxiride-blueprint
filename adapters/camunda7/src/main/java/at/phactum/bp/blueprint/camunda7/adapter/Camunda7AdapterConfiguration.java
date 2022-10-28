@@ -2,6 +2,7 @@ package at.phactum.bp.blueprint.camunda7.adapter;
 
 import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
 import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAdapter;
+import at.phactum.bp.blueprint.camunda7.adapter.jobexecutor.BlueprintJobExecutor;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.camunda7.adapter.service.WakupJobExecutorService;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
@@ -11,30 +12,77 @@ import at.phactum.bp.blueprint.camunda7.adapter.wiring.ProcessEntityAwareExpress
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.TaskWiringBpmnParseListener;
 import at.phactum.bp.blueprint.utilities.SpringDataTool;
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.impl.jobexecutor.JobExecutor;
+import org.camunda.bpm.engine.impl.jobexecutor.NotifyAcquisitionRejectedJobsHandler;
 import org.camunda.bpm.engine.spring.application.SpringProcessApplication;
+import org.camunda.bpm.engine.spring.components.jobexecutor.SpringJobExecutor;
 import org.camunda.bpm.spring.boot.starter.annotation.EnableProcessApplication;
+import org.camunda.bpm.spring.boot.starter.configuration.impl.DefaultJobConfiguration.JobConfiguration;
+import org.camunda.bpm.spring.boot.starter.property.CamundaBpmProperties;
+import org.camunda.bpm.spring.boot.starter.property.JobExecutionProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+
+import java.util.Optional;
 
 @AutoConfigurationPackage(basePackageClasses = Camunda7AdapterConfiguration.class)
 @EnableProcessApplication("org.camunda.bpm.spring.boot.starter.SpringBootProcessApplication")
 public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camunda7ProcessService<?>> {
 
+    private static final Logger logger = LoggerFactory.getLogger(Camunda7AdapterConfiguration.class);
+    
     @Value("${workerId}")
     private String workerId;
 
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Bean
+    @Order(-1)
+    @ConditionalOnProperty(
+            prefix = "camunda.bpm.job-execution",
+            name = "blueprint",
+            havingValue = "true",
+            matchIfMissing = true)
+    public static JobExecutor jobExecutor(
+            @Qualifier(JobConfiguration.CAMUNDA_TASK_EXECUTOR_QUALIFIER) final TaskExecutor taskExecutor,
+            CamundaBpmProperties properties) {
+        
+        logger.info("Blueprint's job-executor is using jobExecutorPreferTimerJobs=true and jobExecutorAcquireByDueDate=true. Please add DB-index according to https://docs.camunda.org/manual/7.6/user-guide/process-engine/the-job-executor/#the-job-order-of-job-acquisition");
+        
+        final SpringJobExecutor springJobExecutor = new BlueprintJobExecutor();
+        springJobExecutor.setTaskExecutor(taskExecutor);
+        springJobExecutor.setRejectedJobsHandler(new NotifyAcquisitionRejectedJobsHandler());
+
+        JobExecutionProperty jobExecution = properties.getJobExecution();
+        Optional.ofNullable(jobExecution.getLockTimeInMillis()).ifPresent(springJobExecutor::setLockTimeInMillis);
+        Optional.ofNullable(jobExecution.getMaxJobsPerAcquisition()).ifPresent(springJobExecutor::setMaxJobsPerAcquisition);
+        Optional.ofNullable(jobExecution.getWaitTimeInMillis()).ifPresent(springJobExecutor::setWaitTimeInMillis);
+        Optional.ofNullable(jobExecution.getMaxWait()).ifPresent(springJobExecutor::setMaxWait);
+        Optional.ofNullable(jobExecution.getBackoffTimeInMillis()).ifPresent(springJobExecutor::setBackoffTimeInMillis);
+        Optional.ofNullable(jobExecution.getMaxBackoff()).ifPresent(springJobExecutor::setMaxBackoff);
+        Optional.ofNullable(jobExecution.getBackoffDecreaseThreshold()).ifPresent(springJobExecutor::setBackoffDecreaseThreshold);
+        Optional.ofNullable(jobExecution.getWaitIncreaseFactor()).ifPresent(springJobExecutor::setWaitIncreaseFactor);
+
+        return springJobExecutor;
+        
+    }
+    
     @Bean
     public SpringDataTool springDataTool(
             final LocalContainerEntityManagerFactoryBean containerEntityManagerFactoryBean) {

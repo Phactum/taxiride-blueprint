@@ -71,3 +71,24 @@ public class TaxiRide {
 ```
 
 The `TaskException` is used for expected errors which must not cause a rollback and typically are processed in BPMN by using error boundary events.
+
+### Job-Executor
+
+The Camunda job-executor is responsible for processing asynchronous continuation of BPMN tasks. It has a delay due to polling the database for jobs (see [Backoff Strategy](https://docs.camunda.org/manual/7.18/user-guide/process-engine/the-job-executor/#backoff-strategy)). If there is manual interaction to the process-engine (e.g. process started, message correlated or user-task completed) you want asynchronous tasks to be completed as soon as possible. For example, you want to give feedback in the UI of a "validation" task following a user-task. Therefore this adapter wakes up the Job-Exceutor to check for new jobs after a manual interaction's transaction is completed.
+
+In cloud environments one typically wants to free resources in idle times to not waste money since resources are charged by time of usage. Camunda's Job-Executor using a polling strategy to find new jobs which either  keeps the database in use or introduces huge delays of execution if max-delays are set to big values. Blueprint provides an extension which makes the Job-Executor sleep until the next timed job's due-date (e.g. timer-event). In conjunction with waking up the job-executor in case of manual interaction this helps to minimize database usage. This behavior has to be enabled this Spring property:
+
+```
+camunda:
+  bpm:
+    job-execution:
+      blueprint: true
+```
+
+Additionally, you have to [set a DB index](https://docs.camunda.org/manual/7.6/user-guide/process-engine/the-job-executor/#the-job-order-of-job-acquisition) according as also logged on started:
+
+```
+Blueprint's job-executor is using jobExecutorPreferTimerJobs=true
+and jobExecutorAcquireByDueDate=true. Please add DB-index according
+to https://docs.camunda.org/manual/7.6/user-guide/process-engine/the-job-executor/#the-job-order-of-job-acquisition
+```
