@@ -1,6 +1,7 @@
 package at.phactum.bp.blueprint.camunda7.adapter;
 
 import at.phactum.bp.blueprint.bpm.deployment.AdapterConfigurationBase;
+import at.phactum.bp.blueprint.camunda7.adapter.cockpit.WakeupFilter;
 import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAdapter;
 import at.phactum.bp.blueprint.camunda7.adapter.jobexecutor.BlueprintJobExecutor;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackage;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +39,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.scheduling.TaskScheduler;
 
 import java.util.Optional;
 
@@ -48,6 +51,9 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     
     @Value("${workerId}")
     private String workerId;
+
+    @Value("${camunda.bpm.webapp.application-path:/camunda}")
+    private String camundaWebAppBaseUrl;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -186,4 +192,40 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
         
     }
 
+    @Bean
+    public FilterRegistrationBean<WakeupFilter> wakeupFilterForCockpit(
+            final ApplicationEventPublisher applicationEventPublisher,
+            final TaskScheduler taskScheduler) {
+
+        final var registrationBean = new FilterRegistrationBean<WakeupFilter>();
+
+        registrationBean.setFilter(
+                new WakeupFilter(
+                        applicationEventPublisher,
+                        taskScheduler));
+        registrationBean.addUrlPatterns(camundaWebAppBaseUrl + "/api/*");
+        registrationBean.setOrder(-1);
+
+        return registrationBean;
+
+    }
+
+    @Bean
+    public FilterRegistrationBean<WakeupFilter> wakeupFilterForRestApi(
+            final ApplicationEventPublisher applicationEventPublisher,
+            final TaskScheduler taskScheduler) {
+
+        final var registrationBean = new FilterRegistrationBean<WakeupFilter>();
+
+        registrationBean.setFilter(
+                new WakeupFilter(
+                        applicationEventPublisher,
+                        taskScheduler));
+        registrationBean.addUrlPatterns("/engine-rest/*");
+        registrationBean.setOrder(-1);
+
+        return registrationBean;
+
+    }
+    
 }
