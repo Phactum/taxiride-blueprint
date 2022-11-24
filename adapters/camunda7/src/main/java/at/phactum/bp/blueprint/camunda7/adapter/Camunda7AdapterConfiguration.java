@@ -193,6 +193,11 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     }
 
     @Bean
+    @ConditionalOnProperty(
+            prefix = "camunda.bpm.job-execution",
+            name = "blueprint",
+            havingValue = "true",
+            matchIfMissing = true)
     public FilterRegistrationBean<WakeupFilter> wakeupFilterForCockpit(
             final ApplicationEventPublisher applicationEventPublisher,
             final TaskScheduler taskScheduler) {
@@ -211,6 +216,11 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     }
 
     @Bean
+    @ConditionalOnProperty(
+            prefix = "camunda.bpm.job-execution",
+            name = "blueprint",
+            havingValue = "true",
+            matchIfMissing = true)
     public FilterRegistrationBean<WakeupFilter> wakeupFilterForRestApi(
             final ApplicationEventPublisher applicationEventPublisher,
             final TaskScheduler taskScheduler) {

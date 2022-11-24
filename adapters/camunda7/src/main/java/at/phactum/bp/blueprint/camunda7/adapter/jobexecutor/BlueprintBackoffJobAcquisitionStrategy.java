@@ -85,7 +85,7 @@ public class BlueprintBackoffJobAcquisitionStrategy extends BackoffJobAcquisitio
             
             waitTime = earliestDueDate.getTime() - now.getTime();
             if (earliestDueDate.getTime() == Long.MAX_VALUE) {
-                logger.debug("No Job having due-date set found, JobExecutor will wait until external interaction");
+                logger.debug("No Job found having due-date set, JobExecutor will wait until external interaction");
             } else {
                 logger.debug("Job with due-date set found, will wait until {}", earliestDueDate);
             }

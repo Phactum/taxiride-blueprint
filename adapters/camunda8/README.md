@@ -13,7 +13,7 @@ This adapter is aware of all the details needed to keep in mind on using Camunda
 
 To avoid interdependencies between the implementation of different use-cases packed into a single microservice the concept of [workflow modules](../spring-boot/README.md#workflow-modules) is introduced. This adapter builds a Camunda deployment for each workflow module found in the classpath.
 
-Since Camunda 8 does not provide BPMS meta-data (e.g. historical deployments) the adapter stores everything necessary to ensure correct operation in separate DB tables.
+Since Camunda 8 does not provide BPMS meta-data (e.g. historical deployments) the adapter stores necessary meta-data in separate DB tables to ensure correct operation.
 
 ### SPI Binding validation
 

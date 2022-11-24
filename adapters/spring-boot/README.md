@@ -109,7 +109,7 @@ or to establish feature switches:
 
 To choose a specific profile the system property `spring.profiles.active` has to be set (e.g `-Dspring.profiles.active=camunda7,test` enables Camunda 7 adapter in the test environment).
 
-### hierarchical profiles
+### Hierarchical profiles
 
 If you provide several stage environments then some of the configuration properties might be the same. You can put them into the main YAML file (e.g. `config/ride.yaml`).
 
@@ -154,3 +154,35 @@ There are two profiles "local" and "simulation" which a treaded in a special way
 *local* is the profile used for local development in your IDE. If no profile is defined at all then this profile is selected as a default. Additionally, the worker ID is set to `local` if non is set.
 
 *simulation* is the feature-switch profile to use simulated external systems instead of accessing real APIs. It is activated per default next to the *local* profile, if no profile is defined. A "simulation" is an additional Spring Boot container you can build which implements the interfaces of all external systems (e.g. REST-APIs, embedded LDAP instead of ActiveDirectory, embedded Kafka, etc.) to be used for local development as well as for running integration tests as part of the build.
+
+## Spring Boot scheduled tasks
+
+To execute Spring Boot's scheduled tasks (e.g. `@Scheduled`) or asynchronous tasks (e.g. `@Async`) in parallel some configuration is required. This is auto-configured by providing a properties class implementing the interface `AsyncConfiguration`:
+
+```
+@ConfigurationProperties(prefix = "taxi")
+public class ApplicationProperties implements AsyncPropertiesAware {
+
+    private AsyncProperties async = new AsyncProperties(); // use standard values
+    
+    @Override
+    public AsyncProperties getAsync() {
+        return async;
+    }
+    
+    public void setAsync(AsyncProperties async) {
+        this.async = async;
+    }
+}
+
+@SpringBootApplication
+@ComponentScan(basePackageClasses = { TaxiApplication.class })
+@EnableConfigurationProperties(ApplicationProperties.class)
+public class TaxiApplication {
+    ...
+}
+```
+
+Inspect the class `AsyncProperties` to learn about the default values.
+
+Additionally, this enables to log uncaught exceptions of those tasks which are otherwise silently ignored and therefore hard to debug. 

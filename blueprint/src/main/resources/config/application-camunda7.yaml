@@ -11,6 +11,7 @@ camunda:
          initializeTelemetry: false
          telemetry-reporter-activate: false
       job-execution:
+         blueprint: false
          core-pool-size: 1
          max-pool-size: 1
          wait-time-in-millis: 100

@@ -92,3 +92,5 @@ Blueprint's job-executor is using jobExecutorPreferTimerJobs=true
 and jobExecutorAcquireByDueDate=true. Please add DB-index according
 to https://docs.camunda.org/manual/7.6/user-guide/process-engine/the-job-executor/#the-job-order-of-job-acquisition
 ```
+
+*Hint:* This feature requires to enable Spring Boot's scheduled tasks [as described here](../spring-boot/README.md#spring-boot-scheduled-tasks).
