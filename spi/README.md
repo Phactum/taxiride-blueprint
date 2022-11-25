@@ -36,6 +36,8 @@ Typically, you have data needed to fulfill the purpose of the workflow. This mig
 @Getter
 @Setter
 public class Ride {
+  @Id
+  private String rideId; // see section "Natural ids"
   private OffsetDateTime pickupTime;
   private String pickupLocation;
   private String targetLocation;
@@ -43,7 +45,7 @@ public class Ride {
 }
 ```
 
-This data has a 1:1 relationship to a particular workflow (a running instance of a process). The Taxi Ride Blueprint uses a dedicated JPA entity per workflow for storing those values. This entity might be split up into a couple of sub-entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow. In terms of DDD this entire tree is called *an aggregate*.
+This data has a 1:1 relationship to a particular workflow (a running instance of a BPMN process). The Taxi Ride Blueprint uses a dedicated JPA entity per workflow for storing those values. This entity might be split up into a couple of sub-entities (many-to-many, one-to-many, many-to-one relations and embedded objects) but the root of that entity-tree is the record connected to the workflow. In terms of DDD this entire tree is called *an aggregate*.
 
 ### Start a workflow
 
@@ -54,7 +56,7 @@ There is a ready-to-use service bean available called `ProcessService`. It is a 
     private ProcessService<Ride> rideService;
 ```
 
-To start a workflow (a running instance of a process) we can use it as part of a typical bean method which my be called due to a business event (e.g. user hits a button):
+To start a workflow we can use it as part of a typical bean method which my be called due to a business event (e.g. user hits a button):
 
 ```java
     public void rideBooked(RideRequest request) {
@@ -71,11 +73,12 @@ Starting a workflow or correlating a message (explained in the [Advanced topics]
 
 We introduce a name based approach for the binding in an aspect-oriented style. As a basis for this binding the BPMN process-id is used:
 
-![Camunda Modeler](./readme/process_propertiespanel.png)
+![](./readme/process_propertiespanel.png)
+*Screenshot of Camunda Modeler*
 
 #### Software-first approach
 
-Developers might want to use a BPMN to improve readability or maintainability of the software since this takes a lot of coding away. In this situation the service bean might be created upfront.
+Developers might want to use a BPMN and a BPMN-engine to improve readability or maintainability of their software since this takes a lot of coding away. In this situation the service bean might be created upfront.
 
 Use the service's class-name as the process BPMN's process-id to wire up the component to the process by simply adding the `@WorkflowService` annotation:
 
@@ -110,7 +113,8 @@ If the service-bean becomes huge due to the number of tasks of the workflow then
 
 Similar to [wiring a process](#wire-up-a-process) an aspect-oriented approach is used for the task binding. This applies to service tasks, send tasks, business rule tasks and user tasks.
 
-![Camunda Modeler](./readme/task_propertiespanel.png)
+![](./readme/task_propertiespanel.png)
+*Screenshot of Camunda Modeler*
 
 The `@WorkflowTask` annotation is used to mark a method responsible for certain BPMN task:
 
@@ -163,29 +167,29 @@ public void selectDriverAccordingToScore(Ride ride) {
 
 As mentioned in section [Process-specific domain-aggregate](#process-specific-domain-aggregate) for each workflow a JPA entity-record is used as a domain-aggregate. So, whenever a service-method is called there is one parameter accepted: The domain-aggregate providing values of the current workflow.
 
-Therefore these workflow task methods do not return any value since they operate on the given data from the domain-aggregate and also store new data in the domain-aggregate if necessary.
+*Hint:* These workflow task methods do not return any value because they operate on the given data from the domain-aggregate and also store new data in the domain-aggregate if necessary. So, just change the field values of the aggregate as the [BPMS-specific adapter](../adapters/README.md#engine-adapters) used will take care of persisting these changed values.
 
 ### Wire up an expression
 
 There are two major situations in which expressions are used:
 
-1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows)
-1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![Camunda Modeler](./readme/timer_propertiespanel.png)
+1. A path decision has to be taken (exclusive gateway, inclusive gateway, conditional flows) ![](./readme/expression_propertiespanel.png) *Screenshot of Camunda Modeler*
+1. A value needs to be calculated (e.g. x business-days as a timer-event definition) ![](./readme/timer_propertiespanel.png) *Screenshot of Camunda Modeler*
 
-In both cases a getter method of the domain-aggregate is used to retrieve the value:
+The expression specified in the BPMN will be used to retrieve the value from the domain-aggregate by using a getter or, if there is not getter, by accessing the named field. In case of the getter the result can also be computed on-the-fly:
 
 ```java
 @Entity
 @Table(name = "RIDES")
 public class Ride {
     ...
-    private Date offeringDeadline;
+    private boolean customerCharged;
     ...
-    public Date getOfferingDeadline() {
-       return offeringDeadline;
+    public boolean isCustomerCharged() {
+       return customerCharged;
     }
     ...
-    public String durationOfTwoBusinessDays() {
+    public String getDurationOfTwoBusinessDays() {
         var holidays = HolidayManager.getInstance(HolidayCalendar.AUSTRIA);
         var nextBusinessDay = Instant.now();
         while (holidays.isHoliday(nextBusinessDay) {
@@ -283,6 +287,9 @@ There are two different situations in which you might want to split up the BPMN 
 
 #### 1. Decomposition - a call-activity is used to hide complexity
 
+![](./readme/callactivity_propertiespanel.png)
+*Screenshot of Camunda Modeler*
+
 In this situation the workflow-aggregate entity created for the root workflow is also used for the workflows spawned by call-activities. The reason for this is, that one still could put the content of the call-activities BPMN into to parent BPMN (e.g. as an embedded subprocess).
 
 As each call-activity's process is a section of fulfillment one may introduce a separate service bean bound to the same workflow-aggregate domain-entity:
@@ -331,8 +338,12 @@ public class ChargeCreditCard {
 ```
 
 ![Reuse instead of decomposition](./readme/call-activity.png)
+*Screenshot of Camunda Modeler*
 
 ### Multi-instance
+
+![](./readme/multi-instance.png)
+*Screenshot of Camunda Modeler*
 
 For multi-instance executions typically a lot of process variables are created automatically:
 
@@ -453,8 +464,8 @@ The sum of those names forms the contract between the BPMN and the underlying im
 - RideBooked (message name)
 - determinePotentialDrivers (service task)
 - requestRideOfferFromDriver (send task)
-- noRideAvailable (aggregate property)
-- customerCharged (aggregate property)
+- noRideAvailable (aggregate field)
+- customerCharged (aggregate field)
 
 *How is data handled?*
 
