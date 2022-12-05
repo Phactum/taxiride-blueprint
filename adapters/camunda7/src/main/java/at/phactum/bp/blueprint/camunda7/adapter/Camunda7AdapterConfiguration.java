@@ -6,6 +6,7 @@ import at.phactum.bp.blueprint.camunda7.adapter.deployment.Camunda7DeploymentAda
 import at.phactum.bp.blueprint.camunda7.adapter.jobexecutor.BlueprintJobExecutor;
 import at.phactum.bp.blueprint.camunda7.adapter.service.Camunda7ProcessService;
 import at.phactum.bp.blueprint.camunda7.adapter.service.WakupJobExecutorService;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7BlueprintProperties;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiring;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7TaskWiringPlugin;
 import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7UserTaskEventHandler;
@@ -54,7 +55,7 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
 
     @Value("${camunda.bpm.webapp.application-path:/camunda}")
     private String camundaWebAppBaseUrl;
-
+    
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -86,6 +87,13 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
         Optional.ofNullable(jobExecution.getWaitIncreaseFactor()).ifPresent(springJobExecutor::setWaitIncreaseFactor);
 
         return springJobExecutor;
+        
+    }
+    
+    @Bean
+    public Camunda7BlueprintProperties camunda7BlueprintProperties() {
+        
+        return new Camunda7BlueprintProperties();
         
     }
     
@@ -133,11 +141,14 @@ public class Camunda7AdapterConfiguration extends AdapterConfigurationBase<Camun
     @Bean
     public TaskWiringBpmnParseListener taskWiringBpmnParseListener(
             final Camunda7TaskWiring taskWiring,
-            final Camunda7UserTaskEventHandler userTaskEventHandler) {
+            final Camunda7UserTaskEventHandler userTaskEventHandler,
+            final Camunda7BlueprintProperties properties) {
         
         return new TaskWiringBpmnParseListener(
                 taskWiring,
-                userTaskEventHandler);
+                userTaskEventHandler,
+                properties.isUseBpmnAsyncDefinitions(),
+                properties.getBpmnAsyncDefinitions());
         
     }
     

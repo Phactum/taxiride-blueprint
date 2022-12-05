@@ -1,4 +1,11 @@
 camunda:
+   blueprint:
+      use-bpmn-async-definitions: true
+      bpmn-async-definitions:
+        - workflow-module-id: ABC1
+          bpmn-process-id: XYZ1
+        - workflow-module-id: ABC2
+          bpmn-process-id: XYZ2
    bpm:
       filter:
          create: "All tasks"

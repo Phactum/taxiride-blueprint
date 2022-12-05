@@ -1,5 +1,22 @@
 package at.phactum.bp.blueprint.camunda7.adapter.wiring;
 
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7BlueprintProperties.BpmnAsyncDefinition;
+import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
+import org.camunda.bpm.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
+import org.camunda.bpm.engine.impl.bpmn.listener.DelegateExpressionExecutionListener;
+import org.camunda.bpm.engine.impl.bpmn.listener.ExpressionExecutionListener;
+import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParse;
+import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParseListener;
+import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
+import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
+import org.camunda.bpm.engine.impl.pvm.process.TransitionImpl;
+import org.camunda.bpm.engine.impl.task.TaskDefinition;
+import org.camunda.bpm.engine.impl.util.StringUtil;
+import org.camunda.bpm.engine.impl.util.xml.Element;
+import org.camunda.bpm.engine.impl.variable.VariableDeclaration;
+import org.springframework.util.StringUtils;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,22 +24,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.camunda.bpm.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
-import org.camunda.bpm.engine.impl.bpmn.listener.DelegateExpressionExecutionListener;
-import org.camunda.bpm.engine.impl.bpmn.listener.ExpressionExecutionListener;
-import org.camunda.bpm.engine.impl.bpmn.parser.AbstractBpmnParseListener;
-import org.camunda.bpm.engine.impl.bpmn.parser.BpmnParse;
-import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
-import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
-import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
-import org.camunda.bpm.engine.impl.task.TaskDefinition;
-import org.camunda.bpm.engine.impl.util.StringUtil;
-import org.camunda.bpm.engine.impl.util.xml.Element;
-import org.springframework.util.StringUtils;
-
-import at.phactum.bp.blueprint.camunda7.adapter.wiring.Camunda7Connectable.Type;
-
-public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
+@SuppressWarnings("deprecation")
+public class TaskWiringBpmnParseListener implements BpmnParseListener {
 
     private static final Pattern CAMUNDA_EL_PATTERN = Pattern.compile("^[\\$\\#]\\{(.*)\\}$");
 
@@ -30,18 +33,26 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
 
     private final Camunda7UserTaskEventHandler userTaskEventHandler;
     
+    private final boolean useBpmnAsyncDefinitions;
+    
+    private final List<BpmnAsyncDefinition> bpmnAsyncDefinitions;
+    
     private List<Camunda7Connectable> connectables = new LinkedList<>();
 
     private Map<String, Camunda7Connectable> serviceTaskLikeElements = new HashMap<>();
     
     public TaskWiringBpmnParseListener(
             final Camunda7TaskWiring taskWiring,
-            final Camunda7UserTaskEventHandler userTaskEventHandler) {
+            final Camunda7UserTaskEventHandler userTaskEventHandler,
+            final boolean useBpmnAsyncDefinitions,
+            final List<BpmnAsyncDefinition> bpmnAsyncDefinitions) {
 
         super();
         this.taskWiring = taskWiring;
         this.userTaskEventHandler = userTaskEventHandler;
-
+        this.useBpmnAsyncDefinitions = useBpmnAsyncDefinitions;
+        this.bpmnAsyncDefinitions = bpmnAsyncDefinitions;
+        
     }
     
     @Override
@@ -154,6 +165,8 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
                 Type.USERTASK);
         
         connectables.add(connectable);
+        
+        removeAsyncBeforeAndAsyncAfter(userTaskElement, activity);
 
     }
 
@@ -269,6 +282,8 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
             connectables.add(connectable);
         }
         
+        removeAndSetAsyncBeforeAndAsyncAfter(element, activity);
+        
     }
 
     private boolean connectEvent(final Element eventElement, final ScopeImpl scope, final ActivityImpl activity) {
@@ -291,6 +306,8 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
                         connectable.getTaskDefinition(),
                         connectable.getType()));
 
+        removeAndSetAsyncBeforeAndAsyncAfter(eventElement, activity);
+        
         return true;
 
     }
@@ -324,6 +341,347 @@ public class TaskWiringBpmnParseListener extends AbstractBpmnParseListener {
         final UserTaskActivityBehavior activityBehavior = (UserTaskActivityBehavior) activity.getActivityBehavior();
         return activityBehavior.getTaskDefinition();
         
+    }
+
+    private void removeAsyncBeforeAndAsyncAfter(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        removeAndSetAsyncBeforeAndAsyncAfter(
+                element,
+                activity,
+                false);
+        
+    }
+
+    private void removeAndSetAsyncBeforeAndAsyncAfter(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        removeAndSetAsyncBeforeAndAsyncAfter(
+                element,
+                activity,
+                true);
+        
+    }
+
+    private void removeAndSetAsyncBeforeAndAsyncAfter(
+            final Element element,
+            final ActivityImpl activity,
+            final boolean set) {
+        
+        if (useBpmnAsyncDefinitions) {
+            return;
+        }
+        
+        final var workflowModuleId = Camunda7WorkflowModuleAwareBpmnParse.getWorkflowModuleId();
+        final var bpmnProcessId = ((ProcessDefinitionEntity) activity.getProcessDefinition()).getKey();
+        if (bpmnAsyncDefinitions
+                .stream()
+                .filter(d -> d.getWorkflowModuleId().equals(workflowModuleId))
+                .filter(d -> d.getBpmnProcessId().equals(bpmnProcessId))
+                .findFirst()
+                .isPresent()) {
+            return;
+        }
+        
+        activity.setAsyncAfter(false);
+        activity.setAsyncBefore(false);
+        
+        if (!set) {
+            return;
+        }
+        
+        activity.setAsyncBefore(true, true);
+        activity.setAsyncAfter(true, true);
+        
+    }
+
+    @Override
+    public void parseStartEvent(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAndSetAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseExclusiveGateway(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseInclusiveGateway(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseParallelGateway(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseScriptTask(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseTask(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseManualTask(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseBoundaryTimerEventDefinition(
+            final Element element,
+            final boolean interrupting,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseBoundaryErrorEventDefinition(
+            final Element element,
+            final boolean interrupting,
+            final ActivityImpl activity,
+            final ActivityImpl nestedErrorEventActivity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+        
+    }
+
+    @Override
+    public void parseSubProcess(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseCallActivity(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseProperty(
+            final Element element,
+            final VariableDeclaration variableDeclaration,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseSequenceFlow(
+            final Element sequenceFlowElement,
+            final ScopeImpl scopeElement,
+            final TransitionImpl transition) {
+
+    }
+
+    @Override
+    public void parseMultiInstanceLoopCharacteristics(
+            final Element element,
+            final Element multiInstanceLoopCharacteristicsElement,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseIntermediateTimerEventDefinition(
+            final Element element, ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseRootElement(
+            final Element rootElement,
+            final List<ProcessDefinitionEntity> processDefinitions) {
+        
+    }
+
+    @Override
+    public void parseReceiveTask(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseIntermediateSignalCatchEventDefinition(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseBoundarySignalEventDefinition(
+            final Element element,
+            final boolean interrupting,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+        
+    }
+
+    @Override
+    public void parseEventBasedGateway(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseTransaction(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseCompensateEventDefinition(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseIntermediateCatchEvent(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseBoundaryEvent(
+            final Element element,
+            final ScopeImpl scope,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseIntermediateMessageCatchEventDefinition(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+   public void parseBoundaryMessageEventDefinition(
+            final Element element,
+            final boolean interrupting,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseBoundaryEscalationEventDefinition(
+            final Element element, boolean interrupting, ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    public void parseBoundaryConditionalEventDefinition(
+            final Element element,
+            final boolean interrupting,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseIntermediateConditionalEventDefinition(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
+    }
+
+    @Override
+    public void parseConditionalStartEventForEventSubprocess(
+            final Element element,
+            final ActivityImpl activity,
+            final boolean interrupting) {
+        
+        removeAsyncBeforeAndAsyncAfter(element, activity);
+
     }
     
 }
