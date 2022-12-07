@@ -28,6 +28,7 @@ public class ExceptionHandlingAsyncTaskExecutor extends JmxExposedThreadPoolTask
 	}
 
 	@Override
+	@Deprecated
 	public void execute(Runnable task, long startTimeout) {
 		super.execute(createWrappedRunnable(task), startTimeout);
 	}

@@ -104,7 +104,7 @@ public class DeploymentService {
             }
            
             final var deployedProcess = (DeployedProcess) Hibernate
-                    .unproxy(deploymentRepository.getById(processDefinitionKey));
+                    .unproxy(deploymentRepository.getReferenceById(processDefinitionKey));
             final var deployedResource = deployedProcess.getDeployedResource();
             
             try (final var inputStream = new ByteArrayInputStream(

@@ -23,6 +23,7 @@ public class Camunda8ProcessService<DE>
 
     private ZeebeClient client;
     
+    @SuppressWarnings("unused")
     private String workflowModuleId;
 
     private String bpmnProcessId;

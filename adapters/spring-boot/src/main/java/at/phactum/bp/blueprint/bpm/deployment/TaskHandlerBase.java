@@ -88,7 +88,7 @@ public abstract class TaskHandlerBase {
                         () -> {
                             if (domainEntity[0] == null) {
                                 domainEntity[0] = workflowDomainEntityRepository
-                                        .getById(workflowDomainEntityId);
+                                        .getReferenceById(workflowDomainEntityId);
                             }
                             return domainEntity[0];
                         }, multiInstanceSupplier))
