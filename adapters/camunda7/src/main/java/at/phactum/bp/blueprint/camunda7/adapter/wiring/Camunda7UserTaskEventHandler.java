@@ -55,7 +55,7 @@ public class Camunda7UserTaskEventHandler implements TaskListener {
                 .orElseThrow(() -> new RuntimeException(
                         "The is no method annotated by '@WorkflowTask(id = \""
                         + delegateTask.getTaskDefinitionKey()
-                        + "\") in any class annotated by @WorkflowService(bpmnProcess = @@BpmnProcess(bpmnProcessId = \""
+                        + "\") in any class annotated by @WorkflowService(bpmnProcess = @BpmnProcess(bpmnProcessId = \""
                         + bpmnProcessId
                         + "\"))!"));
         

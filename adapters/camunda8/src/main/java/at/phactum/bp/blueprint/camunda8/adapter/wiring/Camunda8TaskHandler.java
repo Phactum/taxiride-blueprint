@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.camunda.bpm.model.xml.ModelInstance;
@@ -85,14 +86,20 @@ public class Camunda8TaskHandler extends TaskHandlerBase implements JobHandler {
                     job.getProcessDefinitionKey(),
                     job.getKey());
             
+            final var taskIdRetrieved = new AtomicBoolean(false);
+            
             final var domainEntity = super.execute(
                     businessKey,
                     multiInstanceVariable -> getVariable(job, multiInstanceVariable),
                     taskParameter -> getVariable(job, taskParameter),
-                    () -> Long.toHexString(job.getKey()),
+                    () -> {
+                        taskIdRetrieved.set(true);
+                        return Long.toHexString(job.getKey());
+                    },
                     () -> Event.CREATED);
 
-            if (taskType != Type.USERTASK) {
+            if ((taskType != Type.USERTASK)
+                    && !taskIdRetrieved.get()) {
                 command = createCompleteCommand(client, job, domainEntity);
             }
         } catch (TaskException bpmnError) {

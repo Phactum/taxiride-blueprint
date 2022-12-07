@@ -41,6 +41,13 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
 
     private Map<String, Camunda7Connectable> serviceTaskLikeElements = new HashMap<>();
     
+    static enum Async {
+        DONT_SET,
+        SET_ASYNC_BEFORE_ONLY,
+        SET_ASYNC_AFTER_ONLY,
+        SET_ASYNC_BEFORE_AND_AFTER
+    };
+    
     public TaskWiringBpmnParseListener(
             final Camunda7TaskWiring taskWiring,
             final Camunda7UserTaskEventHandler userTaskEventHandler,
@@ -166,7 +173,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
         
         connectables.add(connectable);
         
-        removeAsyncBeforeAndAsyncAfter(userTaskElement, activity);
+        resetAsyncForWaitstateTasks(userTaskElement, activity);
 
     }
 
@@ -282,7 +289,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             connectables.add(connectable);
         }
         
-        removeAndSetAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForNonWaitstateTasks(element, activity);
         
     }
 
@@ -306,7 +313,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
                         connectable.getTaskDefinition(),
                         connectable.getType()));
 
-        removeAndSetAsyncBeforeAndAsyncAfter(eventElement, activity);
+        resetAsyncForWaitstateTasks(eventElement, activity);
         
         return true;
 
@@ -347,28 +354,39 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final Element element,
             final ActivityImpl activity) {
         
-        removeAndSetAsyncBeforeAndAsyncAfter(
+        resetAsyncBeforeAndAsyncAfter(
                 element,
                 activity,
-                false);
+                Async.DONT_SET);
         
     }
 
-    private void removeAndSetAsyncBeforeAndAsyncAfter(
+    private void resetAsyncForWaitstateTasks(
             final Element element,
             final ActivityImpl activity) {
         
-        removeAndSetAsyncBeforeAndAsyncAfter(
+        resetAsyncBeforeAndAsyncAfter(
                 element,
                 activity,
-                true);
+                Async.SET_ASYNC_AFTER_ONLY);
         
     }
 
-    private void removeAndSetAsyncBeforeAndAsyncAfter(
+    private void resetAsyncForNonWaitstateTasks(
+            final Element element,
+            final ActivityImpl activity) {
+        
+        resetAsyncBeforeAndAsyncAfter(
+                element,
+                activity,
+                Async.SET_ASYNC_BEFORE_AND_AFTER);
+        
+    }
+
+    private void resetAsyncBeforeAndAsyncAfter(
             final Element element,
             final ActivityImpl activity,
-            final boolean set) {
+            final Async mode) {
         
         if (useBpmnAsyncDefinitions) {
             return;
@@ -388,12 +406,14 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
         activity.setAsyncAfter(false);
         activity.setAsyncBefore(false);
         
-        if (!set) {
-            return;
+        if ((mode == Async.SET_ASYNC_BEFORE_AND_AFTER)
+                || (mode == Async.SET_ASYNC_BEFORE_ONLY)) {
+            activity.setAsyncBefore(true, true);
         }
-        
-        activity.setAsyncBefore(true, true);
-        activity.setAsyncAfter(true, true);
+        if ((mode == Async.SET_ASYNC_BEFORE_AND_AFTER)
+                || (mode == Async.SET_ASYNC_AFTER_ONLY)) {
+            activity.setAsyncAfter(true, true);
+        }
         
     }
 
@@ -403,7 +423,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        removeAndSetAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncBeforeAndAsyncAfter(element, activity, Async.SET_ASYNC_BEFORE_ONLY);
 
     }
 
@@ -443,7 +463,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForNonWaitstateTasks(element, activity);
 
     }
 
@@ -484,7 +504,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final ActivityImpl activity,
             final ActivityImpl nestedErrorEventActivity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
         
     }
 
@@ -557,7 +577,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final ScopeImpl scope,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
 
     }
 
@@ -566,7 +586,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final Element element,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
 
     }
 
@@ -576,7 +596,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final boolean interrupting,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
         
     }
 
@@ -634,7 +654,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final Element element,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
 
     }
 
@@ -644,7 +664,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final boolean interrupting,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
 
     }
 
@@ -670,7 +690,7 @@ public class TaskWiringBpmnParseListener implements BpmnParseListener {
             final Element element,
             final ActivityImpl activity) {
         
-        removeAsyncBeforeAndAsyncAfter(element, activity);
+        resetAsyncForWaitstateTasks(element, activity);
 
     }
 

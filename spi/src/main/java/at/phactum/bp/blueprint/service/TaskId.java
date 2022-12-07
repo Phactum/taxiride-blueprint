@@ -12,7 +12,9 @@ import at.phactum.bp.blueprint.process.ProcessService;
 
 /**
  * This annotation is used to define a parameter which will be used to hand-over
- * the task's id. This id is used to complete the task asynchronously.
+ * the task's id. This id is used to complete the task asynchronously. If this
+ * task cannot be completed asynchronously due to the BPMS' underlying implementation
+ * the value of the parameter will be null.
  * 
  * <pre>
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
@@ -35,7 +37,5 @@ import at.phactum.bp.blueprint.process.ProcessService;
 @Inherited
 @Documented
 public @interface TaskId {
-
-    Class<?> cancellation() default Void.class;
 
 }

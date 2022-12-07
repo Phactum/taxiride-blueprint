@@ -23,6 +23,7 @@ import at.phactum.bp.blueprint.bpm.deployment.MultiInstance;
 import at.phactum.bp.blueprint.bpm.deployment.TaskHandlerBase;
 import at.phactum.bp.blueprint.bpm.deployment.parameters.MethodParameter;
 import at.phactum.bp.blueprint.service.MultiInstanceElementResolver;
+import at.phactum.bp.blueprint.service.TaskEvent.Event;
 import at.phactum.bp.blueprint.service.TaskException;
 
 public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate {
@@ -83,7 +84,7 @@ public class Camunda7TaskHandler extends TaskHandlerBase implements JavaDelegate
                     },
                     taskParameter -> execution.getVariableLocal(taskParameter),
                     null,
-                    null);
+                    () -> Event.CREATED);
 
         } catch (TaskException e) {
 

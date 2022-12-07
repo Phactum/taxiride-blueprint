@@ -262,17 +262,25 @@ public class Camunda8TaskWiring extends TaskWiringBase<Camunda8Connectable, Camu
     private String propertyName(
             final Method method) {
         
-        if (!method.getName().startsWith("get")) {
+        if (method.getName().startsWith("get")) {
+            if (method.getName().length() < 4) {
+                return method.getName();
+            }
+            
+            return
+                    method.getName().substring(3, 4).toLowerCase()
+                    + method.getName().substring(4);
+        } else if (method.getName().startsWith("is")) {
+            if (method.getName().length() < 3) {
+                return method.getName();
+            }
+            
+            return
+                    method.getName().substring(2, 3).toLowerCase()
+                    + method.getName().substring(3);
+        } else {
             return method.getName();
         }
-        
-        if (method.getName().length() == 3) {
-            return method.getName();
-        }
-        
-        return
-                method.getName().substring(3, 4).toLowerCase()
-                + method.getName().substring(4);
         
     }
     

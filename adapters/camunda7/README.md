@@ -59,9 +59,9 @@ Defining the right Camunda 7 transactional behavior can be difficult. We have se
 
 In the very beginnings of Camunda it was sold as a feature to not require one transaction for each BPMN task/element. Meanwhile computers are fast and cheap and avoiding data loss as well as building cheap software is more important than optimization of software. Therefore it is better to use the Blueprint approach.
 
-To support this on deploying bundled BPMN files, the Camunda feature "Async before" is set on every task/element automatically. The only exceptions are usertasks and tasks using implementation type "external" which implement the desired behavior implicitly.
+To support this, on deploying bundled BPMN files the Camunda feature "Async before" is set on every task automatically. The only exceptions are usertasks, tasks using implementation type "external" as well as natural wait states like receive tasks because all of them implement the desired behavior implicitly. Additionally, the "Async after" is set on each and every task to ensure tasks completed successfully are not rolled back any more.
 
-To have one transaction for your business code and for Camunda one should mark the service bean like this:
+If there is an exception in your business code and you have to roll back the transaction then Camunda's job of picking up the task has to be rolled back as well to ensure the retry-mechanism. Additionally, the `TaskException` is used for expected business errors handled by BPMN error boundary events which must not cause a rollback. To achieve both one should mark the service bean like this:
 
 ```java
 @Service
@@ -69,8 +69,6 @@ To have one transaction for your business code and for Camunda one should mark t
 @Transactional(noRollbackFor = TaskException.class)
 public class TaxiRide {
 ```
-
-The `TaskException` is used for expected errors which must not cause a rollback and typically are processed in BPMN by using error boundary events.
 
 ### Job-Executor
 
@@ -80,7 +78,7 @@ In cloud environments one typically wants to free resources in idle times to not
 
 This feature is enabled by default and if not wanted needs to be disabled this Spring property:
 
-```
+```yaml
 camunda:
   bpm:
     job-execution:

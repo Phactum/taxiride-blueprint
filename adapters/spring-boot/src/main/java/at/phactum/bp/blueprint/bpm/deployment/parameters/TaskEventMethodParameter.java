@@ -20,10 +20,6 @@ public class TaskEventMethodParameter extends MethodParameter {
             if (event == Event.ALL) {
                 events.add(Event.CREATED);
                 events.add(Event.CANCELED);
-                events.add(Event.COMPLETED);
-            } else if (event == Event.BPMS) {
-                events.add(Event.CREATED);
-                events.add(Event.CANCELED);
             } else {
                 events.add(event);
             }

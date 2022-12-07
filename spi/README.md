@@ -20,6 +20,7 @@ It incorporates various state-of-the-art techniques and concepts to simplify bus
     1. [Versioning of BPMN business-processes](#versioning-of-bpmn-business-processes)
     1. [Call-activities](#call-activities)
     1. [Multi-instance](#multi-instance)
+    1. [User tasks and asynchronous tasks](#user-tasks-and-asynchronous-tasks)
 1. [Concept](#concept)
 
 ## Usage
@@ -279,6 +280,9 @@ Valid formats:
 * '>3': only versions higher then "3"
 * '>=3': only versions higher then or equal to "3"
 
+*Heads up:* This feature is not yet implemented but already prepared in code. Fill your annotations
+properly to benefit from it once it's available.
+
 ### Call-activities
 
 In general BPMN models can be splitted up by using the "call-activity" task which is not meant to be executed by custom business code but instead is interpreted by the workflow system to spawn another process instance based on another BPMN.
@@ -436,6 +440,59 @@ public class DriverResolver implements MultiInstanceElementResolver<Ride, Driver
 ```
 
 In this example the element of the collection based 'RequestRideOffer' multi-instance embedded subprocess is used next to the index of the nested multi-instance 'CancelNotRequiredRide'. Both values are passed to the internal 'DriverService' to determine the required driver entity.
+
+### User tasks and asynchronous tasks
+
+A user task is a task which is fulfilled by a human. In terms of a BPMN-engine the engine stops and waits for human input (e.g. collected via a graphical user interface) to be reported via API. This procedure is the same as processing asynchronous service tasks (e.g. calling an external service which confirms after a while by calling a REST-endpoint).
+
+In both situations one needs a reference id to be used to complete the task once the workload is done (either by a human or a service). This reference id, also called `task-id`, is handed over by using the `@TaskId` and `@TaskEvent` annotation:
+
+```java
+@WorkflowTask
+public void retrievePayment(
+        final Ride ride,
+        final @TaskId String taskId,
+        final @TaskEvent Event taskEvent) {
+    if (taskEvent == Event.CREATED) {
+        ride.setRetrievePaymentTaskId(taskId);
+    } else {
+        ride.setRetrievePaymentTaskId(null);
+    }
+}
+```
+
+*Heads up:* If the task-id is used in a workflow-task's method which is not able to be processed asynchronously then `null` is passed as a value (e.g. not a user-task or the BPMN-engine does not support asynchronous tasks).
+
+Depending on whether a `@TaskEvent` annotated parameter is given and [it's value](./src/main/java/at/phactum/bp/blueprint/service/TaskEvent.java), the workflow-method is called on each event:
+
+* `@TaskEvent(TaskEvent.Event.CREATED)`: The workflow-method is called only when the task is created.
+* `@TaskEvent(TaskEvent.Event.CANCELED)`: The workflow-method is called only when the task is cancelled (e.g. due to interrupting boundary events).
+* `@TaskEvent(TaskEvent.Event.ALL)`: The workflow-method is called two times each for `CREATED` and `CANCELED`. The default behavior for the `@TaskEvent` annotation with no value given.
+* No `@TaskEvent` annotation: The workflow-method is called only when the task is created.
+
+In case of a user task for example a workflow-method could send a notification to the user and in case of an asynchronous task the external service has to be called on the `CREATED` event. The given task-id has to be stored to be used once the asynchronous task completes to make the BPMN-engine know the which task is done:
+
+```java
+@RestController
+public class DriverGuiController {
+    @Autowired
+    private ProcessService<Ride> rideService;
+    @Autowired
+    private RideRepository rides;
+    @RequestMapping(
+            method = RequestMethod.GET,
+            value = "/gui/ride/{rideId}/payment")
+    public void completePayment(
+            @PathVariable("rideId") String rideId,
+            @RequestBody RideCharged rideCharged) {
+        final var ride = rides.findById(rideId);
+        ride.setChared(rideCharged.getAmount());
+        rideService.complete(ride, ride.getRetrievePaymentTaskId());
+    }
+}
+```
+
+*Hint:* At the moment the Camunda 7 adapter does not supported asynchronous tasks. This feature will be available soon.
 
 ## Concept
 

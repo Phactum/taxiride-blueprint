@@ -81,14 +81,13 @@ public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskList
             return false;
         }
         
-        final var events = this.parameters
+        return this.parameters
                 .stream()
                 .filter(parameter -> parameter instanceof TaskEventMethodParameter)
                 .map(parameter -> ((TaskEventMethodParameter) parameter).getEvents())
                 .findFirst()
-                .orElse(Set.of());
-        
-        return events.contains(event);
+                .orElse(Set.of())
+                .contains(event);
         
     }
     
@@ -96,8 +95,6 @@ public class Camunda7UserTaskHandler extends TaskHandlerBase implements TaskList
             final String eventName) {
         
         switch (eventName) {
-        case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_COMPLETE:
-            return Event.COMPLETED;
         case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_DELETE:
             return Event.CANCELED;
         case org.camunda.bpm.engine.delegate.TaskListener.EVENTNAME_CREATE:

@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * &#64;WorkflowTask(taskDefinition = "myFormKey")
  * public void setStatus(
  *         final MyDomainEntity entity,
- *         &#64;TaskEvent("ALL") TaskEvent event,
+ *         &#64;TaskEvent("ALL") {@link Event} event,
  *         &#64;UserTaskId String id) throws {@link TaskException} {
  * </pre>
  */
@@ -27,13 +27,11 @@ import java.lang.annotation.Target;
 public @interface TaskEvent {
 
     enum Event {
-        CREATED, // on creating a user task
-        COMPLETED, // on completing a user task
-        CANCELED, // on canceling a user task (e.g. due to boundary event)
-        ALL, // all events: CREATED, COMPLETED, CANCELED
-        BPMS, // only events caused by the BPMS and not by the user: CREATED, CANCELED
+        CREATED, // filter to events on creating a task
+        CANCELED, // filter to events on canceling a user task or an asynchronous task (e.g. due to boundary event)
+        ALL, // no filtering, also the 
     };
 
-    public Event[] value() default { Event.BPMS };
+    public Event[] value() default { Event.ALL };
 
 }

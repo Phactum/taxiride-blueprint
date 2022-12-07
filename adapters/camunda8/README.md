@@ -46,3 +46,17 @@ In case your model has more than one receive task active you have to define uniq
 
 ### Transaction behavior
 
+Since Camunda 8 is an external system to your services one has to deal with eventual consistency in conjunction with transactions. This adapter uses the recommended pattern to report a task as completed and roll back the local transaction in case of errors. Possible errors are:
+
+1. Camunda 8 is not reachable / cannot process the confirmation of a completed task
+1. The task to be completed was cancelled meanwhile e.g. due to boundary events
+
+If there is an exception in your business code and you have to roll back the transaction then Camunda's task retry-mechanism should retry as configured. Additionally, the `TaskException` is used for expected business errors handled by BPMN error boundary events which must not cause a rollback. To achieve both one should mark the service bean like this:
+
+```java
+@Service
+@WorkflowService(workflowAggregateClass = Ride.class)
+@Transactional(noRollbackFor = TaskException.class)
+public class TaxiRide {
+```
+
