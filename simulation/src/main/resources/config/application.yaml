@@ -1,0 +1,13 @@
+server:
+  port: 9080
+  servlet:
+    context-path: /
+
+spring:
+   application:
+      name: taxi-simulation
+
+application:
+  driver-callback-service-client:
+    base-url: http://localhost:8080/api/v1
+    log: true

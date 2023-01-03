@@ -1,0 +1,27 @@
+logging:
+  level:
+    at.phactum.bp.blueprint: DEBUG
+    com.taxicompany: DEBUG
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+   application:
+      name: taxi
+   main:
+      allow-bean-definition-overriding: true
+   jpa:
+      open-in-view: false
+      properties:
+         hibernate:
+            dialect: com.taxicompany.config.H2JsonDialect
+   datasource:
+      url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      jdbc-batch-processing: false
+   h2:
+      console:
+         enabled: true
+         path: /h2

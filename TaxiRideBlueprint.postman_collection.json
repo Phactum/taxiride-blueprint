@@ -1,0 +1,120 @@
+{
+	"info": {
+		"_postman_id": "4e3ef1a7-1634-4091-b9bb-74f8aa35e51b",
+		"name": "Taxi Ride Blueprint",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15464711"
+	},
+	"item": [
+		{
+			"name": "ride booked",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let rideId = pm.response.text();",
+							"pm.collectionVariables.set(\"rideId\", rideId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"pickupLocation\": {\n        \"longitude\": 1.1234,\n        \"latitude\": 4.5354,\n        \"hint\": null\n    },\n    \"pickupTime\": \"2023-01-01T17:00:00+0100\",\n    \"targetLocation\": {\n        \"longitude\": 1.1234,\n        \"latitude\": 4.5354,\n        \"hint\": null\n    }\n}\n"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/ride/booked",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"ride",
+						"booked"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ride charged",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 27\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/ride/{{rideId}}/charged?rideId",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"ride",
+						"{{rideId}}",
+						"charged"
+					],
+					"query": [
+						{
+							"key": "rideId",
+							"value": null
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "rideId",
+			"value": "ff80818185728f9e0185728fd5f30000",
+			"type": "string"
+		}
+	]
+}

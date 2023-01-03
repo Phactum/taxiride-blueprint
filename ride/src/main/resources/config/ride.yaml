@@ -1,0 +1,5 @@
+ride:
+  period-for-immediately-pickups: PT1H
+  driver-service-client:
+    base-url: http://localhost:9080/api/v1
+    log: true

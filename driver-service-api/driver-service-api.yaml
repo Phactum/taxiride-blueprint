@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  description: Driver API
+  version: '1.0'
+  title: driver
+servers:
+  - url: /api/v1
+
+paths:
+  /driver/drivers-nearby:
+    post:
+      tags:
+        - driverService
+      summary: a list of drivers nearby a given location
+      operationId: determineDriversNearby
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriversNearbyParameters'
+      responses:
+        200:
+          description: the drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+  /driver/{driverId}/request-ride-offer:
+    post:
+      tags:
+        - driverService
+      summary: request a ride offer
+      operationId: requestRideOffer
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestRideOfferParameters'
+      responses:
+        200:
+          description: acknowledged
+  /driver/{driverId}/offer/{rideId}:
+    delete:
+      tags:
+        - driverService
+      summary: cancel a ride offer
+      operationId: cancelRideOffer
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: acknowledged
+    put:
+      tags:
+        - driverService
+      summary: confirm a ride offer
+      operationId: confirmRideOffer
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        200:
+          description: acknowledged
+  /driver/{driverId}/offer/{rideId}/retrieve-payment:
+    post:
+      tags:
+        - driverService
+      summary: trigger to retrieve payment charged by driver
+      operationId: retrievePayment
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: number
+              format: float
+      responses:
+        200:
+          description: acknowledged
+  /driver/{driverId}/offer/{rideId}/pay-driver-fee:
+    post:
+      tags:
+        - driverService
+      summary: confirm driver fee is payed
+      operationId: feePayed
+      parameters:
+        - in: path
+          name: driverId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: number
+              format: float
+      responses:
+        200:
+          description: acknowledged
+
+components:
+  schemas:
+    Location:
+      type: object
+      properties:
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+        hint:
+          type: string
+    DriversNearbyParameters:
+      type: object
+      properties:
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+    Driver:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    RequestRideOfferParameters:
+      type: object
+      properties:
+        rideId:
+          type: string
+        pickupLocation:
+          $ref: '#/components/schemas/Location'
+        pickupTime:
+          type: string
+          format: date-time
+        targetLocation:
+          $ref: '#/components/schemas/Location'

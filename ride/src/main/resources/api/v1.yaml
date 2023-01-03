@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  description: Ride API
+  version: '1.0'
+  title: ride
+servers:
+  - url: /api/v1
+
+paths:
+  /ride/booked:
+    post:
+      tags:
+        - ride
+      summary: notify about a booked ride
+      operationId: rideBooked
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideBookedParameters'
+      responses:
+        200:
+          description: the ride
+          content:
+            application/json:
+              schema:
+                description: the ride id
+                type: string
+  /ride/{rideId}/charged:
+    post:
+      tags:
+        - ride
+      summary: charge a booked ride
+      operationId: rideCharged
+      parameters:
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RideCharged'
+      responses:
+        200:
+          description: the ride
+          content:
+            application/json:
+              schema:
+                description: the ride id
+                type: string
+
+components:
+  schemas:
+    Location:
+      type: object
+      properties:
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+        hint:
+          type: string
+    RideBookedParameters:
+      type: object
+      properties:
+        pickupLocation:
+          $ref: '#/components/schemas/Location'
+        pickupTime:
+          type: string
+          format: date-time
+        targetLocation:
+          $ref: '#/components/schemas/Location'
+    RideCharged:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: float
+

@@ -1,0 +1,22 @@
+camunda:
+   bpm:
+      filter:
+         create: "All tasks"
+      admin-user:
+         id: admin
+         password: admin
+         first-name: Admin
+         last-name: Istrator
+      generic-properties.properties:
+         initializeTelemetry: false
+         telemetry-reporter-activate: false
+      default-number-of-retries: 1
+      job-execution:
+         core-pool-size: 1
+         max-pool-size: 1
+         wait-time-in-millis: 100
+         max-wait: 100
+         deployment-aware: true
+      database:
+         schema-update: true
+         jdbc-batch-processing: false
