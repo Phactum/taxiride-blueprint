@@ -9,7 +9,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <vanillabp.version>0.0.1-SNAPSHOT</vanillabp.version>
+    <vanillabp.version>1.0.0</vanillabp.version>
   </properties>
 
   <build>

@@ -61,6 +61,7 @@
         <dependency>
           <groupId>io.vanillabp</groupId>
           <artifactId>camunda7-spring-boot-adapter</artifactId>
+          <version>0.0.1-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>
@@ -70,6 +71,7 @@
         <dependency>
           <groupId>io.vanillabp</groupId>
           <artifactId>camunda8-spring-boot-adapter</artifactId>
+          <version>0.0.1-SNAPSHOT</version>
         </dependency>
       </dependencies>
     </profile>
