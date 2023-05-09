@@ -9,7 +9,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <vanillabp.version>1.0.0</vanillabp.version>
+    <vanillabp-spi.version>1.0.0</vanillabp-spi.version>
+    <vanillabp-spring-boot-support.version>1.0.0</vanillabp-spring-boot-support.version>
+    <vanillabp-camunda7-adapter.version>1.0.0</vanillabp-camunda7-adapter.version>
+    <vanillabp-camunda8-adapter.version>1.0.0</vanillabp-camunda8-adapter.version>
   </properties>
 
   <build>
@@ -47,22 +50,22 @@
       <dependency>
         <groupId>io.vanillabp</groupId>
         <artifactId>spring-boot-support</artifactId>
-        <version>${vanillabp.version}</version>
+        <version>${vanillabp-spring-boot-support.version}</version>
       </dependency>
       <dependency>
         <groupId>io.vanillabp</groupId>
         <artifactId>spi-for-java</artifactId>
-        <version>${vanillabp.version}</version>
+        <version>${vanillabp-spi.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.vanillabp</groupId>
+        <groupId>org.camunda.community.vanillabp</groupId>
         <artifactId>camunda7-spring-boot-adapter</artifactId>
-        <version>${vanillabp.version}</version>
+        <version>${vanillabp-camunda7-adapter.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.vanillabp</groupId>
+        <groupId>org.camunda.community.vanillabp</groupId>
         <artifactId>camunda8-spring-boot-adapter</artifactId>
-        <version>${vanillabp.version}</version>
+        <version>${vanillabp-camunda8-adapter.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
