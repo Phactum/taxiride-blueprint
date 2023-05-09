@@ -9,10 +9,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <vanillabp-spi.version>1.0.0</vanillabp-spi.version>
-    <vanillabp-spring-boot-support.version>1.0.0</vanillabp-spring-boot-support.version>
-    <vanillabp-camunda7-adapter.version>1.0.0</vanillabp-camunda7-adapter.version>
-    <vanillabp-camunda8-adapter.version>1.0.0</vanillabp-camunda8-adapter.version>
+    <vanillabp-spi.version>1.0.2</vanillabp-spi.version>
+    <vanillabp-spring-boot-support.version>1.0.3</vanillabp-spring-boot-support.version>
+    <vanillabp-camunda7-adapter.version>1.0.7</vanillabp-camunda7-adapter.version>
+    <vanillabp-camunda8-adapter.version>1.0.4</vanillabp-camunda8-adapter.version>
   </properties>
 
   <build>

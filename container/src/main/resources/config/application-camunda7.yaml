@@ -20,3 +20,8 @@ camunda:
       database:
          schema-update: true
          jdbc-batch-processing: false
+
+vanillabp:
+  adapters:
+    camunda7:
+      resources-path: processes/camunda7
